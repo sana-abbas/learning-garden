@@ -2,19 +2,57 @@ import { useEffect, useRef } from "react";
 import confetti from "canvas-confetti";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Award } from "lucide-react";
+import { Sparkles, Award, PhoneCall, Users } from "lucide-react";
+
+export type MilestoneVariant = "fc1" | "fc2" | "fc3" | "fc4";
 
 interface Props {
   open: boolean;
   onOpenChange: (o: boolean) => void;
-  variant: "midway" | "harvest";
+  variant: MilestoneVariant;
 }
+
+const COPY: Record<MilestoneVariant, {
+  title: string;
+  body: string;
+  cta: string;
+  badge: string;
+  isHarvest?: boolean;
+}> = {
+  fc1: {
+    badge: "Founders' Call · Month 3",
+    title: "Foundations Roundtable unlocked! 🌱",
+    body: "You've planted deep roots through Internet, JavaScript, and HTML & CSS. Hop on the Foundations Roundtable to meet the founders and your cohort.",
+    cta: "Claim my Foundations Call",
+  },
+  fc2: {
+    badge: "Founders' Call · Month 6",
+    title: "Mid-Way Resilience Roundtable! 🌿",
+    body: "Portfolio shipped, dynamic websites and TypeScript in the bag. Time for the Resilience Roundtable — momentum, mindset, and what's ahead.",
+    cta: "Claim my Resilience spot",
+  },
+  fc3: {
+    badge: "Founders' Call · Month 9",
+    title: "Full-Stack Momentum Call! 🌸",
+    body: "Databases and React complete — your stem is reaching the sky. Join the Momentum Call to plan your final project and career runway.",
+    cta: "Claim my Momentum Call",
+  },
+  fc4: {
+    badge: "Founders' Call · Month 12",
+    title: "The Secret Garden is open! 🌸",
+    body: "You landed your first paid project! You've earned the Master Gardener Badge and unlocked the 'Career Harvest' Founders' Call!",
+    cta: "Claim my Career Harvest Call",
+    isHarvest: true,
+  },
+};
 
 export function MilestoneModal({ open, onOpenChange, variant }: Props) {
   const fired = useRef(false);
+  const copy = COPY[variant];
+  const isHarvest = !!copy.isHarvest;
 
   useEffect(() => {
-    if (open && variant === "harvest" && !fired.current) {
+    if (open && isHarvest && !fired.current) {
       fired.current = true;
       const fire = (particleRatio: number, opts: confetti.Options) => {
         confetti({
@@ -31,9 +69,9 @@ export function MilestoneModal({ open, onOpenChange, variant }: Props) {
       fire(0.1, { spread: 120, startVelocity: 45 });
     }
     if (!open) fired.current = false;
-  }, [open, variant]);
+  }, [open, isHarvest]);
 
-  const isHarvest = variant === "harvest";
+  const Icon = isHarvest ? Award : variant === "fc3" ? Sparkles : variant === "fc2" ? Users : PhoneCall;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -47,7 +85,6 @@ export function MilestoneModal({ open, onOpenChange, variant }: Props) {
             border: "1px solid var(--border)",
           }}
         >
-          {/* Decorative orb */}
           <div
             className="mx-auto mb-5 w-20 h-20 rounded-full flex items-center justify-center animate-float-soft"
             style={{
@@ -59,23 +96,19 @@ export function MilestoneModal({ open, onOpenChange, variant }: Props) {
                 : "0 0 50px oklch(0.6 0.16 145 / 0.5)",
             }}
           >
-            {isHarvest ? (
-              <Award className="w-10 h-10 text-white drop-shadow" strokeWidth={1.8} />
-            ) : (
-              <Sparkles className="w-9 h-9 text-white drop-shadow" strokeWidth={1.8} />
-            )}
+            <Icon className="w-9 h-9 text-white drop-shadow" strokeWidth={1.8} />
           </div>
+
+          <p className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted-foreground)] mb-2">
+            {copy.badge}
+          </p>
 
           <DialogHeader className="space-y-3">
             <DialogTitle className="text-2xl font-serif tracking-tight text-[color:var(--foreground)]">
-              {isHarvest
-                ? "The Secret Garden is open! 🌸"
-                : "Deep Roots Established! 🌱"}
+              {copy.title}
             </DialogTitle>
             <DialogDescription className="text-[color:var(--muted-foreground)] text-base leading-relaxed">
-              {isHarvest
-                ? "You landed your first paid project! You've earned the Master Gardener Badge and unlocked the 'Career Harvest' Founders' Call."
-                : "You've unlocked the Mid-Way 'Resilience Roundtable' Founders' Call. Claim your spot!"}
+              {copy.body}
             </DialogDescription>
           </DialogHeader>
 
@@ -91,7 +124,7 @@ export function MilestoneModal({ open, onOpenChange, variant }: Props) {
                 boxShadow: "0 10px 30px -8px oklch(0.5 0.18 340 / 0.5)",
               }}
             >
-              {isHarvest ? "Claim my Career Harvest Call" : "Claim my Roundtable spot"}
+              {copy.cta}
             </Button>
           </DialogFooter>
         </div>

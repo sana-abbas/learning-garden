@@ -22,7 +22,16 @@ import {
 import { BotanicalGarden } from "@/components/garden/BotanicalGarden";
 import { MilestoneModal, type MilestoneVariant } from "@/components/garden/MilestoneModal";
 
+import { supabase } from "@/integrations/supabase/client";
+import { LogOut } from "lucide-react";
+import { redirect, useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
+
 export const Route = createFileRoute("/")({
+  beforeLoad: async () => {
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) throw redirect({ to: "/login" });
+  },
   component: Index,
 });
 

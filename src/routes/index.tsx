@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Leaf,
@@ -156,7 +156,7 @@ function Index() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [modal, setModal] = useState<MilestoneVariant | null>(null);
 
-  useMemo(() => {
+  useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? null));
   }, []);
 

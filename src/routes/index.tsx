@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Leaf,
@@ -22,7 +22,16 @@ import {
 import { BotanicalGarden } from "@/components/garden/BotanicalGarden";
 import { MilestoneModal, type MilestoneVariant } from "@/components/garden/MilestoneModal";
 
+import { supabase } from "@/integrations/supabase/client";
+import { LogOut } from "lucide-react";
+import { redirect, useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
+
 export const Route = createFileRoute("/")({
+  beforeLoad: async () => {
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) throw redirect({ to: "/login" });
+  },
   component: Index,
 });
 
@@ -139,11 +148,23 @@ const STEPS: Step[] = [
 ];
 
 function Index() {
+  const navigate = useNavigate();
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   // checked map for steps without subtasks AND for sub-tasks
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [openId, setOpenId] = useState<string | null>(null);
   const [modal, setModal] = useState<MilestoneVariant | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? null));
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast.success("Signed out");
+    navigate({ to: "/login" });
+  };
 
   // A step is "complete" if it has no subtasks and is checked, OR all subtasks are checked
   const isStepComplete = (step: Step): boolean => {
@@ -205,25 +226,39 @@ function Index() {
       {/* Sidebar */}
       <aside className="lg:w-[420px] lg:min-h-screen lg:max-h-screen lg:overflow-y-auto bg-[color:var(--sidebar)] border-r border-[color:var(--sidebar-border)] flex flex-col">
         <div className="p-7 border-b border-[color:var(--sidebar-border)] sticky top-0 bg-[color:var(--sidebar)] z-10">
-          <div className="flex items-center gap-2.5">
-            <div
-              className="w-10 h-10 rounded-2xl flex items-center justify-center"
-              style={{
-                background: "linear-gradient(135deg, var(--primary), var(--bloom-pink))",
-                boxShadow: "var(--shadow-leaf)",
-              }}
+          <div className="flex items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2.5">
+              <div
+                className="w-10 h-10 rounded-2xl flex items-center justify-center"
+                style={{
+                  background: "linear-gradient(135deg, var(--primary), var(--bloom-pink))",
+                  boxShadow: "var(--shadow-leaf)",
+                }}
+              >
+                <Leaf className="w-5 h-5 text-white" strokeWidth={2.2} />
+              </div>
+              <div>
+                <h1 className="font-serif text-xl tracking-tight text-[color:var(--sidebar-foreground)]">
+                  Code Blossom
+                </h1>
+                <p className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted-foreground)]">
+                  Full-Stack Curriculum
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              title={userEmail ?? "Sign out"}
+              className="p-2 rounded-lg text-[color:var(--muted-foreground)] hover:text-[color:var(--foreground)] hover:bg-[color:var(--background)] transition-colors"
             >
-              <Leaf className="w-5 h-5 text-white" strokeWidth={2.2} />
-            </div>
-            <div>
-              <h1 className="font-serif text-xl tracking-tight text-[color:var(--sidebar-foreground)]">
-                Code Blossom
-              </h1>
-              <p className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted-foreground)]">
-                Full-Stack Curriculum
-              </p>
-            </div>
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
+          {userEmail && (
+            <p className="mt-3 text-[11px] text-[color:var(--muted-foreground)] truncate">
+              Signed in as <span className="font-medium">{userEmail}</span>
+            </p>
+          )}
 
           <div className="mt-6">
             <div className="flex items-baseline justify-between mb-2">

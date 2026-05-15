@@ -226,25 +226,39 @@ function Index() {
       {/* Sidebar */}
       <aside className="lg:w-[420px] lg:min-h-screen lg:max-h-screen lg:overflow-y-auto bg-[color:var(--sidebar)] border-r border-[color:var(--sidebar-border)] flex flex-col">
         <div className="p-7 border-b border-[color:var(--sidebar-border)] sticky top-0 bg-[color:var(--sidebar)] z-10">
-          <div className="flex items-center gap-2.5">
-            <div
-              className="w-10 h-10 rounded-2xl flex items-center justify-center"
-              style={{
-                background: "linear-gradient(135deg, var(--primary), var(--bloom-pink))",
-                boxShadow: "var(--shadow-leaf)",
-              }}
+          <div className="flex items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2.5">
+              <div
+                className="w-10 h-10 rounded-2xl flex items-center justify-center"
+                style={{
+                  background: "linear-gradient(135deg, var(--primary), var(--bloom-pink))",
+                  boxShadow: "var(--shadow-leaf)",
+                }}
+              >
+                <Leaf className="w-5 h-5 text-white" strokeWidth={2.2} />
+              </div>
+              <div>
+                <h1 className="font-serif text-xl tracking-tight text-[color:var(--sidebar-foreground)]">
+                  Code Blossom
+                </h1>
+                <p className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted-foreground)]">
+                  Full-Stack Curriculum
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              title={userEmail ?? "Sign out"}
+              className="p-2 rounded-lg text-[color:var(--muted-foreground)] hover:text-[color:var(--foreground)] hover:bg-[color:var(--background)] transition-colors"
             >
-              <Leaf className="w-5 h-5 text-white" strokeWidth={2.2} />
-            </div>
-            <div>
-              <h1 className="font-serif text-xl tracking-tight text-[color:var(--sidebar-foreground)]">
-                Code Blossom
-              </h1>
-              <p className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted-foreground)]">
-                Full-Stack Curriculum
-              </p>
-            </div>
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
+          {userEmail && (
+            <p className="mt-3 text-[11px] text-[color:var(--muted-foreground)] truncate">
+              Signed in as <span className="font-medium">{userEmail}</span>
+            </p>
+          )}
 
           <div className="mt-6">
             <div className="flex items-baseline justify-between mb-2">

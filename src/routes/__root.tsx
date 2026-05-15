@@ -108,6 +108,25 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
+
+  React.useEffect(() => {
+    let mounted = true;
+    import("@/integrations/supabase/client").then(({ supabase }) => {
+      if (!mounted) return;
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+        router.invalidate();
+        queryClient.invalidateQueries();
+      });
+      // store unsub
+      (window as unknown as { __sbUnsub?: () => void }).__sbUnsub = () =>
+        subscription.unsubscribe();
+    });
+    return () => {
+      mounted = false;
+      (window as unknown as { __sbUnsub?: () => void }).__sbUnsub?.();
+    };
+  }, [router, queryClient]);
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -226,19 +226,6 @@ function Index() {
                 </p>
               </div>
             </div>
-            <button
-              onClick={handleLogout}
-              title={userEmail ?? "Sign out"}
-              className="p-2 rounded-lg text-[color:var(--muted-foreground)] hover:text-[color:var(--foreground)] hover:bg-[color:var(--background)] transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-          {userEmail && (
-            <p className="mt-3 text-[11px] text-[color:var(--muted-foreground)] truncate">
-              Signed in as <span className="font-medium">{userEmail}</span>
-            </p>
-          )}
 
           <div className="mt-6">
             <div className="flex items-baseline justify-between mb-2">

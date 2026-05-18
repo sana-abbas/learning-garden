@@ -140,23 +140,11 @@ const STEPS: Step[] = [
 ];
 
 function Index() {
-  const navigate = useNavigate();
-  const [userEmail, setUserEmail] = useState<string | null>(null);
   // checked map for steps without subtasks AND for sub-tasks
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [openId, setOpenId] = useState<string | null>(null);
   const [modal, setModal] = useState<MilestoneVariant | null>(null);
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? null));
-  }, []);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast.success("Signed out");
-    navigate({ to: "/login" });
-  };
 
   // A step is "complete" if it has no subtasks and is checked, OR all subtasks are checked
   const isStepComplete = (step: Step): boolean => {

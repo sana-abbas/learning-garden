@@ -18,9 +18,11 @@ import {
   PhoneCall,
   ChevronDown,
   MessageCircle,
+  LogOut,
 } from "lucide-react";
 import { BotanicalGarden } from "@/components/garden/BotanicalGarden";
 import { MilestoneModal, type MilestoneVariant } from "@/components/garden/MilestoneModal";
+import { supabase } from "@/integrations/supabase/client";
 
 
 export const Route = createFileRoute("/")({

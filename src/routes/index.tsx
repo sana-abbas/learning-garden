@@ -22,16 +22,8 @@ import {
 import { BotanicalGarden } from "@/components/garden/BotanicalGarden";
 import { MilestoneModal, type MilestoneVariant } from "@/components/garden/MilestoneModal";
 
-import { supabase } from "@/integrations/supabase/client";
-import { LogOut } from "lucide-react";
-import { redirect, useNavigate } from "@tanstack/react-router";
-import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) throw redirect({ to: "/login" });
-  },
   component: Index,
 });
 
@@ -148,23 +140,11 @@ const STEPS: Step[] = [
 ];
 
 function Index() {
-  const navigate = useNavigate();
-  const [userEmail, setUserEmail] = useState<string | null>(null);
   // checked map for steps without subtasks AND for sub-tasks
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [openId, setOpenId] = useState<string | null>(null);
   const [modal, setModal] = useState<MilestoneVariant | null>(null);
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? null));
-  }, []);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast.success("Signed out");
-    navigate({ to: "/login" });
-  };
 
   // A step is "complete" if it has no subtasks and is checked, OR all subtasks are checked
   const isStepComplete = (step: Step): boolean => {
@@ -246,19 +226,8 @@ function Index() {
                 </p>
               </div>
             </div>
-            <button
-              onClick={handleLogout}
-              title={userEmail ?? "Sign out"}
-              className="p-2 rounded-lg text-[color:var(--muted-foreground)] hover:text-[color:var(--foreground)] hover:bg-[color:var(--background)] transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
           </div>
-          {userEmail && (
-            <p className="mt-3 text-[11px] text-[color:var(--muted-foreground)] truncate">
-              Signed in as <span className="font-medium">{userEmail}</span>
-            </p>
-          )}
+
 
           <div className="mt-6">
             <div className="flex items-baseline justify-between mb-2">

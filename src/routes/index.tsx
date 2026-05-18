@@ -226,6 +226,8 @@ function Index() {
                 </p>
               </div>
             </div>
+          </div>
+
 
           <div className="mt-6">
             <div className="flex items-baseline justify-between mb-2">

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Leaf,
@@ -21,7 +21,6 @@ import {
 } from "lucide-react";
 import { BotanicalGarden } from "@/components/garden/BotanicalGarden";
 import { MilestoneModal, type MilestoneVariant } from "@/components/garden/MilestoneModal";
-
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -140,26 +139,43 @@ const STEPS: Step[] = [
 ];
 
 function Index() {
-  // checked map for steps without subtasks AND for sub-tasks
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [openId, setOpenId] = useState<string | null>(null);
   const [modal, setModal] = useState<MilestoneVariant | null>(null);
+  const modalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("cb_checked");
+      if (saved) setChecked(JSON.parse(saved));
+      const savedNotes = localStorage.getItem("cb_notes");
+      if (savedNotes) setNotes(JSON.parse(savedNotes));
+    } catch {}
+  }, []);
 
-  // A step is "complete" if it has no subtasks and is checked, OR all subtasks are checked
-  const isStepComplete = (step: Step): boolean => {
-    if (step.subtasks && step.subtasks.length > 0) {
-      return step.subtasks.every((s) => checked[s.id]);
-    }
-    return !!checked[step.id];
-  };
+  useEffect(() => {
+    localStorage.setItem("cb_checked", JSON.stringify(checked));
+  }, [checked]);
+
+  useEffect(() => {
+    localStorage.setItem("cb_notes", JSON.stringify(notes));
+  }, [notes]);
+
+  useEffect(() => {
+    return () => { if (modalTimerRef.current) clearTimeout(modalTimerRef.current); };
+  }, []);
 
   const completion = useMemo(() => {
     const map: Record<string, boolean> = {};
-    STEPS.forEach((s) => (map[s.id] = isStepComplete(s)));
+    STEPS.forEach((s) => {
+      if (s.subtasks && s.subtasks.length > 0) {
+        map[s.id] = s.subtasks.every((sub) => checked[sub.id]);
+      } else {
+        map[s.id] = !!checked[s.id];
+      }
+    });
     return map;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checked]);
 
   const toggleStep = (step: Step) => {
@@ -174,21 +190,17 @@ function Index() {
     }
     setChecked((prev) => {
       const wasChecked = !!prev[step.id];
-      const next = { ...prev, [step.id]: !wasChecked };
       if (!wasChecked && step.kind === "call" && step.callVariant) {
         const variant = step.callVariant;
-        setTimeout(() => setModal(variant), 600);
+        if (modalTimerRef.current) clearTimeout(modalTimerRef.current);
+        modalTimerRef.current = setTimeout(() => setModal(variant), 600);
       }
-      return next;
+      return { ...prev, [step.id]: !wasChecked };
     });
   };
 
-  const toggleSubtask = (step: Step, subId: string) => {
-    setChecked((prev) => {
-      const next = { ...prev, [subId]: !prev[subId] };
-      // if parent had call variant we don't trigger here (calls have no subtasks)
-      return next;
-    });
+  const toggleSubtask = (_step: Step, subId: string) => {
+    setChecked((prev) => ({ ...prev, [subId]: !prev[subId] }));
   };
 
   const completedCount = STEPS.filter((s) => completion[s.id]).length;
@@ -265,6 +277,39 @@ function Index() {
               ? step.subtasks!.filter((s) => checked[s.id]).length
               : 0;
 
+            const titleContent = (
+              <>
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`text-sm font-medium truncate transition-colors ${
+                      isChecked
+                        ? "text-[color:var(--foreground)]"
+                        : "text-[color:var(--sidebar-foreground)]"
+                    }`}
+                  >
+                    {step.title}
+                  </div>
+                  {isCall && (
+                    <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[color:var(--bloom-pink)]/15 text-[color:var(--bloom-magenta)] shrink-0">
+                      Call
+                    </span>
+                  )}
+                  {isPaid && (
+                    <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[color:var(--primary)]/15 text-[color:var(--primary)] shrink-0">
+                      Paid
+                    </span>
+                  )}
+                </div>
+                <div className="text-[11px] text-[color:var(--muted-foreground)] mt-0.5 truncate">
+                  {isCall
+                    ? step.subtitle
+                    : `${step.subtitle} · ${step.duration}${
+                        hasSubs ? ` · ${subDone}/${step.subtasks!.length}` : ""
+                      }`}
+                </div>
+              </>
+            );
+
             return (
               <div
                 key={step.id}
@@ -305,42 +350,19 @@ function Index() {
                           : "var(--muted-foreground)",
                     }}
                   >
-                    <Icon className="w-4.5 h-4.5" />
+                    <Icon className="w-[18px] h-[18px]" />
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => hasSubs && setOpenId(isOpen ? null : step.id)}
-                    className="flex-1 min-w-0 text-left cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`text-sm font-medium truncate transition-colors ${
-                          isChecked
-                            ? "text-[color:var(--foreground)]"
-                            : "text-[color:var(--sidebar-foreground)]"
-                        }`}
-                      >
-                        {step.title}
-                      </div>
-                      {isCall && (
-                        <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[color:var(--bloom-pink)]/15 text-[color:var(--bloom-magenta)] shrink-0">
-                          Call
-                        </span>
-                      )}
-                      {isPaid && (
-                        <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[color:var(--primary)]/15 text-[color:var(--primary)] shrink-0">
-                          Paid
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[11px] text-[color:var(--muted-foreground)] mt-0.5 truncate">
-                      {isCall
-                        ? step.subtitle
-                        : `${step.subtitle} · ${step.duration}${
-                            hasSubs ? ` · ${subDone}/${step.subtasks!.length}` : ""
-                          }`}
-                    </div>
-                  </button>
+                  {hasSubs ? (
+                    <button
+                      type="button"
+                      onClick={() => setOpenId(isOpen ? null : step.id)}
+                      className="flex-1 min-w-0 text-left"
+                    >
+                      {titleContent}
+                    </button>
+                  ) : (
+                    <div className="flex-1 min-w-0">{titleContent}</div>
+                  )}
                   {hasSubs ? (
                     <button
                       type="button"

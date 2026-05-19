@@ -82,6 +82,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "icon", href: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌸</text></svg>" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" },
@@ -112,21 +113,15 @@ function RootComponent() {
   const router = useRouter();
 
   React.useEffect(() => {
-    let mounted = true;
+    let unsubscribe: (() => void) | undefined;
     import("@/integrations/supabase/client").then(({ supabase }) => {
-      if (!mounted) return;
       const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
         router.invalidate();
         queryClient.invalidateQueries();
       });
-      // store unsub
-      (window as unknown as { __sbUnsub?: () => void }).__sbUnsub = () =>
-        subscription.unsubscribe();
+      unsubscribe = () => subscription.unsubscribe();
     });
-    return () => {
-      mounted = false;
-      (window as unknown as { __sbUnsub?: () => void }).__sbUnsub?.();
-    };
+    return () => unsubscribe?.();
   }, [router, queryClient]);
 
   return (

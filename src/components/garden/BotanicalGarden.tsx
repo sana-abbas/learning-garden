@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Sparkles } from "lucide-react";
 
 interface Props {
@@ -15,6 +16,22 @@ export function BotanicalGarden({
   flowerActive,
   exoticActive,
 }: Props) {
+  const soilSpecks = useMemo(() =>
+    Array.from({ length: 60 }, (_, i) => ({
+      cx: `${(i * 37) % 100}%`,
+      cy: `${(i * 53) % 100}%`,
+      r: ((i * 31) % 15) / 10 + 0.5,
+    })), []);
+
+  const sparkleData = useMemo(() =>
+    Array.from({ length: 24 }, () => ({
+      top: Math.random() * 80 + 5,
+      left: Math.random() * 90 + 5,
+      size: Math.random() * 14 + 10,
+      duration: 2 + Math.random() * 2,
+      delay: Math.random() * 2,
+    })), []);
+
   return (
     <div className="relative w-full h-full min-h-[640px] rounded-[2rem] overflow-hidden shadow-[0_30px_80px_-30px_oklch(0.4_0.05_60/0.4)] border border-[color:var(--border)]">
       {/* Sky */}
@@ -58,12 +75,12 @@ export function BotanicalGarden({
       >
         {/* Soil texture specks */}
         <svg className="absolute inset-0 w-full h-full opacity-40" preserveAspectRatio="none">
-          {Array.from({ length: 60 }).map((_, i) => (
+          {soilSpecks.map((speck, i) => (
             <circle
               key={i}
-              cx={`${(i * 37) % 100}%`}
-              cy={`${(i * 53) % 100}%`}
-              r={Math.random() * 1.5 + 0.5}
+              cx={speck.cx}
+              cy={speck.cy}
+              r={speck.r}
               fill="oklch(0.5 0.06 55)"
             />
           ))}
@@ -331,18 +348,18 @@ export function BotanicalGarden({
       {/* Sparkles overlay */}
       {exoticActive && (
         <div className="absolute inset-0 pointer-events-none">
-          {Array.from({ length: 24 }).map((_, i) => (
+          {sparkleData.map((s, i) => (
             <Sparkles
               key={i}
               className="absolute text-[color:var(--sparkle)]"
               style={{
-                top: `${Math.random() * 80 + 5}%`,
-                left: `${Math.random() * 90 + 5}%`,
-                width: `${Math.random() * 14 + 10}px`,
-                height: `${Math.random() * 14 + 10}px`,
+                top: `${s.top}%`,
+                left: `${s.left}%`,
+                width: `${s.size}px`,
+                height: `${s.size}px`,
                 opacity: 0,
                 filter: "drop-shadow(0 0 8px var(--sparkle))",
-                animation: `sparkle-twinkle ${2 + Math.random() * 2}s ease-in-out ${Math.random() * 2}s infinite`,
+                animation: `sparkle-twinkle ${s.duration}s ease-in-out ${s.delay}s infinite`,
               }}
             />
           ))}

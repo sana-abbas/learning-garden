@@ -228,20 +228,8 @@ function Index() {
                 </p>
               </div>
             </div>
-            <button
-              onClick={handleLogout}
-              title={userEmail ? `Sign out ${userEmail}` : "Sign out"}
-              className="p-2 rounded-lg hover:bg-[oklch(0.92_0.025_85)] text-[color:var(--muted-foreground)] hover:text-[color:var(--foreground)] transition-colors"
-              aria-label="Sign out"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
           </div>
-          {userEmail && (
-            <p className="text-[11px] text-[color:var(--muted-foreground)] mt-2 truncate">
-              Signed in as {userEmail}
-            </p>
-          )}
+
 
 
           <div className="mt-6">

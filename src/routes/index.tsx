@@ -145,37 +145,7 @@ function Index() {
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [openId, setOpenId] = useState<string | null>(null);
   const [modal, setModal] = useState<MilestoneVariant | null>(null);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [authReady, setAuthReady] = useState(false);
 
-  useEffect(() => {
-    let mounted = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return;
-      if (!data.session) {
-        window.location.replace("/login");
-        return;
-      }
-      setUserEmail(data.session.user.email ?? null);
-      setAuthReady(true);
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (!session) {
-        window.location.replace("/login");
-      } else {
-        setUserEmail(session.user.email ?? null);
-      }
-    });
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.replace("/login");
-  };
 
   // A step is "complete" if it has no subtasks and is checked, OR all subtasks are checked
   const isStepComplete = (step: Step): boolean => {

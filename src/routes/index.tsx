@@ -202,13 +202,6 @@ function Index() {
     completion["ch5"] && completion["ch6"] && completion["ch7"] && completion["ch8"];
   const exoticActive = completion["ch9"] && completion["paid2"];
 
-  if (!authReady) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[color:var(--background)]">
-        <div className="text-sm text-[color:var(--muted-foreground)]">Loading your garden…</div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[color:var(--background)] flex flex-col lg:flex-row">

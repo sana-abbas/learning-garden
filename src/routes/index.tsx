@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Leaf,
@@ -18,11 +18,9 @@ import {
   PhoneCall,
   ChevronDown,
   MessageCircle,
-  LogOut,
 } from "lucide-react";
 import { BotanicalGarden } from "@/components/garden/BotanicalGarden";
 import { MilestoneModal, type MilestoneVariant } from "@/components/garden/MilestoneModal";
-import { supabase } from "@/integrations/supabase/client";
 
 
 export const Route = createFileRoute("/")({
@@ -147,37 +145,7 @@ function Index() {
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [openId, setOpenId] = useState<string | null>(null);
   const [modal, setModal] = useState<MilestoneVariant | null>(null);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [authReady, setAuthReady] = useState(false);
 
-  useEffect(() => {
-    let mounted = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return;
-      if (!data.session) {
-        window.location.replace("/login");
-        return;
-      }
-      setUserEmail(data.session.user.email ?? null);
-      setAuthReady(true);
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (!session) {
-        window.location.replace("/login");
-      } else {
-        setUserEmail(session.user.email ?? null);
-      }
-    });
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.replace("/login");
-  };
 
   // A step is "complete" if it has no subtasks and is checked, OR all subtasks are checked
   const isStepComplete = (step: Step): boolean => {
@@ -234,13 +202,6 @@ function Index() {
     completion["ch5"] && completion["ch6"] && completion["ch7"] && completion["ch8"];
   const exoticActive = completion["ch9"] && completion["paid2"];
 
-  if (!authReady) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[color:var(--background)]">
-        <div className="text-sm text-[color:var(--muted-foreground)]">Loading your garden…</div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[color:var(--background)] flex flex-col lg:flex-row">
@@ -267,20 +228,8 @@ function Index() {
                 </p>
               </div>
             </div>
-            <button
-              onClick={handleLogout}
-              title={userEmail ? `Sign out ${userEmail}` : "Sign out"}
-              className="p-2 rounded-lg hover:bg-[oklch(0.92_0.025_85)] text-[color:var(--muted-foreground)] hover:text-[color:var(--foreground)] transition-colors"
-              aria-label="Sign out"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
           </div>
-          {userEmail && (
-            <p className="text-[11px] text-[color:var(--muted-foreground)] mt-2 truncate">
-              Signed in as {userEmail}
-            </p>
-          )}
+
 
 
           <div className="mt-6">

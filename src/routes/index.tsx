@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -18,7 +18,9 @@ import {
   PhoneCall,
   ChevronDown,
   MessageCircle,
+  LogOut,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { BotanicalGarden } from "@/components/garden/BotanicalGarden";
 import { MilestoneModal, type MilestoneVariant } from "@/components/garden/MilestoneModal";
 
@@ -139,28 +141,58 @@ const STEPS: Step[] = [
 ];
 
 function Index() {
+  const navigate = useNavigate();
+  const [userId, setUserId] = useState<string | null>(null);
+  const [authReady, setAuthReady] = useState(false);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [openId, setOpenId] = useState<string | null>(null);
   const [modal, setModal] = useState<MilestoneVariant | null>(null);
   const modalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Auth guard — redirect to /login if not signed in
   useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate({ to: "/login" });
+      } else {
+        setUserId(session.user.id);
+        setAuthReady(true);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        navigate({ to: "/login" });
+      } else {
+        setUserId(session.user.id);
+        setAuthReady(true);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  // Load progress from localStorage once we know the user
+  useEffect(() => {
+    if (!userId) return;
     try {
-      const saved = localStorage.getItem("cb_checked");
+      const saved = localStorage.getItem(`cb_checked_${userId}`);
       if (saved) setChecked(JSON.parse(saved));
-      const savedNotes = localStorage.getItem("cb_notes");
+      const savedNotes = localStorage.getItem(`cb_notes_${userId}`);
       if (savedNotes) setNotes(JSON.parse(savedNotes));
     } catch {}
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
-    localStorage.setItem("cb_checked", JSON.stringify(checked));
-  }, [checked]);
+    if (!userId) return;
+    localStorage.setItem(`cb_checked_${userId}`, JSON.stringify(checked));
+  }, [checked, userId]);
 
   useEffect(() => {
-    localStorage.setItem("cb_notes", JSON.stringify(notes));
-  }, [notes]);
+    if (!userId) return;
+    localStorage.setItem(`cb_notes_${userId}`, JSON.stringify(notes));
+  }, [notes, userId]);
 
   useEffect(() => {
     return () => { if (modalTimerRef.current) clearTimeout(modalTimerRef.current); };
@@ -203,6 +235,20 @@ function Index() {
     setChecked((prev) => ({ ...prev, [subId]: !prev[subId] }));
   };
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    // onAuthStateChange listener above will navigate to /login
+  };
+
+  // Show spinner while checking auth
+  if (!authReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[color:var(--background)]">
+        <div className="w-6 h-6 rounded-full border-2 border-[color:var(--primary)] border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
   const completedCount = STEPS.filter((s) => completion[s.id]).length;
   const progress = (completedCount / STEPS.length) * 100;
   const allDone = completedCount === STEPS.length;
@@ -240,6 +286,14 @@ function Index() {
                 </p>
               </div>
             </div>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              title="Sign out"
+              className="p-2 rounded-xl text-[color:var(--muted-foreground)] hover:bg-[oklch(0.92_0.025_85)] hover:text-[color:var(--foreground)] transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
 
 

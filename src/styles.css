@@ -161,38 +161,58 @@
 .animate-sun-glow { animation: sun-glow 5s ease-in-out infinite; }
 
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  /* Night garden — warm earthy dark, not cold blue */
+  --background: oklch(0.16 0.025 70);
+  --foreground: oklch(0.92 0.02 80);
+  --card: oklch(0.20 0.025 68);
+  --card-foreground: oklch(0.92 0.02 80);
+  --popover: oklch(0.20 0.025 68);
+  --popover-foreground: oklch(0.92 0.02 80);
+  --primary: oklch(0.62 0.15 145);
+  --primary-foreground: oklch(0.15 0.03 60);
+  --secondary: oklch(0.25 0.04 120);
+  --secondary-foreground: oklch(0.88 0.04 130);
+  --muted: oklch(0.24 0.02 70);
+  --muted-foreground: oklch(0.58 0.04 75);
+  --accent: oklch(0.70 0.20 350);
+  --accent-foreground: oklch(0.99 0.01 350);
+  --destructive: oklch(0.65 0.20 25);
+  --destructive-foreground: oklch(0.99 0.01 25);
+  --border: oklch(0.28 0.03 65 / 80%);
+  --input: oklch(0.28 0.03 65);
+  --ring: oklch(0.62 0.15 145);
+  --chart-1: oklch(0.62 0.15 145);
+  --chart-2: oklch(0.72 0.20 350);
+  --chart-3: oklch(0.78 0.18 180);
+  --chart-4: oklch(0.80 0.22 60);
+  --chart-5: oklch(0.62 0.22 305);
+  /* Garden scene tokens */
+  --sky-top: oklch(0.22 0.05 240);
+  --sky-bottom: oklch(0.18 0.06 230);
+  --sun: oklch(0.85 0.15 75);
+  --sun-glow: oklch(0.78 0.18 70);
+  --soil-top: oklch(0.28 0.05 50);
+  --soil-bottom: oklch(0.16 0.04 45);
+  --root-glow: oklch(0.72 0.18 180);
+  --stem: oklch(0.62 0.18 145);
+  --leaf: oklch(0.68 0.20 140);
+  --leaf-light: oklch(0.78 0.17 135);
+  --bloom-pink: oklch(0.75 0.21 350);
+  --bloom-magenta: oklch(0.65 0.24 340);
+  --bloom-purple: oklch(0.60 0.22 305);
+  --bloom-exotic: oklch(0.80 0.22 60);
+  --bloom-exotic-2: oklch(0.72 0.25 30);
+  --sparkle: oklch(0.95 0.18 95);
+  --shadow-leaf: 0 10px 40px -10px oklch(0.62 0.15 145 / 0.35);
+  --shadow-bloom: 0 20px 60px -15px oklch(0.75 0.21 350 / 0.45);
+  --sidebar: oklch(0.19 0.028 68);
+  --sidebar-foreground: oklch(0.90 0.02 80);
+  --sidebar-primary: oklch(0.62 0.15 145);
+  --sidebar-primary-foreground: oklch(0.99 0.01 100);
+  --sidebar-accent: oklch(0.25 0.05 130);
+  --sidebar-accent-foreground: oklch(0.82 0.08 140);
+  --sidebar-border: oklch(0.26 0.03 65);
+  --sidebar-ring: oklch(0.62 0.15 145);
 }
 
 @layer base {

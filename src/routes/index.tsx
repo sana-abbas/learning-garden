@@ -19,8 +19,13 @@ import {
   ChevronDown,
   MessageCircle,
   LogOut,
+  Moon,
+  Sun,
+  Flame,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTheme } from "@/hooks/useTheme";
+import confetti from "canvas-confetti";
 import { BotanicalGarden } from "@/components/garden/BotanicalGarden";
 import { MilestoneModal, type MilestoneVariant } from "@/components/garden/MilestoneModal";
 
@@ -237,10 +242,51 @@ const STEPS: Step[] = [
   { id: "fc4", title: "Career Harvest Call", subtitle: "Founders' Call · Month 12", duration: "Master Gardener", icon: Sprout, kind: "call", callVariant: "fc4" },
 ];
 
+// ── helpers ──────────────────────────────────────────────────────────────────
+
+function parseWeeks(duration: string): number {
+  if (/week/i.test(duration)) {
+    const m = duration.match(/(\d+)/);
+    return m ? parseInt(m[1]) : 0;
+  }
+  if (/month/i.test(duration)) {
+    const m = duration.match(/(\d+)[–-]?(\d+)?/);
+    if (m) {
+      const lo = parseInt(m[1]);
+      const hi = m[2] ? parseInt(m[2]) : lo;
+      return Math.round(((lo + hi) / 2) * 4);
+    }
+  }
+  return 0;
+}
+
+function getTodayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getYesterdayStr() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
+function fireConfetti() {
+  confetti({
+    particleCount: 90,
+    spread: 65,
+    origin: { y: 0.45, x: 0.25 },
+    colors: ["#4ade80", "#86efac", "#f472b6", "#a78bfa", "#fbbf24", "#34d399"],
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 function Index() {
   const navigate = useNavigate();
+  const { theme, toggle: toggleTheme } = useTheme();
   const [userId, setUserId] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [streak, setStreak] = useState(0);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [openId, setOpenId] = useState<string | null>(null);
@@ -270,7 +316,7 @@ function Index() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Load progress from localStorage once we know the user
+  // Load progress + streak from localStorage once we know the user
   useEffect(() => {
     if (!userId) return;
     try {
@@ -278,6 +324,8 @@ function Index() {
       if (saved) setChecked(JSON.parse(saved));
       const savedNotes = localStorage.getItem(`cb_notes_${userId}`);
       if (savedNotes) setNotes(JSON.parse(savedNotes));
+      const savedStreak = parseInt(localStorage.getItem(`cb_streak_count_${userId}`) ?? "0");
+      setStreak(savedStreak);
     } catch {}
   }, [userId]);
 
@@ -315,21 +363,48 @@ function Index() {
         step.subtasks!.forEach((s) => (next[s.id] = !allDone));
         return next;
       });
+      if (!allDone && step.kind === "module") setTimeout(fireConfetti, 300);
+      if (!allDone) bumpStreak();
       return;
     }
     setChecked((prev) => {
       const wasChecked = !!prev[step.id];
-      if (!wasChecked && step.kind === "call" && step.callVariant) {
-        const variant = step.callVariant;
-        if (modalTimerRef.current) clearTimeout(modalTimerRef.current);
-        modalTimerRef.current = setTimeout(() => setModal(variant), 600);
+      if (!wasChecked) {
+        if (step.kind === "call" && step.callVariant) {
+          const variant = step.callVariant;
+          if (modalTimerRef.current) clearTimeout(modalTimerRef.current);
+          modalTimerRef.current = setTimeout(() => setModal(variant), 600);
+        }
+        if (step.kind === "module") setTimeout(fireConfetti, 300);
       }
       return { ...prev, [step.id]: !wasChecked };
     });
+    if (!checked[step.id]) bumpStreak();
   };
 
-  const toggleSubtask = (_step: Step, subId: string) => {
-    setChecked((prev) => ({ ...prev, [subId]: !prev[subId] }));
+  const toggleSubtask = (step: Step, subId: string) => {
+    setChecked((prev) => {
+      const next = { ...prev, [subId]: !prev[subId] };
+      // Fire confetti when checking the last remaining subtask in a module
+      if (!prev[subId] && step.subtasks && step.kind === "module") {
+        const allDone = step.subtasks.every((s) => next[s.id]);
+        if (allDone) setTimeout(fireConfetti, 300);
+      }
+      return next;
+    });
+    if (!checked[subId]) bumpStreak();
+  };
+
+  const bumpStreak = () => {
+    if (!userId) return;
+    const today = getTodayStr();
+    const lastDate = localStorage.getItem(`cb_streak_date_${userId}`);
+    if (lastDate === today) return; // already bumped today
+    const current = parseInt(localStorage.getItem(`cb_streak_count_${userId}`) ?? "0");
+    const next = lastDate === getYesterdayStr() ? current + 1 : 1;
+    localStorage.setItem(`cb_streak_date_${userId}`, today);
+    localStorage.setItem(`cb_streak_count_${userId}`, String(next));
+    setStreak(next);
   };
 
   const handleSignOut = async () => {
@@ -349,6 +424,11 @@ function Index() {
   const completedCount = STEPS.filter((s) => completion[s.id]).length;
   const progress = (completedCount / STEPS.length) * 100;
   const allDone = completedCount === STEPS.length;
+
+  const weeksRemaining = useMemo(
+    () => STEPS.filter((s) => !completion[s.id]).reduce((acc, s) => acc + parseWeeks(s.duration), 0),
+    [completion],
+  );
 
   const rootsActive = completion["ch1"] || completion["ch2"];
   const sproutActive = completion["ch2"] && completion["ch3"];
@@ -383,14 +463,31 @@ function Index() {
                 </p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={handleSignOut}
-              title="Sign out"
-              className="p-2 rounded-xl text-[color:var(--muted-foreground)] hover:bg-[oklch(0.92_0.025_85)] hover:text-[color:var(--foreground)] transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              {streak > 0 && (
+                <div className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold mr-0.5"
+                  style={{ background: "oklch(0.95 0.08 60 / 0.3)", color: "oklch(0.55 0.15 50)" }}>
+                  <Flame className="w-3 h-3" />
+                  {streak}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={toggleTheme}
+                title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                className="p-2 rounded-xl text-[color:var(--muted-foreground)] hover:bg-[oklch(0.92_0.025_85)] hover:text-[color:var(--foreground)] transition-colors"
+              >
+                {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                title="Sign out"
+                className="p-2 rounded-xl text-[color:var(--muted-foreground)] hover:bg-[oklch(0.92_0.025_85)] hover:text-[color:var(--foreground)] transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
 
@@ -413,6 +510,11 @@ function Index() {
                 }}
               />
             </div>
+            {weeksRemaining > 0 && (
+              <p className="text-[10px] text-[color:var(--muted-foreground)] mt-1.5 text-right">
+                ~{weeksRemaining} weeks remaining
+              </p>
+            )}
           </div>
         </div>
 

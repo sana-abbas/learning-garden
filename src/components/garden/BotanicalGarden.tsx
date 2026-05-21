@@ -7,6 +7,7 @@ interface Props {
   stemActive: boolean;
   flowerActive: boolean;
   exoticActive: boolean;
+  isDark?: boolean;
 }
 
 export function BotanicalGarden({
@@ -15,6 +16,7 @@ export function BotanicalGarden({
   stemActive,
   flowerActive,
   exoticActive,
+  isDark = false,
 }: Props) {
   const soilSpecks = useMemo(() =>
     Array.from({ length: 60 }, (_, i) => ({
@@ -33,7 +35,7 @@ export function BotanicalGarden({
     })), []);
 
   return (
-    <div className="relative w-full h-full min-h-[640px] rounded-[2rem] overflow-hidden shadow-[0_30px_80px_-30px_oklch(0.4_0.05_60/0.4)] border border-[color:var(--border)]">
+    <div className="relative w-full h-full rounded-[2rem] overflow-hidden shadow-[0_30px_80px_-30px_oklch(0.4_0.05_60/0.4)] border border-[color:var(--border)]">
       {/* Sky */}
       <div
         className="absolute inset-x-0 top-0 h-1/2"
@@ -42,27 +44,53 @@ export function BotanicalGarden({
             "linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 100%)",
         }}
       >
-        {/* Sun */}
-        <div className="absolute top-10 right-12 w-32 h-32">
-          <div
-            className="absolute inset-0 rounded-full blur-2xl animate-sun-glow"
-            style={{ background: "var(--sun-glow)" }}
-          />
-          <div
-            className="absolute inset-4 rounded-full"
-            style={{
-              background:
-                "radial-gradient(circle at 35% 35%, oklch(0.99 0.05 95), var(--sun))",
-              boxShadow: "0 0 60px var(--sun-glow)",
-            }}
-          />
-        </div>
-        {/* Soft clouds */}
-        <div className="absolute top-20 left-10 w-40 h-12 rounded-full bg-white/40 blur-xl animate-float-soft" />
-        <div
-          className="absolute top-32 left-1/3 w-56 h-14 rounded-full bg-white/30 blur-xl animate-float-soft"
-          style={{ animationDelay: "1.5s" }}
-        />
+        {/* Sun / Moon */}
+        {isDark ? (
+          <div className="absolute top-10 right-12 w-32 h-32">
+            <div
+              className="absolute inset-0 rounded-full blur-2xl animate-sun-glow"
+              style={{ background: "oklch(0.75 0.06 240 / 0.35)" }}
+            />
+            <svg viewBox="0 0 100 100" className="absolute inset-2 w-[75%] h-[75%]">
+              <defs>
+                <mask id="moonMask">
+                  <rect width="100" height="100" fill="white" />
+                  <circle cx="68" cy="30" r="34" fill="black" />
+                </mask>
+              </defs>
+              <circle
+                cx="50" cy="50" r="42"
+                fill="oklch(0.91 0.04 85)"
+                mask="url(#moonMask)"
+                style={{ filter: "drop-shadow(0 0 18px oklch(0.85 0.05 90 / 0.8))" }}
+              />
+            </svg>
+          </div>
+        ) : (
+          <div className="absolute top-10 right-12 w-32 h-32">
+            <div
+              className="absolute inset-0 rounded-full blur-2xl animate-sun-glow"
+              style={{ background: "var(--sun-glow)" }}
+            />
+            <div
+              className="absolute inset-4 rounded-full"
+              style={{
+                background: "radial-gradient(circle at 35% 35%, oklch(0.99 0.05 95), var(--sun))",
+                boxShadow: "0 0 60px var(--sun-glow)",
+              }}
+            />
+          </div>
+        )}
+        {/* Soft clouds (light mode only) */}
+        {!isDark && (
+          <>
+            <div className="absolute top-20 left-10 w-40 h-12 rounded-full bg-white/40 blur-xl animate-float-soft" />
+            <div
+              className="absolute top-32 left-1/3 w-56 h-14 rounded-full bg-white/30 blur-xl animate-float-soft"
+              style={{ animationDelay: "1.5s" }}
+            />
+          </>
+        )}
       </div>
 
       {/* Soil */}

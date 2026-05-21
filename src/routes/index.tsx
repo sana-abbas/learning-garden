@@ -355,6 +355,11 @@ function Index() {
     return map;
   }, [checked]);
 
+  const weeksRemaining = useMemo(
+    () => STEPS.filter((s) => !completion[s.id]).reduce((acc, s) => acc + parseWeeks(s.duration), 0),
+    [completion],
+  );
+
   const toggleStep = (step: Step) => {
     if (step.subtasks && step.subtasks.length > 0) {
       const allDone = step.subtasks.every((s) => checked[s.id]);
@@ -425,11 +430,6 @@ function Index() {
   const progress = (completedCount / STEPS.length) * 100;
   const allDone = completedCount === STEPS.length;
 
-  const weeksRemaining = useMemo(
-    () => STEPS.filter((s) => !completion[s.id]).reduce((acc, s) => acc + parseWeeks(s.duration), 0),
-    [completion],
-  );
-
   const rootsActive = completion["ch1"] || completion["ch2"];
   const sproutActive = completion["ch2"] && completion["ch3"];
   const stemActive = completion["ch4"] && completion["paid1"];
@@ -439,10 +439,10 @@ function Index() {
 
 
   return (
-    <div className="min-h-screen bg-[color:var(--background)] flex flex-col lg:flex-row">
+    <div className="h-screen overflow-hidden bg-[color:var(--background)] flex flex-col lg:flex-row">
       {/* Sidebar */}
-      <aside className="lg:w-[420px] lg:min-h-screen lg:max-h-screen lg:overflow-y-auto bg-[color:var(--sidebar)] border-r border-[color:var(--sidebar-border)] flex flex-col">
-        <div className="p-7 border-b border-[color:var(--sidebar-border)] sticky top-0 bg-[color:var(--sidebar)] z-10">
+      <aside className="lg:w-[420px] h-full overflow-hidden bg-[color:var(--sidebar)] border-r border-[color:var(--sidebar-border)] flex flex-col">
+        <div className="p-7 border-b border-[color:var(--sidebar-border)] shrink-0 bg-[color:var(--sidebar)] z-10">
           <div className="flex items-center justify-between gap-2.5">
             <div className="flex items-center gap-2.5">
               <div
@@ -465,17 +465,23 @@ function Index() {
             </div>
             <div className="flex items-center gap-1">
               {streak > 0 && (
-                <div className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold mr-0.5"
-                  style={{ background: "oklch(0.95 0.08 60 / 0.3)", color: "oklch(0.55 0.15 50)" }}>
+                <div
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold mr-0.5"
+                  title={`${streak}-day streak! Keep it up 🔥`}
+                  style={{
+                    background: theme === "dark" ? "oklch(0.35 0.08 55 / 0.5)" : "oklch(0.95 0.08 60 / 0.3)",
+                    color: theme === "dark" ? "oklch(0.88 0.14 70)" : "oklch(0.55 0.15 50)",
+                  }}
+                >
                   <Flame className="w-3 h-3" />
-                  {streak}
+                  {streak} day streak
                 </div>
               )}
               <button
                 type="button"
                 onClick={toggleTheme}
                 title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-                className="p-2 rounded-xl text-[color:var(--muted-foreground)] hover:bg-[oklch(0.92_0.025_85)] hover:text-[color:var(--foreground)] transition-colors"
+                className="p-2 rounded-xl text-[color:var(--muted-foreground)] hover:bg-[oklch(0.92_0.025_85)] dark:hover:bg-[oklch(0.27_0.03_65)] hover:text-[color:var(--foreground)] transition-colors"
               >
                 {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
@@ -483,7 +489,7 @@ function Index() {
                 type="button"
                 onClick={handleSignOut}
                 title="Sign out"
-                className="p-2 rounded-xl text-[color:var(--muted-foreground)] hover:bg-[oklch(0.92_0.025_85)] hover:text-[color:var(--foreground)] transition-colors"
+                className="p-2 rounded-xl text-[color:var(--muted-foreground)] hover:bg-[oklch(0.92_0.025_85)] dark:hover:bg-[oklch(0.27_0.03_65)] hover:text-[color:var(--foreground)] transition-colors"
               >
                 <LogOut className="w-4 h-4" />
               </button>
@@ -501,7 +507,7 @@ function Index() {
                 {completedCount}/{STEPS.length}
               </span>
             </div>
-            <div className="h-1.5 rounded-full bg-[oklch(0.88_0.04_85)] overflow-hidden">
+            <div className="h-1.5 rounded-full bg-[oklch(0.88_0.04_85)] dark:bg-[oklch(0.27_0.03_65)] overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-700 ease-out"
                 style={{
@@ -518,7 +524,7 @@ function Index() {
           </div>
         </div>
 
-        <div className="flex-1 p-5 space-y-1.5">
+        <div className="flex-1 overflow-y-auto p-5 space-y-1.5">
           {STEPS.map((step, i) => {
             const isChecked = completion[step.id];
             const Icon = step.icon;
@@ -572,8 +578,8 @@ function Index() {
                       ? "bg-[color:var(--sidebar-accent)] border-[color:var(--bloom-pink)]/40 shadow-sm"
                       : "bg-[color:var(--sidebar-accent)] border-[color:var(--primary)]/30 shadow-sm"
                     : isCall
-                      ? "border-dashed border-[color:var(--bloom-pink)]/30 bg-[oklch(0.97_0.025_340)]/40"
-                      : "border-transparent hover:bg-[oklch(0.92_0.025_85)] hover:border-[color:var(--sidebar-border)]"
+                      ? "border-dashed border-[color:var(--bloom-pink)]/30 bg-[oklch(0.97_0.025_340)]/40 dark:bg-[oklch(0.22_0.04_340)]/20"
+                      : "border-transparent hover:bg-[oklch(0.92_0.025_85)] dark:hover:bg-[oklch(0.27_0.03_65)] hover:border-[color:var(--sidebar-border)]"
                 }`}
               >
                 <div className="group flex items-center gap-3.5 p-3.5">
@@ -594,8 +600,8 @@ function Index() {
                             ? "linear-gradient(135deg, var(--bloom-pink), var(--primary))"
                             : "linear-gradient(135deg, var(--primary), var(--leaf-light))"
                         : isCall
-                          ? "oklch(0.94 0.04 340)"
-                          : "oklch(0.9 0.03 85)",
+                          ? theme === "dark" ? "oklch(0.25 0.06 340)" : "oklch(0.94 0.04 340)"
+                          : theme === "dark" ? "oklch(0.24 0.03 65)" : "oklch(0.9 0.03 85)",
                       color: isChecked
                         ? "white"
                         : isCall
@@ -620,7 +626,7 @@ function Index() {
                     <button
                       type="button"
                       onClick={() => setOpenId(isOpen ? null : step.id)}
-                      className="p-1 rounded-md hover:bg-[oklch(0.92_0.025_85)] cursor-pointer shrink-0"
+                      className="p-1 rounded-md hover:bg-[oklch(0.92_0.025_85)] dark:hover:bg-[oklch(0.27_0.03_65)] cursor-pointer shrink-0"
                       aria-label={isOpen ? "Collapse" : "Expand"}
                     >
                       <ChevronDown
@@ -645,7 +651,7 @@ function Index() {
                         const subChecked = !!checked[sub.id];
                         return (
                           <li key={sub.id}>
-                            <label className="flex items-start gap-2.5 p-2 rounded-lg cursor-pointer hover:bg-[oklch(0.94_0.02_85)] transition-colors">
+                            <label className="flex items-start gap-2.5 p-2 rounded-lg cursor-pointer hover:bg-[oklch(0.94_0.02_85)] dark:hover:bg-[oklch(0.27_0.03_65)] transition-colors">
                               <Checkbox
                                 checked={subChecked}
                                 onCheckedChange={() => toggleSubtask(step, sub.id)}
@@ -678,7 +684,7 @@ function Index() {
                         }
                         placeholder="Jot a reflection, an aha moment, or a question…"
                         rows={2}
-                        className="w-full text-[12px] leading-relaxed p-2.5 rounded-lg bg-[oklch(0.97_0.015_85)] border border-[color:var(--sidebar-border)] focus:outline-none focus:ring-2 focus:ring-[color:var(--primary)]/30 focus:border-[color:var(--primary)]/40 resize-none placeholder:text-[color:var(--muted-foreground)]/60 text-[color:var(--sidebar-foreground)] transition-all"
+                        className="w-full text-[12px] leading-relaxed p-2.5 rounded-lg bg-[oklch(0.97_0.015_85)] dark:bg-[oklch(0.22_0.03_65)] border border-[color:var(--sidebar-border)] focus:outline-none focus:ring-2 focus:ring-[color:var(--primary)]/30 focus:border-[color:var(--primary)]/40 resize-none placeholder:text-[color:var(--muted-foreground)]/60 text-[color:var(--sidebar-foreground)] transition-all"
                       />
                     </div>
                   </div>
@@ -688,13 +694,13 @@ function Index() {
           })}
         </div>
 
-        <div className="p-5 border-t border-[color:var(--sidebar-border)] sticky bottom-0 bg-[color:var(--sidebar)]">
+        <div className="p-5 border-t border-[color:var(--sidebar-border)] shrink-0 bg-[color:var(--sidebar)]">
           <div
             className="rounded-2xl p-4 flex items-center gap-3"
             style={{
               background: allDone
                 ? "linear-gradient(135deg, var(--bloom-pink), var(--bloom-purple))"
-                : "oklch(0.92 0.03 85)",
+                : theme === "dark" ? "oklch(0.24 0.03 65)" : "oklch(0.92 0.03 85)",
               color: allDone ? "white" : "var(--muted-foreground)",
             }}
           >
@@ -709,9 +715,9 @@ function Index() {
       </aside>
 
       {/* Main */}
-      <main className="flex-1 p-5 lg:p-10">
-        <div className="max-w-5xl mx-auto">
-          <div className="mb-6 flex items-end justify-between gap-4 flex-wrap">
+      <main className="flex-1 overflow-hidden flex flex-col p-5 lg:p-10">
+        <div className="flex-1 flex flex-col min-h-0 max-w-5xl mx-auto w-full">
+          <div className="shrink-0 mb-6 flex items-end justify-between gap-4 flex-wrap">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-[color:var(--muted-foreground)] mb-2">
                 Your Botanical Garden
@@ -730,13 +736,16 @@ function Index() {
             </div>
           </div>
 
-          <BotanicalGarden
-            rootsActive={rootsActive}
-            sproutActive={sproutActive}
-            stemActive={stemActive}
-            flowerActive={flowerActive}
-            exoticActive={exoticActive}
-          />
+          <div className="flex-1 min-h-0">
+            <BotanicalGarden
+              rootsActive={rootsActive}
+              sproutActive={sproutActive}
+              stemActive={stemActive}
+              flowerActive={flowerActive}
+              exoticActive={exoticActive}
+              isDark={theme === "dark"}
+            />
+          </div>
         </div>
       </main>
 

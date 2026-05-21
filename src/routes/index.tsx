@@ -22,9 +22,12 @@ import {
   Moon,
   Sun,
   Flame,
+  RefreshCw,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import type { User } from "@supabase/supabase-js";
 import { useTheme } from "@/hooks/useTheme";
+import { useProgress } from "@/hooks/useProgress";
 import confetti from "canvas-confetti";
 import { BotanicalGarden } from "@/components/garden/BotanicalGarden";
 import { MilestoneModal, type MilestoneVariant } from "@/components/garden/MilestoneModal";
@@ -260,16 +263,6 @@ function parseWeeks(duration: string): number {
   return 0;
 }
 
-function getTodayStr() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function getYesterdayStr() {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return d.toISOString().slice(0, 10);
-}
-
 function fireConfetti() {
   confetti({
     particleCount: 90,
@@ -285,13 +278,14 @@ function Index() {
   const navigate = useNavigate();
   const { theme, toggle: toggleTheme } = useTheme();
   const [userId, setUserId] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
-  const [streak, setStreak] = useState(0);
-  const [checked, setChecked] = useState<Record<string, boolean>>({});
-  const [notes, setNotes] = useState<Record<string, string>>({});
   const [openId, setOpenId] = useState<string | null>(null);
   const [modal, setModal] = useState<MilestoneVariant | null>(null);
   const modalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { checked, setChecked, notes, setNotes, streak, bumpStreak, syncing } =
+    useProgress(userId);
 
   // Auth guard — redirect to /login if not signed in
   useEffect(() => {
@@ -300,6 +294,7 @@ function Index() {
         navigate({ to: "/login" });
       } else {
         setUserId(session.user.id);
+        setUser(session.user);
         setAuthReady(true);
       }
     });
@@ -309,35 +304,13 @@ function Index() {
         navigate({ to: "/login" });
       } else {
         setUserId(session.user.id);
+        setUser(session.user);
         setAuthReady(true);
       }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
-
-  // Load progress + streak from localStorage once we know the user
-  useEffect(() => {
-    if (!userId) return;
-    try {
-      const saved = localStorage.getItem(`cb_checked_${userId}`);
-      if (saved) setChecked(JSON.parse(saved));
-      const savedNotes = localStorage.getItem(`cb_notes_${userId}`);
-      if (savedNotes) setNotes(JSON.parse(savedNotes));
-      const savedStreak = parseInt(localStorage.getItem(`cb_streak_count_${userId}`) ?? "0");
-      setStreak(savedStreak);
-    } catch {}
-  }, [userId]);
-
-  useEffect(() => {
-    if (!userId) return;
-    localStorage.setItem(`cb_checked_${userId}`, JSON.stringify(checked));
-  }, [checked, userId]);
-
-  useEffect(() => {
-    if (!userId) return;
-    localStorage.setItem(`cb_notes_${userId}`, JSON.stringify(notes));
-  }, [notes, userId]);
 
   useEffect(() => {
     return () => { if (modalTimerRef.current) clearTimeout(modalTimerRef.current); };
@@ -400,18 +373,6 @@ function Index() {
     if (!checked[subId]) bumpStreak();
   };
 
-  const bumpStreak = () => {
-    if (!userId) return;
-    const today = getTodayStr();
-    const lastDate = localStorage.getItem(`cb_streak_date_${userId}`);
-    if (lastDate === today) return; // already bumped today
-    const current = parseInt(localStorage.getItem(`cb_streak_count_${userId}`) ?? "0");
-    const next = lastDate === getYesterdayStr() ? current + 1 : 1;
-    localStorage.setItem(`cb_streak_date_${userId}`, today);
-    localStorage.setItem(`cb_streak_count_${userId}`, String(next));
-    setStreak(next);
-  };
-
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     // onAuthStateChange listener above will navigate to /login
@@ -430,6 +391,16 @@ function Index() {
   const progress = (completedCount / STEPS.length) * 100;
   const allDone = completedCount === STEPS.length;
 
+  // User profile derived values
+  const displayName = (user?.user_metadata?.full_name as string | undefined)
+    ?? user?.email?.split("@")[0]
+    ?? "Gardener";
+  const avatarUrl = user?.user_metadata?.avatar_url as string | undefined;
+  const initials = displayName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
+  const lastActive = user?.last_sign_in_at
+    ? new Date(user.last_sign_in_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    : null;
+
   const rootsActive = completion["ch1"] || completion["ch2"];
   const sproutActive = completion["ch2"] && completion["ch3"];
   const stemActive = completion["ch4"] && completion["paid1"];
@@ -442,57 +413,24 @@ function Index() {
     <div className="h-screen overflow-hidden bg-[color:var(--background)] flex flex-col lg:flex-row">
       {/* Sidebar */}
       <aside className="lg:w-[420px] h-full overflow-hidden bg-[color:var(--sidebar)] border-r border-[color:var(--sidebar-border)] flex flex-col">
-        <div className="p-7 border-b border-[color:var(--sidebar-border)] shrink-0 bg-[color:var(--sidebar)] z-10">
-          <div className="flex items-center justify-between gap-2.5">
-            <div className="flex items-center gap-2.5">
-              <div
-                className="w-10 h-10 rounded-2xl flex items-center justify-center"
-                style={{
-                  background: "linear-gradient(135deg, var(--primary), var(--bloom-pink))",
-                  boxShadow: "var(--shadow-leaf)",
-                }}
-              >
-                <Leaf className="w-5 h-5 text-white" strokeWidth={2.2} />
-              </div>
-              <div>
-                <h1 className="font-serif text-xl tracking-tight text-[color:var(--sidebar-foreground)]">
-                  Code Blossom
-                </h1>
-                <p className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted-foreground)]">
-                  Full-Stack Curriculum
-                </p>
-              </div>
+        <div className="p-6 border-b border-[color:var(--sidebar-border)] shrink-0 bg-[color:var(--sidebar)] z-10">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+              style={{
+                background: "linear-gradient(135deg, var(--primary), var(--bloom-pink))",
+                boxShadow: "var(--shadow-leaf)",
+              }}
+            >
+              <Leaf className="w-4 h-4 text-white" strokeWidth={2.2} />
             </div>
-            <div className="flex items-center gap-1">
-              {streak > 0 && (
-                <div
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold mr-0.5"
-                  title={`${streak}-day streak! Keep it up 🔥`}
-                  style={{
-                    background: theme === "dark" ? "oklch(0.35 0.08 55 / 0.5)" : "oklch(0.95 0.08 60 / 0.3)",
-                    color: theme === "dark" ? "oklch(0.88 0.14 70)" : "oklch(0.55 0.15 50)",
-                  }}
-                >
-                  <Flame className="w-3 h-3" />
-                  {streak} day streak
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={toggleTheme}
-                title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-                className="p-2 rounded-xl text-[color:var(--muted-foreground)] hover:bg-[oklch(0.92_0.025_85)] dark:hover:bg-[oklch(0.27_0.03_65)] hover:text-[color:var(--foreground)] transition-colors"
-              >
-                {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </button>
-              <button
-                type="button"
-                onClick={handleSignOut}
-                title="Sign out"
-                className="p-2 rounded-xl text-[color:var(--muted-foreground)] hover:bg-[oklch(0.92_0.025_85)] dark:hover:bg-[oklch(0.27_0.03_65)] hover:text-[color:var(--foreground)] transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
+            <div>
+              <h1 className="font-serif text-lg tracking-tight text-[color:var(--sidebar-foreground)]">
+                Code Blossom
+              </h1>
+              <p className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--muted-foreground)]">
+                Full-Stack Curriculum
+              </p>
             </div>
           </div>
 
@@ -715,25 +653,97 @@ function Index() {
       </aside>
 
       {/* Main */}
-      <main className="flex-1 overflow-hidden flex flex-col p-5 lg:p-10">
-        <div className="flex-1 flex flex-col min-h-0 max-w-5xl mx-auto w-full">
-          <div className="shrink-0 mb-6 flex items-end justify-between gap-4 flex-wrap">
+      <main className="flex-1 overflow-hidden flex flex-col p-5 lg:p-8">
+
+        {/* ── Top bar ─────────────────────────────────────────────── */}
+        <div className="shrink-0 flex items-center justify-between gap-4 mb-5">
+
+          {/* Left: avatar + name + last active */}
+          <div className="flex items-center gap-3">
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={displayName}
+                className="w-10 h-10 rounded-full object-cover ring-2 ring-[color:var(--primary)]/30"
+              />
+            ) : (
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold text-white shrink-0"
+                style={{ background: "linear-gradient(135deg, var(--primary), var(--bloom-pink))" }}
+              >
+                {initials}
+              </div>
+            )}
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-[color:var(--muted-foreground)] mb-2">
+              <p className="text-sm font-semibold text-[color:var(--foreground)] leading-tight">
+                {displayName}
+              </p>
+              {lastActive && (
+                <p className="text-[11px] text-[color:var(--muted-foreground)] leading-tight mt-0.5">
+                  Last active {lastActive}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Right: streak + theme + logout */}
+          <div className="flex items-center gap-2">
+            {syncing && (
+              <span title="Syncing…">
+                <RefreshCw className="w-3.5 h-3.5 text-[color:var(--muted-foreground)] animate-spin" />
+              </span>
+            )}
+            {streak > 0 && (
+              <div
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold"
+                title={`${streak}-day streak! Keep it up 🔥`}
+                style={{
+                  background: theme === "dark" ? "oklch(0.35 0.08 55 / 0.5)" : "oklch(0.95 0.08 60 / 0.3)",
+                  color: theme === "dark" ? "oklch(0.88 0.14 70)" : "oklch(0.55 0.15 50)",
+                }}
+              >
+                <Flame className="w-3.5 h-3.5" />
+                {streak} day streak
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              className="p-2 rounded-xl text-[color:var(--muted-foreground)] hover:bg-[oklch(0.92_0.025_85)] dark:hover:bg-[oklch(0.27_0.03_65)] hover:text-[color:var(--foreground)] transition-colors"
+            >
+              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              title="Sign out"
+              className="p-2 rounded-xl text-[color:var(--muted-foreground)] hover:bg-[oklch(0.92_0.025_85)] dark:hover:bg-[oklch(0.27_0.03_65)] hover:text-[color:var(--foreground)] transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* ── Garden section ──────────────────────────────────────── */}
+        <div className="flex-1 flex flex-col min-h-0 w-full">
+          <div className="shrink-0 mb-4 flex items-end justify-between gap-4 flex-wrap">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-[color:var(--muted-foreground)] mb-1.5">
                 Your Botanical Garden
               </p>
-              <h2 className="font-serif text-3xl lg:text-4xl tracking-tight text-[color:var(--foreground)]">
+              <h2 className="font-serif text-2xl lg:text-3xl tracking-tight text-[color:var(--foreground)]">
                 Tend your learning. Watch it bloom.
               </h2>
             </div>
-            <div className="text-sm text-[color:var(--muted-foreground)] italic max-w-xs text-right">
+            <p className="text-sm text-[color:var(--muted-foreground)] italic text-right">
               {!rootsActive && "An empty plot, full of promise."}
               {rootsActive && !sproutActive && "Roots, quiet and luminous, take hold."}
               {sproutActive && !stemActive && "A sprout greets the morning sun."}
               {stemActive && !flowerActive && "Leaves unfurl toward the sky."}
               {flowerActive && !exoticActive && "First bloom — vivid and whole."}
               {exoticActive && "A secret garden, fully alive."}
-            </div>
+            </p>
           </div>
 
           <div className="flex-1 min-h-0">

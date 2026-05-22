@@ -432,6 +432,9 @@ function Index() {
   const prevCompletionRef = useRef<Record<string, boolean>>({});
   // Suppress bloom burst when onboarding pre-checks many chapters at once
   const skipNextBloom = useRef(false);
+  // Tracks the userId for which the bloom ref has been initialized
+  // Reset whenever a new user's progress loads so we don't fire on login
+  const bloomInitializedFor = useRef<string | null>(null);
 
   // Auth guard — redirect to /login if not signed in
   useEffect(() => {
@@ -496,7 +499,17 @@ function Index() {
   // Detect newly completed chapters → show fact toast + bloom burst
   useEffect(() => {
     const prev = prevCompletionRef.current;
-    prevCompletionRef.current = { ...completion }; // always update first
+    prevCompletionRef.current = { ...completion };
+
+    // On first load (or when a different user's data loads), silently sync
+    // the ref so existing completions don't appear as "newly completed"
+    if (bloomInitializedFor.current !== userId) {
+      if (progressReady) {
+        prevCompletionRef.current = { ...completion };
+        bloomInitializedFor.current = userId;
+      }
+      return;
+    }
 
     // Suppress during onboarding pre-check
     if (skipNextBloom.current) {
@@ -520,7 +533,7 @@ function Index() {
       const t = setTimeout(() => setBloomBurst(false), 3200);
       return () => clearTimeout(t);
     }
-  }, [completion]);
+  }, [completion, progressReady]);
 
   const toggleStep = (step: Step) => {
     // Steps with subtasks: toggling the parent checkbox bulk-checks/unchecks all subtasks
@@ -548,11 +561,12 @@ function Index() {
       return;
     }
 
-    // Founders call — block if prerequisites not met, otherwise show claim modal
-    if (step.kind === "call" && step.callVariant && !checked[step.id]) {
-      if (lockedCalls[step.id]) return; // prerequisites not done — silently ignore
+    // Founders call — once claimed it stays claimed; can't be unchecked
+    if (step.kind === "call") {
+      if (checked[step.id]) return; // already claimed — lock it permanently
+      if (lockedCalls[step.id]) return; // prerequisites not done
       pendingCallStep.current = step;
-      setCallClaimModal(step.callVariant);
+      setCallClaimModal(step.callVariant!);
       return;
     }
 
@@ -842,7 +856,8 @@ function Index() {
                   <Checkbox
                     checked={isChecked}
                     onCheckedChange={() => toggleStep(step)}
-                    className="w-5 h-5 rounded-md border-[color:var(--primary)]/40 data-[state=checked]:bg-[color:var(--primary)] data-[state=checked]:border-[color:var(--primary)]"
+                    disabled={isCall && isChecked}
+                    className="w-5 h-5 rounded-md border-[color:var(--primary)]/40 data-[state=checked]:bg-[color:var(--primary)] data-[state=checked]:border-[color:var(--primary)] disabled:opacity-100 disabled:cursor-default"
                   />
                   )}
                   <div

@@ -26,6 +26,8 @@ import {
   Lock,
   Send,
   Check,
+  Menu,
+  X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -425,6 +427,7 @@ function Index() {
     }
   };
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bloomBurst, setBloomBurst] = useState(false);
   const prevCompletionRef = useRef<Record<string, boolean>>({});
   // Suppress bloom burst when onboarding pre-checks many chapters at once
@@ -683,8 +686,23 @@ function Index() {
 
   return (
     <div className="h-screen overflow-hidden bg-[color:var(--background)] flex flex-col lg:flex-row">
-      {/* Sidebar */}
-      <aside className="lg:w-[420px] h-full overflow-hidden bg-[color:var(--sidebar)] border-r border-[color:var(--sidebar-border)] flex flex-col">
+
+      {/* Mobile backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar — fixed drawer on mobile, static on desktop */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-40 w-[85vw] max-w-[400px] flex flex-col
+        bg-[color:var(--sidebar)] border-r border-[color:var(--sidebar-border)]
+        transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        lg:static lg:w-[420px] lg:translate-x-0 lg:shrink-0
+      `}>
         <div className="p-6 border-b border-[color:var(--sidebar-border)] shrink-0 bg-[color:var(--sidebar)] z-10">
           <div className="flex items-center gap-3">
             <div
@@ -696,7 +714,7 @@ function Index() {
             >
               <Leaf className="w-4 h-4 text-white" strokeWidth={2.2} />
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <h1 className="font-serif text-lg tracking-tight text-[color:var(--sidebar-foreground)]">
                 Code Blossom
               </h1>
@@ -704,6 +722,14 @@ function Index() {
                 Full-Stack Curriculum
               </p>
             </div>
+            {/* Close button — mobile only */}
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden p-1.5 rounded-lg text-[color:var(--muted-foreground)] hover:bg-[oklch(0.92_0.025_85)] dark:hover:bg-[oklch(0.27_0.03_65)]"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
 
 
@@ -958,14 +984,24 @@ function Index() {
       <main className="flex-1 overflow-hidden flex flex-col p-4 lg:p-6">
 
         {/* ── Top bar ─────────────────────────────────────────────── */}
-        <div className="shrink-0 flex items-center justify-between gap-4 mb-3">
+        <div className="shrink-0 flex items-center gap-2 mb-3">
 
-          {/* Left: tagline + garden state caption */}
-          <div>
-            <h2 className="font-serif text-lg lg:text-xl tracking-tight text-[color:var(--foreground)] leading-tight">
+          {/* Hamburger — mobile only */}
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(true)}
+            className="lg:hidden p-2 rounded-xl text-[color:var(--muted-foreground)] hover:bg-[oklch(0.92_0.025_85)] dark:hover:bg-[oklch(0.27_0.03_65)] hover:text-[color:var(--foreground)] transition-colors shrink-0"
+            aria-label="Open curriculum"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+
+          {/* Tagline + garden state caption */}
+          <div className="flex-1 min-w-0">
+            <h2 className="font-serif text-base lg:text-xl tracking-tight text-[color:var(--foreground)] leading-tight">
               Code. Learn. Bloom.
             </h2>
-            <p className="text-[11px] text-[color:var(--muted-foreground)] italic mt-0.5">
+            <p className="hidden lg:block text-[11px] text-[color:var(--muted-foreground)] italic mt-0.5">
               {!rootsActive && "An empty plot, full of promise."}
               {rootsActive && !sproutActive && "Roots, quiet and luminous, take hold."}
               {sproutActive && !stemActive && "A sprout greets the morning sun."}
@@ -976,25 +1012,28 @@ function Index() {
           </div>
 
           {/* Right: controls + profile */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
             {syncing && (
               <span title="Syncing…">
                 <RefreshCw className="w-3.5 h-3.5 text-[color:var(--muted-foreground)] animate-spin" />
               </span>
             )}
+
+            {/* Streak pill */}
             {streak > 0 && (
               <div
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold"
+                className="flex items-center gap-1.5 rounded-full font-semibold px-3 py-1.5 text-[12px]"
                 title={`${streak}-day streak! Keep it up 🔥`}
                 style={{
                   background: theme === "dark" ? "oklch(0.35 0.08 55 / 0.5)" : "oklch(0.95 0.08 60 / 0.3)",
                   color: theme === "dark" ? "oklch(0.88 0.14 70)" : "oklch(0.55 0.15 50)",
                 }}
               >
-                <Flame className="w-3.5 h-3.5" />
+                <Flame className="w-3.5 h-3.5 shrink-0" />
                 {streak} day streak
               </div>
             )}
+
             <button
               type="button"
               onClick={toggleTheme}
@@ -1012,16 +1051,14 @@ function Index() {
               <LogOut className="w-4 h-4" />
             </button>
 
-            {/* Divider */}
-            <div className="w-px h-7 bg-[color:var(--border)] mx-1" />
-
-            {/* Profile: avatar + name + last active */}
-            <div className="flex items-center gap-2.5">
+            {/* Divider + avatar — desktop only */}
+            <div className="hidden lg:flex items-center gap-2.5">
+              <div className="w-px h-7 bg-[color:var(--border)] mx-0.5" />
               {avatarUrl ? (
                 <img
                   src={avatarUrl}
                   alt={displayName}
-                  className="w-9 h-9 rounded-full object-cover ring-2 ring-[color:var(--primary)]/30 shrink-0"
+                  className="w-8 h-8 rounded-full object-cover ring-2 ring-[color:var(--primary)]/30 shrink-0"
                   onError={(e) => {
                     e.currentTarget.style.display = "none";
                     e.currentTarget.nextElementSibling?.removeAttribute("style");
@@ -1029,7 +1066,7 @@ function Index() {
                 />
               ) : null}
               <div
-                className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold text-white shrink-0"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold text-white shrink-0"
                 style={{
                   background: "linear-gradient(135deg, var(--primary), var(--bloom-pink))",
                   display: avatarUrl ? "none" : undefined,
@@ -1048,6 +1085,7 @@ function Index() {
                 )}
               </div>
             </div>
+
           </div>
         </div>
 

@@ -1,6 +1,19 @@
 import { useMemo } from "react";
 import { Sparkles } from "lucide-react";
 
+// Deterministic petal positions — no Math.random() to avoid flicker on re-render
+const PETALS = Array.from({ length: 14 }, (_, i) => ({
+  left: `${(i * 13 + 4) % 88}%`,
+  delay: `${((i * 0.22) % 1.8).toFixed(2)}s`,
+  duration: `${(1.9 + (i * 0.19) % 1.3).toFixed(2)}s`,
+  size: 10 + (i * 6) % 14,
+  color: i % 3 === 0
+    ? "oklch(0.72 0.21 350)"   // pink
+    : i % 3 === 1
+      ? "oklch(0.62 0.18 140)" // green
+      : "oklch(0.78 0.22 60)", // gold
+}));
+
 interface Props {
   rootsActive: boolean;
   sproutActive: boolean;
@@ -8,6 +21,7 @@ interface Props {
   flowerActive: boolean;
   exoticActive: boolean;
   isDark?: boolean;
+  bloomBurst?: boolean;
 }
 
 export function BotanicalGarden({
@@ -17,6 +31,7 @@ export function BotanicalGarden({
   flowerActive,
   exoticActive,
   isDark = false,
+  bloomBurst = false,
 }: Props) {
   const soilSpecks = useMemo(() =>
     Array.from({ length: 60 }, (_, i) => ({
@@ -392,6 +407,38 @@ export function BotanicalGarden({
             />
           ))}
         </div>
+      )}
+
+      {/* Bloom burst — golden glow + falling petals on chapter complete */}
+      {bloomBurst && (
+        <>
+          {/* Golden glow overlay */}
+          <div
+            className="absolute inset-0 rounded-[2rem] pointer-events-none"
+            style={{
+              background: "radial-gradient(ellipse at 50% 40%, oklch(0.88 0.22 75 / 0.55) 0%, oklch(0.75 0.18 130 / 0.2) 55%, transparent 80%)",
+              animation: "bloom-glow-burst 2.8s ease-out forwards",
+            }}
+          />
+          {/* Falling petals */}
+          {PETALS.map((p, i) => (
+            <svg
+              key={i}
+              viewBox="0 0 24 24"
+              className="absolute pointer-events-none"
+              style={{
+                top: "-2%",
+                left: p.left,
+                width: `${p.size}px`,
+                height: `${p.size}px`,
+                animation: `petal-fall ${p.duration} ease-in ${p.delay} forwards`,
+                filter: `drop-shadow(0 2px 4px ${p.color}80)`,
+              }}
+            >
+              <ellipse cx="12" cy="12" rx="6" ry="11" fill={p.color} transform="rotate(-20 12 12)" />
+            </svg>
+          ))}
+        </>
       )}
 
       {/* Empty state hint */}

@@ -20,6 +20,8 @@ export type Database = {
           user_id: string
           checked: Json
           notes: Json
+          submissions: Json
+          onboarded: boolean
           streak_count: number
           streak_date: string | null
           created_at: string
@@ -30,6 +32,8 @@ export type Database = {
           user_id: string
           checked?: Json
           notes?: Json
+          submissions?: Json
+          onboarded?: boolean
           streak_count?: number
           streak_date?: string | null
           created_at?: string
@@ -40,6 +44,8 @@ export type Database = {
           user_id?: string
           checked?: Json
           notes?: Json
+          submissions?: Json
+          onboarded?: boolean
           streak_count?: number
           streak_date?: string | null
           created_at?: string

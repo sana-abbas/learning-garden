@@ -21,6 +21,7 @@ function lsKey(kind: string, userId: string) {
 
 export type Submission = {
   link?: string;
+  link2?: string;
   video?: string;
   claimedAt?: string;
   submittedAt?: string;

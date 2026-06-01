@@ -77,7 +77,7 @@ const STEPS: Step[] = [
       { id: "ch1-a", label: "Read: What is the internet?" },
       { id: "ch1-b", label: "Read: How does the internet work?" },
       { id: "ch1-c", label: "Read: Internet Routing Hierarchy" },
-      { id: "ch1-d", label: "Assignment: Publish blog post on Medium", gate: { linkLabel: "Medium post URL" } },
+      { id: "ch1-d", label: "Assignment: Publish blog post on Medium", gate: { linkLabel: "Medium post URL", linkDomains: ["medium.com"] } },
     ],
   },
   {
@@ -108,7 +108,7 @@ const STEPS: Step[] = [
       { id: "ch3-b", label: "HTML basics (Codecademy)" },
       { id: "ch3-c", label: "Learn CSS in 11 hours" },
       { id: "ch3-d", label: "CSS basic & advanced properties" },
-      { id: "ch3-e", label: "Assignment: Build personal portfolio", gate: { linkLabel: "Portfolio website URL" } },
+      { id: "ch3-e", label: "Assignment: Build personal portfolio", gate: { linkLabel: "Portfolio website URL", videoLabel: "Video walkthrough URL (Loom / YouTube)" } },
     ],
   },
   {
@@ -146,7 +146,7 @@ const STEPS: Step[] = [
       { id: "paid1-b", label: "Set up dev environment & Git repo" },
       { id: "paid1-c", label: "Implement 3+ JavaScript features" },
       { id: "paid1-d", label: "Deploy to Netlify / GitHub Pages" },
-      { id: "paid1-e", label: "Submit repo, live demo & video walkthrough", gate: { linkLabel: "Repo & live demo URL", videoLabel: "Video walkthrough URL (Loom / YouTube)" } },
+      { id: "paid1-e", label: "Submit repo, live demo & video walkthrough", gate: { linkLabel: "GitHub repo URL", linkDomains: ["github.com"], link2Label: "Live demo URL", videoLabel: "Video walkthrough URL (Loom / YouTube)" } },
     ],
   },
   {
@@ -177,7 +177,7 @@ const STEPS: Step[] = [
       { id: "ch6-c", label: "Go through beginner-friendly TypeScript tutorial (freeCodeCamp)" },
       { id: "ch6-d", label: "Watch TypeScript Tutorial full course (YouTube)" },
       { id: "ch6-e", label: "Complete all exercises" },
-      { id: "ch6-f", label: "Assignment: Build a Task Manager app in TypeScript", gate: { linkLabel: "GitHub repo URL" } },
+      { id: "ch6-f", label: "Assignment: Build a Task Manager app in TypeScript", gate: { linkLabel: "GitHub repo URL", linkDomains: ["github.com"] } },
       { id: "ch6-g", label: "Share project video on Slack channel", gate: { videoLabel: "Project video URL (Loom / YouTube)" } },
     ],
   },
@@ -195,9 +195,8 @@ const STEPS: Step[] = [
       { id: "ch7-c", label: "Optional: Codecademy Learn SQL course" },
       { id: "ch7-d", label: "Watch MongoDB YouTube course (tutorials 1–14)" },
       { id: "ch7-e", label: "W3Schools MongoDB aggregation tutorial" },
-      { id: "ch7-f", label: "SQL Assignment: Install Northwind DB & complete queries", gate: { linkLabel: "Google Drive link (SQL query file)" } },
-      { id: "ch7-g", label: "MongoDB Assignment: Import Mflix DB & complete queries", gate: { linkLabel: "Google Drive link (MongoDB query file)" } },
-      { id: "ch7-h", label: "Submit query documents with comments to mentor", gate: { linkLabel: "Google Drive link" } },
+      { id: "ch7-f", label: "SQL Assignment: Install Northwind DB & complete queries", gate: { linkLabel: "Google Drive link (SQL query file)", linkDomains: ["drive.google.com"] } },
+      { id: "ch7-g", label: "MongoDB Assignment: Import Mflix DB & complete queries", gate: { linkLabel: "Google Drive link (MongoDB query file)", linkDomains: ["drive.google.com"] } },
     ],
   },
   {
@@ -231,7 +230,7 @@ const STEPS: Step[] = [
       { id: "ch9-e", label: "Complete Codecademy Express course" },
       { id: "ch9-f", label: "Optional: Read MDN Express/Node.js docs" },
       { id: "ch9-g", label: "Complete The Odin Project Node.js course" },
-      { id: "ch9-h", label: "Submit Odin Project projects to Google Drive", gate: { linkLabel: "Google Drive link" } },
+      { id: "ch9-h", label: "Submit Odin Project projects to Google Drive", gate: { linkLabel: "Google Drive link", linkDomains: ["drive.google.com"] } },
     ],
   },
   {
@@ -250,7 +249,7 @@ const STEPS: Step[] = [
       { id: "paid2-f", label: "Ensure responsive & intuitive UI" },
       { id: "paid2-g", label: "Test all features, fix bugs, get mentor feedback" },
       { id: "paid2-h", label: "Deploy frontend (Vercel/Netlify) & backend (Render/Heroku)" },
-      { id: "paid2-i", label: "Upload source code to GitHub with README", gate: { linkLabel: "GitHub repo URL" } },
+      { id: "paid2-i", label: "Upload source code to GitHub with README", gate: { linkLabel: "GitHub repo URL", linkDomains: ["github.com"] } },
       { id: "paid2-j", label: "Record 5–10 min video walkthrough & submit", gate: { videoLabel: "Video walkthrough URL (Loom / YouTube)" } },
     ],
   },
@@ -318,7 +317,7 @@ const QUOTES = [
 
 const CHAPTER_FACTS: Record<string, { stat: string; source: string }> = {
   ch1: {
-    stat: "Over 5.4 billion people use the internet every day — and you now understand the protocol behind every single request they make.",
+    stat: "Over 5.4 billion people use the internet every day and you now understand the protocol behind every single request they make.",
     source: "Statista Global Internet Report 2024",
   },
   ch2: {
@@ -366,7 +365,7 @@ const CHAPTER_FACTS: Record<string, { stat: string; source: string }> = {
 function showRandomQuote() {
   const q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
   toast(q.text, {
-    description: q.author ? `— ${q.author}` : undefined,
+    description: q.author ? `(${q.author})` : undefined,
     icon: "🌱",
     duration: 4000,
   });
@@ -524,7 +523,7 @@ function Index() {
       const fact = CHAPTER_FACTS[justCompleted[0].id];
       if (fact) {
         toast(fact.stat, {
-          description: `Source: ${fact.source}`,
+          description: `(${fact.source})`,
           icon: "📊",
           duration: 7000,
         });
@@ -604,7 +603,7 @@ function Index() {
     showRandomQuote();
   };
 
-  const handleSubmissionConfirm = (data: { link?: string; video?: string }) => {
+  const handleSubmissionConfirm = async (data: { link?: string; video?: string }) => {
     if (!submissionModal) return;
     const { step, sub } = submissionModal;
     setSubmission(sub.id, { ...data, submittedAt: new Date().toISOString() });
@@ -619,6 +618,22 @@ function Index() {
     bumpStreak();
     showRandomQuote();
     setSubmissionModal(null);
+    // Notify mentor via edge function (fails silently if not deployed)
+    try {
+      await supabase.functions.invoke("notify-assignment-submitted", {
+        body: {
+          chapterTitle: step.title,
+          subtaskLabel: sub.label,
+          link: data.link,
+          link2: data.link2,
+          video: data.video,
+          userName: (user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? "A participant",
+          userEmail: user?.email ?? "",
+        },
+      });
+    } catch {
+      // Edge function not deployed yet — that's fine
+    }
   };
 
   const handleCallClaim = async () => {

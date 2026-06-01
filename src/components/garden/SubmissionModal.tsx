@@ -7,8 +7,11 @@ import { Link, Video, CheckCircle2 } from "lucide-react";
 import type { Submission } from "@/hooks/useProgress";
 
 export interface SubmissionGate {
-  linkLabel?: string;   // e.g. "Google Drive link", "Portfolio URL" — if set, link field is shown
-  videoLabel?: string;  // e.g. "Video walkthrough URL" — if set, video field is shown
+  linkLabel?: string;      // first link field label
+  link2Label?: string;     // second link field label (e.g. "Live demo URL")
+  videoLabel?: string;     // video field label
+  linkDomains?: string[];  // allowed domains for first link
+  link2Domains?: string[]; // allowed domains for second link
 }
 
 interface Props {
@@ -29,19 +32,46 @@ function isValidUrl(val: string) {
   }
 }
 
+function matchesDomain(val: string, domains: string[]) {
+  try {
+    const hostname = new URL(val).hostname.toLowerCase();
+    return domains.some((d) => hostname === d || hostname.endsWith("." + d));
+  } catch {
+    return false;
+  }
+}
+
+function domainError(domains: string[]) {
+  return `Link must be from: ${domains.join(", ")}`;
+}
+
 export function SubmissionModal({ open, subtaskLabel, gate, existing, onSubmit, onClose }: Props) {
   const [link, setLink] = useState(existing?.link ?? "");
+  const [link2, setLink2] = useState(existing?.link2 ?? "");
   const [video, setVideo] = useState(existing?.video ?? "");
 
-  const linkOk = !gate.linkLabel || (link.trim() !== "" && isValidUrl(link.trim()));
-  const videoOk = !gate.videoLabel || (video.trim() !== "" && isValidUrl(video.trim()));
-  const canSubmit = linkOk && videoOk;
+  const linkTrimmed = link.trim();
+  const link2Trimmed = link2.trim();
+  const videoTrimmed = video.trim();
+
+  const linkValidUrl = linkTrimmed !== "" && isValidUrl(linkTrimmed);
+  const linkDomainOk = !gate.linkDomains || !linkValidUrl || matchesDomain(linkTrimmed, gate.linkDomains);
+  const linkOk = !gate.linkLabel || (linkValidUrl && linkDomainOk);
+
+  const link2ValidUrl = link2Trimmed !== "" && isValidUrl(link2Trimmed);
+  const link2DomainOk = !gate.link2Domains || !link2ValidUrl || matchesDomain(link2Trimmed, gate.link2Domains);
+  const link2Ok = !gate.link2Label || (link2ValidUrl && link2DomainOk);
+
+  const videoOk = !gate.videoLabel || (videoTrimmed !== "" && isValidUrl(videoTrimmed));
+
+  const canSubmit = linkOk && link2Ok && videoOk;
 
   const handleSubmit = () => {
     if (!canSubmit) return;
     const data: Submission = { submittedAt: new Date().toISOString() };
-    if (gate.linkLabel) data.link = link.trim();
-    if (gate.videoLabel) data.video = video.trim();
+    if (gate.linkLabel) data.link = linkTrimmed;
+    if (gate.link2Label) data.link2 = link2Trimmed;
+    if (gate.videoLabel) data.video = videoTrimmed;
     onSubmit(data);
   };
 
@@ -103,8 +133,33 @@ export function SubmissionModal({ open, subtaskLabel, gate, existing, onSubmit, 
                   onChange={(e) => setLink(e.target.value)}
                   className="text-sm bg-white/60 dark:bg-[oklch(0.22_0.03_65)] border-[color:var(--border)] focus-visible:ring-[color:var(--primary)]/30"
                 />
-                {link && !isValidUrl(link) && (
+                {linkTrimmed && !linkValidUrl && (
                   <p className="text-[11px] text-[color:var(--destructive)]">Please enter a valid URL</p>
+                )}
+                {linkValidUrl && !linkDomainOk && gate.linkDomains && (
+                  <p className="text-[11px] text-[color:var(--destructive)]">{domainError(gate.linkDomains)}</p>
+                )}
+              </div>
+            )}
+
+            {gate.link2Label && (
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1.5 text-xs font-medium text-[color:var(--foreground)]">
+                  <Link className="w-3.5 h-3.5 text-[color:var(--primary)]" />
+                  {gate.link2Label}
+                </Label>
+                <Input
+                  type="url"
+                  placeholder="https://"
+                  value={link2}
+                  onChange={(e) => setLink2(e.target.value)}
+                  className="text-sm bg-white/60 dark:bg-[oklch(0.22_0.03_65)] border-[color:var(--border)] focus-visible:ring-[color:var(--primary)]/30"
+                />
+                {link2Trimmed && !link2ValidUrl && (
+                  <p className="text-[11px] text-[color:var(--destructive)]">Please enter a valid URL</p>
+                )}
+                {link2ValidUrl && !link2DomainOk && gate.link2Domains && (
+                  <p className="text-[11px] text-[color:var(--destructive)]">{domainError(gate.link2Domains)}</p>
                 )}
               </div>
             )}
@@ -122,7 +177,7 @@ export function SubmissionModal({ open, subtaskLabel, gate, existing, onSubmit, 
                   onChange={(e) => setVideo(e.target.value)}
                   className="text-sm bg-white/60 dark:bg-[oklch(0.22_0.03_65)] border-[color:var(--border)] focus-visible:ring-[color:var(--primary)]/30"
                 />
-                {video && !isValidUrl(video) && (
+                {videoTrimmed && !isValidUrl(videoTrimmed) && (
                   <p className="text-[11px] text-[color:var(--destructive)]">Please enter a valid URL</p>
                 )}
               </div>

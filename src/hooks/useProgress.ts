@@ -23,6 +23,7 @@ export type Submission = {
   link?: string;
   link2?: string;
   video?: string;
+  paste?: string;
   claimedAt?: string;
   submittedAt?: string;
 };

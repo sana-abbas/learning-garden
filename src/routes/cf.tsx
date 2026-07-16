@@ -10,7 +10,6 @@ import {
   Sun,
   Flame,
   RefreshCw,
-  Lock,
   Send,
   Check,
   Menu,
@@ -24,38 +23,21 @@ import { useTheme } from "@/hooks/useTheme";
 import { useProgress } from "@/hooks/useProgress";
 import confetti from "canvas-confetti";
 import { BotanicalGarden } from "@/components/garden/BotanicalGarden";
-import { type MilestoneVariant } from "@/components/garden/MilestoneModal";
 import { SubmissionModal } from "@/components/garden/SubmissionModal";
-import { CallClaimModal } from "@/components/garden/CallClaimModal";
+import { ContentModal } from "@/components/garden/ContentModal";
 import { DailyUpdateModal } from "@/components/garden/DailyUpdateModal";
-import { OnboardingScreen, ONBOARDING_OPTIONS } from "@/components/garden/OnboardingScreen";
-import { STEPS, CURRICULUM_STEPS } from "@/data/curriculum";
-import type { Step } from "@/data/curriculum";
+import { CF_STEPS, CF_CURRICULUM_STEPS } from "@/data/curriculum-cf";
+import { CF_CONTENT } from "@/data/content-cf";
+import type { Step, SubTask } from "@/data/curriculum";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/cf")({
   validateSearch: (search: Record<string, unknown>) => ({
     garden: search.garden === "1" || search.garden === true || search.garden === "true",
   }),
-  component: Index,
+  component: CodingFundamentals,
 });
 
 // ── helpers ──────────────────────────────────────────────────────────────────
-
-function parseWeeks(duration: string): number {
-  if (/week/i.test(duration)) {
-    const m = duration.match(/(\d+)/);
-    return m ? parseInt(m[1]) : 0;
-  }
-  if (/month/i.test(duration)) {
-    const m = duration.match(/(\d+)[–-]?(\d+)?/);
-    if (m) {
-      const lo = parseInt(m[1]);
-      const hi = m[2] ? parseInt(m[2]) : lo;
-      return Math.round(((lo + hi) / 2) * 4);
-    }
-  }
-  return 0;
-}
 
 function fireConfetti() {
   confetti({
@@ -66,84 +48,25 @@ function fireConfetti() {
   });
 }
 
-// ── Motivational quotes (shown on subtask check) ──────────────────────────────
-
 const QUOTES = [
   { text: "Every expert was once a beginner.", author: "Helen Hayes" },
-  { text: "The best way to predict the future is to invent it.", author: "Alan Kay" },
   { text: "Code is like humour. When you have to explain it, it's bad.", author: "Cory House" },
   { text: "First, solve the problem. Then, write the code.", author: "John Johnson" },
-  { text: "Any fool can write code a computer understands. Good programmers write code humans understand.", author: "Martin Fowler" },
   { text: "Progress, not perfection.", author: null },
   { text: "Small steps every day add up to big leaps.", author: null },
   { text: "The secret to getting ahead is getting started.", author: "Mark Twain" },
   { text: "It always seems impossible until it's done.", author: "Nelson Mandela" },
   { text: "You don't have to be great to start, but you have to start to be great.", author: null },
   { text: "Talk is cheap. Show me the code.", author: "Linus Torvalds" },
-  { text: "Simplicity is the soul of efficiency.", author: "Austin Freeman" },
   { text: "The journey of a thousand miles begins with a single step.", author: "Lao Tzu" },
-  { text: "The more I learn, the more I realise how much I don't know.", author: "Albert Einstein" },
-  { text: "One of my most productive days was throwing away 1,000 lines of code.", author: "Ken Thompson" },
   { text: "Learning to code is learning to think.", author: "Steve Jobs" },
-  { text: "The best investment you can make is in yourself.", author: "Warren Buffett" },
   { text: "Consistency beats intensity every time.", author: null },
   { text: "Future you is going to thank present you.", author: null },
   { text: "You are literally rewiring your brain right now.", author: null },
   { text: "Every checkbox is a seed planted. 🌱", author: null },
   { text: "Debugging is twice as hard as writing the code in the first place.", author: "Brian Kernighan" },
   { text: "Good judgment comes from experience, and experience comes from bad judgment.", author: null },
-  { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
-  { text: "Sometimes the best code is no code at all.", author: null },
 ];
-
-// ── Chapter completion facts (cited from Stack Overflow / W3Techs surveys) ───
-
-const CHAPTER_FACTS: Record<string, { stat: string; source: string }> = {
-  ch1: {
-    stat: "Over 5.4 billion people use the internet every day and you now understand the protocol behind every single request they make.",
-    source: "Statista Global Internet Report 2024",
-  },
-  ch2: {
-    stat: "JavaScript has been the most-used programming language for 11 consecutive years. You're now speaking the language of the web.",
-    source: "Stack Overflow Developer Survey 2023",
-  },
-  ch3: {
-    stat: "52.9% of all developers use HTML/CSS daily. You've just joined the majority of the dev world.",
-    source: "Stack Overflow Developer Survey 2023",
-  },
-  ch4: {
-    stat: "93.9% of developers use Git for version control. You're now part of the professional standard.",
-    source: "Stack Overflow Developer Survey 2023",
-  },
-  paid1: {
-    stat: "Developers with a portfolio on GitHub are significantly more likely to receive interview callbacks. Yours is live.",
-    source: "LinkedIn Talent Insights 2023",
-  },
-  ch5: {
-    stat: "Bootstrap powers over 19% of all websites — hundreds of millions of pages you can now build from scratch.",
-    source: "W3Techs Web Technology Surveys 2024",
-  },
-  ch6: {
-    stat: "TypeScript adoption grew from 12% to 43% of developers in just 5 years. You're ahead of the curve.",
-    source: "Stack Overflow Developer Survey 2018 vs 2023",
-  },
-  ch7: {
-    stat: "PostgreSQL is the world's most popular database, trusted by Apple, Instagram and Spotify. You now know how it works.",
-    source: "Stack Overflow Developer Survey 2023",
-  },
-  ch8: {
-    stat: "React is used by 40.6% of all developers and powers Netflix, Airbnb, Discord, and more. You're in good company.",
-    source: "Stack Overflow Developer Survey 2023",
-  },
-  ch9: {
-    stat: "Node.js is used by 42.7% of developers worldwide. You can now build the full stack — front to back.",
-    source: "Stack Overflow Developer Survey 2023",
-  },
-  paid2: {
-    stat: "Fewer than 10% of self-taught developers ship a complete, deployed full-stack app. You are now one of them.",
-    source: "Stack Overflow Developer Survey 2023 (industry estimate)",
-  },
-};
 
 function showRandomQuote() {
   const q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
@@ -156,26 +79,26 @@ function showRandomQuote() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-function Index() {
+function CodingFundamentals() {
   const navigate = useNavigate();
   const { garden } = Route.useSearch();
   const { theme, toggle: toggleTheme } = useTheme();
   const [userId, setUserId] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [todayUpdate, setTodayUpdate] = useState<{ today: string; tomorrow: string; blockers: string | null } | null | undefined>(undefined);
   const [openId, setOpenId] = useState<string | null>(null);
-  // Submission gate modal (assignment subtasks)
   const [submissionModal, setSubmissionModal] = useState<{
     step: Step;
     sub: SubTask;
   } | null>(null);
-  // Founders call claim modal
-  const [callClaimModal, setCallClaimModal] = useState<MilestoneVariant | null>(null);
-  // Keep a ref to which call step triggered the modal so we can check it on confirm
-  const pendingCallStep = useRef<Step | null>(null);
-  const modalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [contentModal, setContentModal] = useState<{
+    title: string;
+    content: string;
+    gate?: import("@/components/garden/SubmissionModal").SubmissionGate;
+    step?: Step;
+    sub?: SubTask;
+    subId?: string;
+  } | null>(null);
 
   const {
     checked, setChecked, notes, setNotes,
@@ -184,17 +107,32 @@ function Index() {
     onboarded, progressReady, setOnboarded,
   } = useProgress(userId);
 
-  // Tracks which chapter note just saved (for ✓ button feedback)
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [todayUpdate, setTodayUpdate] = useState<{ today: string; tomorrow: string; blockers: string | null } | null | undefined>(undefined);
+
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const completionShownRef = useRef(false);
+
   const [savedNoteId, setSavedNoteId] = useState<string | null>(null);
   const savedNoteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [savedFeedbackId, setSavedFeedbackId] = useState<string | null>(null);
+  const savedFeedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSaveFeedback = async (stepId: string) => {
+    await saveNow();
+    if (savedFeedbackTimer.current) clearTimeout(savedFeedbackTimer.current);
+    setSavedFeedbackId(stepId);
+    savedFeedbackTimer.current = setTimeout(() => setSavedFeedbackId(null), 2000);
+  };
 
   const handleSaveNote = async (stepId: string) => {
     await saveNow();
     if (savedNoteTimer.current) clearTimeout(savedNoteTimer.current);
     setSavedNoteId(stepId);
     savedNoteTimer.current = setTimeout(() => setSavedNoteId(null), 2000);
-    // Notify mentor via edge function (fails silently if not deployed)
-    const step = STEPS.find((s) => s.id === stepId);
+    const step = CF_STEPS.find((s) => s.id === stepId);
     const noteText = notes[stepId];
     if (step && noteText) {
       try {
@@ -215,60 +153,69 @@ function Index() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bloomBurst, setBloomBurst] = useState(false);
   const prevCompletionRef = useRef<Record<string, boolean>>({});
-  // Suppress bloom burst when onboarding pre-checks many chapters at once
   const skipNextBloom = useRef(false);
-  // Tracks the userId for which the bloom ref has been initialized
-  // Reset whenever a new user's progress loads so we don't fire on login
   const bloomInitializedFor = useRef<string | null>(null);
 
-  // Auth guard — redirect to /login if not signed in, /mentor if mentor role
+  // Auth guard — redirect to /login if not signed in, /mentor if mentor, / if wrong cohort
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) {
         navigate({ to: "/login" });
-      } else {
-        const { data: mentorRow } = await supabase.from("mentors").select("id").eq("user_id", session.user.id).maybeSingle();
-        if (mentorRow && !garden) { navigate({ to: "/mentor" }); return; }
-        if (!mentorRow) {
-          // Check existing cohort assignment first
-          const { data: member } = await supabase
-            .from("cohort_members")
+        return;
+      }
+      // Mentor redirect (skip if ?garden=1)
+      const { data: mentorRow } = await supabase
+        .from("mentors").select("id").eq("user_id", session.user.id).maybeSingle();
+      if (mentorRow && !garden) {
+        navigate({ to: "/mentor" });
+        return;
+      }
+      if (!mentorRow) {
+        // Check existing cohort assignment first
+        const { data: member } = await supabase
+          .from("cohort_members")
+          .select("cohort_id, cohorts(slug)")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+        const existingSlug = (member as any)?.cohorts?.slug;
+        if (existingSlug === "full-stack") { navigate({ to: "/" }); return; }
+        // New student — check invite list by email
+        if (!member && session.user.email) {
+          const { data: invite } = await supabase
+            .from("cohort_invites")
             .select("cohort_id, cohorts(slug)")
-            .eq("user_id", session.user.id)
+            .eq("email", session.user.email.toLowerCase())
             .maybeSingle();
-          const existingSlug = (member as any)?.cohorts?.slug;
-          if (existingSlug === "coding-fundamentals") { navigate({ to: "/cf" }); return; }
-          // New student — check invite list by email
-          if (!member && session.user.email) {
-            const { data: invite } = await supabase
-              .from("cohort_invites")
-              .select("cohort_id, cohorts(slug)")
-              .eq("email", session.user.email.toLowerCase())
-              .maybeSingle();
-            if (invite && (invite as any)?.cohorts?.slug === "coding-fundamentals") {
-              await supabase.from("cohort_members").insert({ user_id: session.user.id, cohort_id: (invite as any).cohort_id });
-              navigate({ to: "/cf" });
-              return;
-            }
+          if (invite && (invite as any)?.cohorts?.slug === "coding-fundamentals") {
+            await supabase.from("cohort_members").insert({ user_id: session.user.id, cohort_id: (invite as any).cohort_id });
+            // CF student confirmed — stay on /cf
+          } else {
+            // Not in CF invite list → send to full-stack
+            navigate({ to: "/" });
+            return;
           }
         }
-        // Not a CF student — stay on / (full-stack, default)
-        // Save display_name and email so the mentor dashboard can read them
-        const name = (session.user.user_metadata?.full_name as string | undefined) ?? session.user.email?.split("@")[0] ?? "Gardener";
-        const avatarUrl = (session.user.user_metadata?.avatar_url as string | undefined) ?? null;
-        supabase.from("user_progress").upsert(
-          { user_id: session.user.id, display_name: name, email: session.user.email, avatar_url: avatarUrl, updated_at: new Date().toISOString() },
-          { onConflict: "user_id" },
-        ).then(() => {});
-        setUserId(session.user.id);
-        setUser(session.user);
-        setAuthReady(true);
-
-        const dateStr = new Date().toISOString().split("T")[0];
-        supabase.from("daily_updates").select("today, tomorrow, blockers")
-          .eq("user_id", session.user.id).eq("date", dateStr).maybeSingle()
-          .then(({ data }) => setTodayUpdate(data ?? null));
       }
+      // Save profile on login
+      const name = (session.user.user_metadata?.full_name as string | undefined) ?? session.user.email?.split("@")[0] ?? "Gardener";
+      const avatarUrl = (session.user.user_metadata?.avatar_url as string | undefined) ?? null;
+      supabase.from("user_progress").upsert(
+        { user_id: session.user.id, display_name: name, email: session.user.email, avatar_url: avatarUrl, updated_at: new Date().toISOString() },
+        { onConflict: "user_id" },
+      ).then(() => {});
+      setUserId(session.user.id);
+      setUser(session.user);
+      setAuthReady(true);
+
+      // Fetch today's daily update
+      const dateStr = new Date().toISOString().split("T")[0];
+      supabase
+        .from("daily_updates")
+        .select("today, tomorrow, blockers")
+        .eq("user_id", session.user.id)
+        .eq("date", dateStr)
+        .maybeSingle()
+        .then(({ data }) => setTodayUpdate(data ?? null));
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -282,18 +229,25 @@ function Index() {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate, garden]);
 
   useEffect(() => {
     return () => {
-      if (modalTimerRef.current) clearTimeout(modalTimerRef.current);
       if (savedNoteTimer.current) clearTimeout(savedNoteTimer.current);
     };
   }, []);
 
+  // Show welcome modal for new users; setOnboarded() fires on dismiss
+  useEffect(() => {
+    if (!onboarded && progressReady) {
+      setShowWelcomeModal(true);
+    }
+  }, [onboarded, progressReady]);
+
   const completion = useMemo(() => {
     const map: Record<string, boolean> = {};
-    STEPS.forEach((s) => {
+    CF_STEPS.forEach((s) => {
       if (s.subtasks && s.subtasks.length > 0) {
         map[s.id] = s.subtasks.every((sub) => checked[sub.id]);
       } else {
@@ -303,29 +257,16 @@ function Index() {
     return map;
   }, [checked]);
 
-  const weeksRemaining = useMemo(
-    () => STEPS.filter((s) => !completion[s.id]).reduce((acc, s) => acc + parseWeeks(s.duration), 0),
+  const chaptersRemaining = useMemo(
+    () => CF_CURRICULUM_STEPS.filter((s) => !completion[s.id]).length,
     [completion],
   );
 
-  // Which founders calls are still locked (prerequisites not all complete)
-  const lockedCalls = useMemo(() => {
-    const map: Record<string, boolean> = {};
-    STEPS.forEach((s) => {
-      if (s.kind === "call" && s.prerequisites) {
-        map[s.id] = !s.prerequisites.every((p) => completion[p]);
-      }
-    });
-    return map;
-  }, [completion]);
-
-  // Detect newly completed chapters → show fact toast + bloom burst
+  // Detect newly completed chapters → bloom burst
   useEffect(() => {
     const prev = prevCompletionRef.current;
     prevCompletionRef.current = { ...completion };
 
-    // On first load (or when a different user's data loads), silently sync
-    // the ref so existing completions don't appear as "newly completed"
     if (bloomInitializedFor.current !== userId) {
       if (progressReady) {
         prevCompletionRef.current = { ...completion };
@@ -334,31 +275,33 @@ function Index() {
       return;
     }
 
-    // Suppress during onboarding pre-check
     if (skipNextBloom.current) {
       skipNextBloom.current = false;
       return;
     }
 
-    const justCompleted = STEPS.filter(
-      (s) => completion[s.id] && !prev[s.id],
-    );
+    const justCompleted = CF_STEPS.filter((s) => completion[s.id] && !prev[s.id]);
     if (justCompleted.length > 0) {
-      const fact = CHAPTER_FACTS[justCompleted[0].id];
-      if (fact) {
-        toast(fact.stat, {
-          description: `(${fact.source})`,
-          icon: "📊",
-          duration: 7000,
-        });
-      }
       setBloomBurst(true);
       const t = setTimeout(() => setBloomBurst(false), 3200);
       return () => clearTimeout(t);
     }
-  }, [completion, progressReady]);
+  }, [completion, progressReady, userId]);
 
-  // Bump streak on app open — just showing up each day keeps the streak alive
+  // Show completion modal once when entire curriculum is done
+  useEffect(() => {
+    if (!progressReady || !userId || completionShownRef.current) return;
+    if (chaptersRemaining === 0) {
+      const key = `cf-complete-shown-${userId}`;
+      if (!localStorage.getItem(key)) {
+        completionShownRef.current = true;
+        setShowCompleteModal(true);
+        localStorage.setItem(key, "1");
+      }
+    }
+  }, [chaptersRemaining, progressReady, userId]);
+
+  // Bump streak on app open
   useEffect(() => {
     if (progressReady && userId) {
       bumpStreak();
@@ -366,63 +309,16 @@ function Index() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progressReady, userId]);
 
-  const toggleStep = (step: Step) => {
-    // Steps with subtasks: toggling the parent checkbox bulk-checks/unchecks all subtasks
-    if (step.subtasks && step.subtasks.length > 0) {
-      const allDone = step.subtasks.every((s) => checked[s.id]);
-
-      // When checking (not unchecking): block on the first gated subtask missing a submission
-      if (!allDone) {
-        const firstPendingGate = step.subtasks.find(
-          (s) => s.gate && !checked[s.id] && !submissions[s.id],
-        );
-        if (firstPendingGate) {
-          setSubmissionModal({ step, sub: firstPendingGate });
-          return;
-        }
-      }
-
-      setChecked((prev) => {
-        const next = { ...prev };
-        step.subtasks!.forEach((s) => (next[s.id] = !allDone));
-        return next;
-      });
-      if (!allDone && step.kind === "module") setTimeout(fireConfetti, 300);
-      if (!allDone) bumpStreak();
-      return;
-    }
-
-    // Founders call — once claimed it stays claimed; can't be unchecked
-    if (step.kind === "call") {
-      if (checked[step.id]) return; // already claimed — lock it permanently
-      if (lockedCalls[step.id]) return; // prerequisites not done
-      pendingCallStep.current = step;
-      setCallClaimModal(step.callVariant!);
-      return;
-    }
-
-    // Regular module step (no subtasks) or unchecking a call
-    setChecked((prev) => {
-      const wasChecked = !!prev[step.id];
-      if (!wasChecked && step.kind === "module") setTimeout(fireConfetti, 300);
-      return { ...prev, [step.id]: !wasChecked };
-    });
-    if (!checked[step.id]) bumpStreak();
-  };
-
   const toggleSubtask = (step: Step, sub: SubTask) => {
     const subId = sub.id;
-    // Unchecking — always allowed
     if (checked[subId]) {
       setChecked((prev) => ({ ...prev, [subId]: false }));
       return;
     }
-    // Checking a gated subtask — open submission modal
     if (sub.gate) {
       setSubmissionModal({ step, sub });
       return;
     }
-    // No gate — check directly
     setChecked((prev) => {
       const next = { ...prev, [subId]: true };
       if (step.subtasks && step.kind === "module") {
@@ -435,9 +331,36 @@ function Index() {
     showRandomQuote();
   };
 
-  const handleSubmissionConfirm = async (data: { link?: string; video?: string }) => {
-    if (!submissionModal) return;
-    const { step, sub } = submissionModal;
+  const toggleStep = (step: Step) => {
+    if (step.subtasks && step.subtasks.length > 0) {
+      const allDone = step.subtasks.every((s) => checked[s.id]);
+      if (!allDone) {
+        const firstPendingGate = step.subtasks.find(
+          (s) => s.gate && !checked[s.id] && !submissions[s.id],
+        );
+        if (firstPendingGate) {
+          setSubmissionModal({ step, sub: firstPendingGate });
+          return;
+        }
+      }
+      setChecked((prev) => {
+        const next = { ...prev };
+        step.subtasks!.forEach((s) => (next[s.id] = !allDone));
+        return next;
+      });
+      if (!allDone) setTimeout(fireConfetti, 300);
+      if (!allDone) bumpStreak();
+      return;
+    }
+    setChecked((prev) => {
+      const wasChecked = !!prev[step.id];
+      if (!wasChecked) setTimeout(fireConfetti, 300);
+      return { ...prev, [step.id]: !wasChecked };
+    });
+    if (!checked[step.id]) bumpStreak();
+  };
+
+  const confirmSubmission = (step: Step, sub: SubTask, data: import("@/hooks/useProgress").Submission) => {
     setSubmission(sub.id, { ...data, submittedAt: new Date().toISOString() });
     setChecked((prev) => {
       const next = { ...prev, [sub.id]: true };
@@ -449,70 +372,18 @@ function Index() {
     });
     bumpStreak();
     showRandomQuote();
+  };
+
+  const handleSubmissionConfirm = async (data: import("@/hooks/useProgress").Submission) => {
+    if (!submissionModal) return;
+    confirmSubmission(submissionModal.step, submissionModal.sub, data);
     setSubmissionModal(null);
-    // Notify mentor via edge function (fails silently if not deployed)
-    try {
-      await supabase.functions.invoke("notify-assignment-submitted", {
-        body: {
-          chapterTitle: step.title,
-          subtaskLabel: sub.label,
-          link: data.link,
-          link2: data.link2,
-          video: data.video,
-          userName: (user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? "A participant",
-          userEmail: user?.email ?? "",
-        },
-      });
-    } catch {
-      // Edge function not deployed yet — that's fine
-    }
-  };
-
-  const handleCallClaim = async () => {
-    const step = pendingCallStep.current;
-    if (!step) return;
-    // Mark the call as checked
-    setChecked((prev) => ({ ...prev, [step.id]: true }));
-    setSubmission(step.id, { claimedAt: new Date().toISOString() });
-    bumpStreak();
-    // Fire email notification via Supabase edge function (fails silently if not deployed)
-    try {
-      await supabase.functions.invoke("notify-call-claim", {
-        body: {
-          callName: step.title,
-          callVariant: step.callVariant,
-          userName: (user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? "A participant",
-          userEmail: user?.email ?? "",
-        },
-      });
-    } catch {
-      // Edge function not deployed yet — that's fine, claim is still stored
-    }
-  };
-
-  const handleOnboardingConfirm = async (startingStepId: string) => {
-    // Pre-check all subtasks/steps that come BEFORE the selected starting step
-    const preChecked: Record<string, boolean> = {};
-    for (const step of STEPS) {
-      if (step.id === startingStepId) break;
-      if (step.subtasks && step.subtasks.length > 0) {
-        step.subtasks.forEach((sub) => { preChecked[sub.id] = true; });
-      } else {
-        preChecked[step.id] = true;
-      }
-    }
-    // Don't fire bloom/quotes for this bulk pre-check
-    skipNextBloom.current = true;
-    setChecked(preChecked);
-    await setOnboarded();
   };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    // onAuthStateChange listener above will navigate to /login
   };
 
-  // Show spinner while checking auth or loading progress
   if (!authReady || !progressReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[color:var(--background)]">
@@ -521,12 +392,9 @@ function Index() {
     );
   }
 
-  // Progress counts only curriculum steps (modules + paid projects), not founders calls
-const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
-  const progress = (completedCount / CURRICULUM_STEPS.length) * 100;
-  const allDone = completedCount === CURRICULUM_STEPS.length;
+  const completedCount = CF_CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
+  const progress = (completedCount / CF_CURRICULUM_STEPS.length) * 100;
 
-  // User profile derived values
   const displayName = (user?.user_metadata?.full_name as string | undefined)
     ?? user?.email?.split("@")[0]
     ?? "Gardener";
@@ -536,13 +404,12 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
     ? new Date(user.last_sign_in_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })
     : null;
 
-  const rootsActive = completion["ch1"] || completion["ch2"];
-  const sproutActive = completion["ch2"] && completion["ch3"];
-  const stemActive = completion["ch4"] && completion["paid1"];
-  const flowerActive =
-    completion["ch5"] && completion["ch6"] && completion["ch7"] && completion["ch8"];
-  const exoticActive = completion["ch9"] && completion["paid2"];
-
+  // Garden stage mapping for CF curriculum
+  const rootsActive = completion["cf0"] || completion["cf1"];
+  const sproutActive = completion["cf2"] && completion["cf3"];
+  const stemActive = completion["cf7"] && completion["cf8"];
+  const flowerActive = completion["cf12"] && completion["cf13"];
+  const exoticActive = completion["cf15"] && completion["cf16"];
 
   return (
     <div className="h-screen overflow-hidden bg-[color:var(--background)] flex flex-col lg:flex-row">
@@ -555,7 +422,7 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
         />
       )}
 
-      {/* Sidebar — fixed drawer on mobile, static on desktop */}
+      {/* Sidebar */}
       <aside className={`
         fixed inset-y-0 left-0 z-40 w-[85vw] max-w-[400px] flex flex-col
         bg-[color:var(--sidebar)] border-r border-[color:var(--sidebar-border)]
@@ -579,7 +446,7 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
                 Code Blossom
               </h1>
               <p className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--muted-foreground)]">
-                Full-Stack Curriculum
+                Coding Fundamentals
               </p>
             </div>
             {/* Close button — mobile only */}
@@ -587,13 +454,12 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
               type="button"
               onClick={() => setSidebarOpen(false)}
               className="lg:hidden p-1.5 rounded-lg text-[color:var(--muted-foreground)] hover:bg-[oklch(0.92_0.025_85)] dark:hover:bg-[oklch(0.27_0.03_65)]"
-              aria-label="Close sidebar"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Back to dashboard button — mentor garden preview only */}
+          {/* Back to dashboard button — mentor preview only */}
           {garden && (
             <button
               type="button"
@@ -607,10 +473,10 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
           <div className="mt-6">
             <div className="flex items-baseline justify-between mb-2">
               <span className="text-xs font-medium uppercase tracking-wider text-[color:var(--muted-foreground)]">
-                Curriculum
+                Progress
               </span>
               <span className="text-xs font-mono text-[color:var(--muted-foreground)]">
-                {completedCount}/{CURRICULUM_STEPS.length}
+                {completedCount}/{CF_CURRICULUM_STEPS.length}
               </span>
             </div>
             <div className="h-1.5 rounded-full bg-[oklch(0.88_0.04_85)] dark:bg-[oklch(0.27_0.03_65)] overflow-hidden">
@@ -622,33 +488,23 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
                 }}
               />
             </div>
-            {weeksRemaining > 0 && (
+            {chaptersRemaining > 0 && (
               <p className="text-[10px] text-[color:var(--muted-foreground)] mt-1.5 text-right">
-                ~{weeksRemaining} weeks remaining
+                {chaptersRemaining} chapter{chaptersRemaining !== 1 ? "s" : ""} remaining
               </p>
             )}
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-1.5">
-          {STEPS.map((step, i) => {
+          {CF_STEPS.map((step, i) => {
             const isChecked = completion[step.id];
             const Icon = step.icon;
-            const isCall = step.kind === "call";
-            const isPaid = step.kind === "paid";
-            const isLocked = isCall && !!lockedCalls[step.id];
             const hasSubs = !!(step.subtasks && step.subtasks.length);
             const isOpen = openId === step.id;
             const subDone = hasSubs
               ? step.subtasks!.filter((s) => checked[s.id]).length
               : 0;
-            // Human-readable hint for locked calls
-            const lockHint = isLocked && step.prerequisites
-              ? `Complete ${step.prerequisites
-                  .filter((p) => !completion[p])
-                  .map((p) => STEPS.find((s) => s.id === p)?.title ?? p)
-                  .join(", ")} to unlock`
-              : null;
 
             const titleContent = (
               <>
@@ -662,29 +518,10 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
                   >
                     {step.title}
                   </div>
-                  {isCall && (
-                    <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[color:var(--bloom-pink)]/15 text-[color:var(--bloom-magenta)] shrink-0">
-                      Call
-                    </span>
-                  )}
-                  {isPaid && (
-                    <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[color:var(--primary)]/15 text-[color:var(--primary)] shrink-0">
-                      Paid
-                    </span>
-                  )}
                 </div>
                 <div className="text-[11px] text-[color:var(--muted-foreground)] mt-0.5 truncate">
-                  {isCall
-                    ? step.subtitle
-                    : `${step.subtitle} · ${step.duration}${
-                        hasSubs ? ` · ${subDone}/${step.subtasks!.length}` : ""
-                      }`}
+                  {`${step.subtitle}${hasSubs ? ` · ${subDone}/${step.subtasks!.length}` : ""}`}
                 </div>
-                {lockHint && (
-                  <div className="text-[10px] text-[color:var(--muted-foreground)]/70 mt-0.5 truncate">
-                    🔒 {lockHint}
-                  </div>
-                )}
               </>
             );
 
@@ -692,49 +529,26 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
               <div
                 key={step.id}
                 className={`rounded-2xl border transition-all duration-300 ${
-                  isLocked
-                    ? "border-dashed border-[color:var(--muted-foreground)]/20 opacity-60"
-                    : isChecked
-                      ? isCall
-                        ? "bg-[color:var(--sidebar-accent)] border-[color:var(--bloom-pink)]/40 shadow-sm"
-                        : "bg-[color:var(--sidebar-accent)] border-[color:var(--primary)]/30 shadow-sm"
-                      : isCall
-                        ? "border-dashed border-[color:var(--bloom-pink)]/30 bg-[oklch(0.97_0.025_340)]/40 dark:bg-[oklch(0.22_0.04_340)]/20"
-                        : "border-transparent hover:bg-[oklch(0.92_0.025_85)] dark:hover:bg-[oklch(0.27_0.03_65)] hover:border-[color:var(--sidebar-border)]"
+                  isChecked
+                    ? "bg-[color:var(--sidebar-accent)] border-[color:var(--primary)]/30 shadow-sm"
+                    : "border-transparent hover:bg-[oklch(0.92_0.025_85)] dark:hover:bg-[oklch(0.27_0.03_65)] hover:border-[color:var(--sidebar-border)]"
                 }`}
               >
                 <div className="group flex items-center gap-3.5 p-3.5">
-                  {isLocked ? (
-                    <div className="w-5 h-5 flex items-center justify-center shrink-0">
-                      <Lock className="w-3.5 h-3.5 text-[color:var(--muted-foreground)]" />
-                    </div>
-                  ) : (
                   <Checkbox
                     checked={isChecked}
                     onCheckedChange={() => toggleStep(step)}
-                    disabled={isCall && isChecked}
-                    className="w-5 h-5 rounded-md border-[color:var(--primary)]/40 data-[state=checked]:bg-[color:var(--primary)] data-[state=checked]:border-[color:var(--primary)] disabled:opacity-100 disabled:cursor-default"
+                    className="w-5 h-5 rounded-md border-[color:var(--primary)]/40 data-[state=checked]:bg-[color:var(--primary)] data-[state=checked]:border-[color:var(--primary)]"
                   />
-                  )}
                   <div
                     className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all duration-500 ${
                       isChecked ? "scale-105" : "opacity-70"
                     }`}
                     style={{
                       background: isChecked
-                        ? isCall
-                          ? "linear-gradient(135deg, var(--bloom-pink), var(--bloom-magenta))"
-                          : isPaid
-                            ? "linear-gradient(135deg, var(--bloom-pink), var(--primary))"
-                            : "linear-gradient(135deg, var(--primary), var(--leaf-light))"
-                        : isCall
-                          ? theme === "dark" ? "oklch(0.25 0.06 340)" : "oklch(0.94 0.04 340)"
-                          : theme === "dark" ? "oklch(0.24 0.03 65)" : "oklch(0.9 0.03 85)",
-                      color: isChecked
-                        ? "white"
-                        : isCall
-                          ? "var(--bloom-magenta)"
-                          : "var(--muted-foreground)",
+                        ? "linear-gradient(135deg, var(--primary), var(--leaf-light))"
+                        : theme === "dark" ? "oklch(0.24 0.03 65)" : "oklch(0.9 0.03 85)",
+                      color: isChecked ? "white" : "var(--muted-foreground)",
                     }}
                   >
                     <Icon className="w-[18px] h-[18px]" />
@@ -764,11 +578,9 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
                       />
                     </button>
                   ) : (
-                    !isCall && (
-                      <span className="text-[10px] font-mono text-[color:var(--muted-foreground)]/70 shrink-0">
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
-                    )
+                    <span className="text-[10px] font-mono text-[color:var(--muted-foreground)]/70 shrink-0">
+                      {String(i).padStart(2, "0")}
+                    </span>
                   )}
                 </div>
 
@@ -785,28 +597,43 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
                                 onCheckedChange={() => toggleSubtask(step, sub)}
                                 className="w-4 h-4 mt-0.5 rounded border-[color:var(--primary)]/40 data-[state=checked]:bg-[color:var(--primary)] data-[state=checked]:border-[color:var(--primary)]"
                               />
-                                  <span className="flex-1">
-                                {sub.url && !subChecked ? (
-                                  <a
-                                    href={sub.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="text-[12.5px] leading-snug underline underline-offset-2 decoration-[color:var(--primary)]/40 hover:decoration-[color:var(--primary)] transition-all text-[color:var(--sidebar-foreground)]"
-                                  >
-                                    {sub.label}
-                                  </a>
-                                ) : (
-                                  <span
-                                    className={`text-[12.5px] leading-snug transition-all ${
-                                      subChecked
-                                        ? "text-[color:var(--muted-foreground)] line-through decoration-[color:var(--primary)]/50"
-                                        : "text-[color:var(--sidebar-foreground)]"
-                                    }`}
-                                  >
-                                    {sub.label}
-                                  </span>
-                                )}
+                              <span className="flex-1">
+                                {(() => {
+                                  const hasContent = !!CF_CONTENT[sub.id];
+                                  const labelClass = `text-[12.5px] leading-snug transition-all ${
+                                    subChecked
+                                      ? "text-[color:var(--muted-foreground)] line-through decoration-[color:var(--primary)]/50"
+                                      : "text-[color:var(--sidebar-foreground)]"
+                                  }`;
+                                  if (hasContent && !subChecked) {
+                                    return (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setContentModal({ title: sub.label, content: CF_CONTENT[sub.id], gate: sub.gate, step, sub, subId: sub.id });
+                                        }}
+                                        className={`${labelClass} text-left underline underline-offset-2 decoration-[color:var(--primary)]/30 hover:decoration-[color:var(--primary)] cursor-pointer`}
+                                      >
+                                        {sub.label}
+                                      </button>
+                                    );
+                                  }
+                                  if (sub.url && !subChecked) {
+                                    return (
+                                      <a
+                                        href={sub.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className={`${labelClass} underline underline-offset-2 decoration-[color:var(--primary)]/40 hover:decoration-[color:var(--primary)]`}
+                                      >
+                                        {sub.label}
+                                      </a>
+                                    );
+                                  }
+                                  return <span className={labelClass}>{sub.label}</span>;
+                                })()}
                                 {sub.gate && subChecked && submissions[sub.id] && (
                                   <span className="block text-[10px] text-[color:var(--primary)] mt-0.5 font-medium">
                                     ✓ Submitted
@@ -818,6 +645,43 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
                         );
                       })}
                     </ul>
+
+                    <div className="pt-2">
+                      <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-[color:var(--muted-foreground)] mb-1.5 font-medium">
+                        <MessageCircle className="w-3 h-3" />
+                        What's one thing we could do to improve this chapter?
+                        <span className="text-[color:var(--destructive)] ml-0.5">*</span>
+                      </label>
+                      <textarea
+                        value={notes[`${step.id}__fb`] || ""}
+                        onChange={(e) =>
+                          setNotes((prev) => ({ ...prev, [`${step.id}__fb`]: e.target.value }))
+                        }
+                        placeholder="Share your thoughts…"
+                        rows={2}
+                        className="w-full text-[12px] leading-relaxed p-2.5 rounded-lg bg-[oklch(0.97_0.015_85)] dark:bg-[oklch(0.22_0.03_65)] border border-[color:var(--sidebar-border)] focus:outline-none focus:ring-2 focus:ring-[color:var(--primary)]/30 focus:border-[color:var(--primary)]/40 resize-none placeholder:text-[color:var(--muted-foreground)]/60 text-[color:var(--sidebar-foreground)] transition-all"
+                      />
+                      <div className="flex justify-end mt-1.5">
+                        <button
+                          type="button"
+                          disabled={!notes[`${step.id}__fb`]}
+                          onClick={() => handleSaveFeedback(step.id)}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-200 ${
+                            savedFeedbackId === step.id
+                              ? "bg-[color:var(--primary)]/15 text-[color:var(--primary)]"
+                              : notes[`${step.id}__fb`]
+                                ? "bg-[color:var(--sidebar-border)] hover:bg-[color:var(--primary)]/15 hover:text-[color:var(--primary)] text-[color:var(--muted-foreground)]"
+                                : "opacity-40 cursor-not-allowed text-[color:var(--muted-foreground)]"
+                          }`}
+                        >
+                          {savedFeedbackId === step.id ? (
+                            <><Check className="w-3 h-3" /> Saved</>
+                          ) : (
+                            <><Send className="w-3 h-3" /> Submit</>
+                          )}
+                        </button>
+                      </div>
+                    </div>
 
                     <div className="pt-2">
                       <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-[color:var(--muted-foreground)] mb-1.5 font-medium">
@@ -860,13 +724,12 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
             );
           })}
         </div>
-
       </aside>
 
       {/* Main */}
       <main className="flex-1 overflow-hidden flex flex-col p-4 lg:p-6">
 
-        {/* ── Top bar ─────────────────────────────────────────────── */}
+        {/* Top bar */}
         <div className="shrink-0 flex items-center gap-2 mb-3">
 
           {/* Hamburger — mobile only */}
@@ -879,7 +742,6 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
             <Menu className="w-5 h-5" />
           </button>
 
-          {/* Tagline + garden state caption */}
           <div className="flex-1 min-w-0">
             <h2 className="font-serif text-base lg:text-xl tracking-tight text-[color:var(--foreground)] leading-tight">
               Code. Learn. Bloom.
@@ -894,7 +756,6 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
             </p>
           </div>
 
-          {/* Right: controls + profile */}
           <div className="flex items-center gap-1.5 shrink-0">
             {syncing && (
               <span title="Syncing…">
@@ -902,7 +763,6 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
               </span>
             )}
 
-            {/* Streak pill */}
             {streak > 0 && (
               <div
                 className="flex items-center gap-1.5 rounded-full font-semibold px-3 py-1.5 text-[12px]"
@@ -950,7 +810,6 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
               <LogOut className="w-4 h-4" />
             </button>
 
-            {/* Divider + avatar — desktop only */}
             <div className="hidden lg:flex items-center gap-2.5">
               <div className="w-px h-7 bg-[color:var(--border)] mx-0.5" />
               {avatarUrl ? (
@@ -984,11 +843,10 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
                 )}
               </div>
             </div>
-
           </div>
         </div>
 
-        {/* ── Garden — takes all remaining space ──────────────────── */}
+        {/* Garden */}
         <div className="flex-1 min-h-0">
           <BotanicalGarden
             rootsActive={rootsActive}
@@ -1002,14 +860,6 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
         </div>
       </main>
 
-      {/* First-login onboarding overlay */}
-      {!onboarded && progressReady && (
-        <OnboardingScreen
-          userName={displayName}
-          onConfirm={handleOnboardingConfirm}
-        />
-      )}
-
       {/* Submission gate modal */}
       {submissionModal && (
         <SubmissionModal
@@ -1022,16 +872,18 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
         />
       )}
 
-      {/* Founders call claim modal */}
-      {callClaimModal && (
-        <CallClaimModal
-          open={true}
-          variant={callClaimModal}
-          onClaim={handleCallClaim}
-          onClose={() => {
-            setCallClaimModal(null);
-            pendingCallStep.current = null;
-          }}
+      {/* Learning content modal */}
+      {contentModal && (
+        <ContentModal
+          title={contentModal.title}
+          content={contentModal.content}
+          onClose={() => setContentModal(null)}
+          gate={contentModal.gate}
+          subId={contentModal.subId}
+          existing={contentModal.sub ? submissions[contentModal.sub.id] : undefined}
+          onSubmit={contentModal.gate && contentModal.step && contentModal.sub
+            ? (data) => confirmSubmission(contentModal.step!, contentModal.sub!, data)
+            : undefined}
         />
       )}
 
@@ -1043,6 +895,91 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
           onClose={() => setShowUpdateModal(false)}
           onSubmitted={(update) => setTodayUpdate(update)}
         />
+      )}
+
+      {/* Welcome modal for new users */}
+      {showWelcomeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div
+            className="relative z-10 w-full max-w-lg max-h-[88vh] flex flex-col rounded-2xl overflow-hidden shadow-2xl"
+            style={{ background: "var(--sidebar)", border: "1px solid var(--sidebar-border)" }}
+          >
+            <div className="flex-1 overflow-y-auto px-7 py-8 space-y-4">
+              <div className="text-4xl text-center">🚀</div>
+              <h2 className="font-serif text-xl font-bold text-center" style={{ color: "var(--foreground)" }}>
+                Buckle up - this is going to be an exciting ride!
+              </h2>
+              <div className="space-y-3 text-sm leading-relaxed" style={{ color: "var(--foreground)" }}>
+                <p>Hi there - we're so happy you're here!</p>
+                <p>You are about to embark on an exciting, yet not so easy journey. In this chapter, we will learn all about JavaScript and basic coding concepts. This is the foundation of coding and therefore really important.</p>
+                <p>It might seem intimidating at first, but we know you can do it. And we're along for the ride, right there with you! 🌸</p>
+                <p className="font-semibold">A few notes on the curriculum:</p>
+                <p>Throughout the curriculum, you will find some recurring elements, like:</p>
+                <ul className="space-y-1.5 pl-4 list-disc" style={{ color: "var(--foreground)" }}>
+                  <li>Marked in green, you will find examples of the theory explained beforehand</li>
+                  <li>Marked in blue, you will find some deep-dive questions for you to work on. These questions are optional, but we recommend that you work through them as well. Think about the problem/question proposed and note down your answer. These deep dives will be discussed in your mentor hours.</li>
+                  <li>Exercises: This is where you take action. Put the learned theory into practice and solve these exercises (mandatory).</li>
+                  <li>Video resources: These are optional.</li>
+                </ul>
+                <p style={{ color: "var(--muted-foreground)", fontSize: "0.8rem" }}>
+                  Please note: If you come across something in the curriculum that is unclear, if you find a mistake or have ideas for improvements, please post your feedback in the #curriculum channel on Slack. We are always happy to hear your constructive feedback and to improve our program with you. Thank you! 🤗
+                </p>
+                <p>What you will learn in this curriculum will kickstart your tech journey and is the first step to an exciting future. So, keep the goal in mind and have fun while you're learning.</p>
+                <p>And remember, you're not alone. You are now part of an incredible community of motivated learners. We can't wait to witness your journey, and we are rooting for you.</p>
+                <p className="font-semibold">So now, without further ado - let the learning begin! 🚀</p>
+              </div>
+            </div>
+            <div className="shrink-0 px-7 pb-7">
+              <button
+                type="button"
+                onClick={() => { setShowWelcomeModal(false); setOnboarded(); }}
+                className="w-full py-2.5 rounded-xl text-sm font-medium text-white transition-opacity"
+                style={{ background: "linear-gradient(135deg, var(--primary), var(--leaf))" }}
+              >
+                Let's go! 🌱
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Curriculum completion modal */}
+      {showCompleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCompleteModal(false)} />
+          <div
+            className="relative z-10 w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl"
+            style={{ background: "var(--sidebar)", border: "1px solid var(--sidebar-border)" }}
+          >
+            <div className="px-7 py-8 space-y-4 text-center">
+              <div className="text-4xl">🎉</div>
+              <h2 className="font-serif text-xl font-bold" style={{ color: "var(--foreground)" }}>
+                You've made it!
+              </h2>
+              <div className="space-y-3 text-sm text-left leading-relaxed" style={{ color: "var(--foreground)" }}>
+                <p>Wowza - that was a lot! 🥹</p>
+                <p>But you know what? You've just made it through one of the toughest parts of learning software development. How do you feel? Are you proud of yourself?</p>
+                <p>We sure know that we are! Not everybody makes it through Javascript and these coding concepts because it's really not easy.</p>
+                <p>So if you're here - it's time to give yourself a pat on the back and appreciate this moment.</p>
+                <p>Look back at everything you've learned and where you started: You've come <strong>so</strong> far! And now, the sky is the limit. Keep going and we know your future will be bright bright bright! 🔮</p>
+                <p>We cannot wait to see all the great things you will do and we are so proud of you!</p>
+                <p className="font-semibold">Congratulations! 🥳</p>
+                <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+                  Warmly,<br />Your Code Blossom Team 🌸
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCompleteModal(false)}
+                className="mt-2 w-full py-2.5 rounded-xl text-sm font-medium text-white transition-opacity"
+                style={{ background: "linear-gradient(135deg, var(--primary), var(--leaf))" }}
+              >
+                Thank you! 🌸
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

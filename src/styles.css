@@ -243,3 +243,153 @@
     font-optical-sizing: auto;
   }
 }
+
+/* ── Content modal prose styles ───────────────────────────────────────────── */
+.prose-cf {
+  color: var(--foreground);
+  font-size: 13.5px;
+  line-height: 1.75;
+}
+.prose-cf h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 1.4rem 0 0.5rem;
+  color: var(--foreground);
+}
+.prose-cf h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 1.2rem 0 0.4rem;
+  color: var(--foreground);
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+.prose-cf p {
+  margin: 0.6rem 0;
+}
+.prose-cf ul, .prose-cf ol {
+  padding-left: 1.4rem;
+  margin: 0.5rem 0;
+}
+.prose-cf li {
+  margin: 0.2rem 0;
+}
+.prose-cf hr {
+  border: none;
+  border-top: 1px solid var(--sidebar-border);
+  margin: 1.2rem 0;
+}
+.prose-cf blockquote {
+  border-left: 3px solid oklch(0.55 0.13 145);
+  margin: 0.65rem 0;
+  padding: 0.5rem 0.75rem 0.5rem 1rem;
+  background: oklch(0.91 0.07 145 / 0.22);
+  border-radius: 0 0.5rem 0.5rem 0;
+  color: var(--sidebar-foreground);
+}
+.dark .prose-cf blockquote {
+  background: oklch(0.25 0.06 145 / 0.25);
+  border-left-color: oklch(0.62 0.15 145);
+}
+.prose-cf blockquote p {
+  margin: 0.2rem 0;
+}
+.prose-cf code {
+  font-family: ui-monospace, "Cascadia Code", monospace;
+  font-size: 0.82em;
+  background: oklch(0.91 0.03 130 / 0.5);
+  padding: 0.1em 0.35em;
+  border-radius: 0.3rem;
+  color: var(--primary);
+}
+.dark .prose-cf code {
+  background: oklch(0.25 0.04 130 / 0.5);
+}
+.prose-cf pre {
+  background: oklch(0.14 0.02 260);
+  color: oklch(0.92 0.03 145);
+  padding: 1rem 1.2rem;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.8rem;
+  line-height: 1.65;
+}
+.prose-cf pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+}
+.prose-cf table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.8rem 0;
+  font-size: 0.82rem;
+}
+.prose-cf th {
+  background: oklch(0.92 0.04 130 / 0.5);
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border: 1px solid var(--sidebar-border);
+  color: var(--foreground);
+}
+.dark .prose-cf th {
+  background: oklch(0.25 0.04 130 / 0.4);
+}
+.prose-cf td {
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--sidebar-border);
+  vertical-align: top;
+}
+.prose-cf tr:nth-child(even) td {
+  background: oklch(0.96 0.01 85 / 0.4);
+}
+.dark .prose-cf tr:nth-child(even) td {
+  background: oklch(0.22 0.02 65 / 0.3);
+}
+.prose-cf strong {
+  font-weight: 600;
+  color: var(--foreground);
+}
+.prose-cf a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 500;
+}
+.prose-cf a:hover {
+  opacity: 0.75;
+}
+.prose-cf img {
+  width: 100%;
+  border-radius: 0.75rem;
+  margin: 0.75rem 0;
+  border: 1px solid var(--sidebar-border);
+}
+
+/* 💡 Deep dive callouts — blue */
+.prose-cf .cf-deepdive {
+  background: oklch(0.92 0.06 225 / 0.22);
+  border-left: 3px solid oklch(0.52 0.15 225);
+  padding: 0.5rem 0.75rem 0.5rem 1rem;
+  border-radius: 0 0.5rem 0.5rem 0;
+  margin: 0.65rem 0;
+}
+.dark .prose-cf .cf-deepdive {
+  background: oklch(0.22 0.06 225 / 0.28);
+  border-left-color: oklch(0.60 0.16 225);
+}
+
+/* 📝 Exercise callouts — amber */
+.prose-cf .cf-exercise {
+  background: oklch(0.93 0.07 80 / 0.22);
+  border-left: 3px solid oklch(0.68 0.16 75);
+  padding: 0.5rem 0.75rem 0.5rem 1rem;
+  border-radius: 0 0.5rem 0.5rem 0;
+  margin: 0.65rem 0;
+}
+.dark .prose-cf .cf-exercise {
+  background: oklch(0.24 0.06 80 / 0.28);
+  border-left-color: oklch(0.72 0.16 75);
+}

@@ -7,6 +7,7 @@ import { Link, Video, CheckCircle2 } from "lucide-react";
 import type { Submission } from "@/hooks/useProgress";
 
 export interface SubmissionGate {
+  pasteLabel?: string;     // textarea paste field label
   linkLabel?: string;      // first link field label
   link2Label?: string;     // second link field label (e.g. "Live demo URL")
   videoLabel?: string;     // video field label
@@ -46,14 +47,17 @@ function domainError(domains: string[]) {
 }
 
 export function SubmissionModal({ open, subtaskLabel, gate, existing, onSubmit, onClose }: Props) {
+  const [paste, setPaste] = useState(existing?.paste ?? "");
   const [link, setLink] = useState(existing?.link ?? "");
   const [link2, setLink2] = useState(existing?.link2 ?? "");
   const [video, setVideo] = useState(existing?.video ?? "");
 
+  const pasteTrimmed = paste.trim();
   const linkTrimmed = link.trim();
   const link2Trimmed = link2.trim();
   const videoTrimmed = video.trim();
 
+  const pasteOk = !gate.pasteLabel || pasteTrimmed !== "";
   const linkValidUrl = linkTrimmed !== "" && isValidUrl(linkTrimmed);
   const linkDomainOk = !gate.linkDomains || !linkValidUrl || matchesDomain(linkTrimmed, gate.linkDomains);
   const linkOk = !gate.linkLabel || (linkValidUrl && linkDomainOk);
@@ -64,11 +68,12 @@ export function SubmissionModal({ open, subtaskLabel, gate, existing, onSubmit, 
 
   const videoOk = !gate.videoLabel || (videoTrimmed !== "" && isValidUrl(videoTrimmed));
 
-  const canSubmit = linkOk && link2Ok && videoOk;
+  const canSubmit = pasteOk && linkOk && link2Ok && videoOk;
 
   const handleSubmit = () => {
     if (!canSubmit) return;
     const data: Submission = { submittedAt: new Date().toISOString() };
+    if (gate.pasteLabel) data.paste = pasteTrimmed;
     if (gate.linkLabel) data.link = linkTrimmed;
     if (gate.link2Label) data.link2 = link2Trimmed;
     if (gate.videoLabel) data.video = videoTrimmed;
@@ -120,6 +125,20 @@ export function SubmissionModal({ open, subtaskLabel, gate, existing, onSubmit, 
 
           {/* Fields */}
           <div className="space-y-4">
+            {gate.pasteLabel && (
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-[color:var(--foreground)]">
+                  {gate.pasteLabel}
+                </Label>
+                <textarea
+                  rows={5}
+                  placeholder="Type or paste your answer here…"
+                  value={paste}
+                  onChange={(e) => setPaste(e.target.value)}
+                  className="w-full text-sm px-3 py-2 rounded-lg border resize-none bg-white/60 dark:bg-[oklch(0.22_0.03_65)] border-[color:var(--border)] focus:outline-none focus:ring-2 focus:ring-[color:var(--primary)]/30"
+                />
+              </div>
+            )}
             {gate.linkLabel && (
               <div className="space-y-1.5">
                 <Label className="flex items-center gap-1.5 text-xs font-medium text-[color:var(--foreground)]">

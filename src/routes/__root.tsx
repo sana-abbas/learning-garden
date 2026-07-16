@@ -74,7 +74,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Code Blossom — Watch your learning bloom" },
+      { title: "Code Blossom Garden" },
       { name: "description", content: "An interactive learning dashboard for the Code Blossom coding bootcamp. Tend your curriculum and watch your garden grow." },
       { property: "og:title", content: "Code Blossom" },
       { property: "og:description", content: "Tend your learning. Watch it bloom." },

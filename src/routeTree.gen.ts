@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as MentorRouteImport } from './routes/mentor'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as CfRouteImport } from './routes/cf'
 import { Route as IndexRouteImport } from './routes/index'
 
 const MentorRoute = MentorRouteImport.update({
@@ -23,6 +24,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CfRoute = CfRouteImport.update({
+  id: '/cf',
+  path: '/cf',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -31,30 +37,34 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cf': typeof CfRoute
   '/login': typeof LoginRoute
   '/mentor': typeof MentorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cf': typeof CfRoute
   '/login': typeof LoginRoute
   '/mentor': typeof MentorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/cf': typeof CfRoute
   '/login': typeof LoginRoute
   '/mentor': typeof MentorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/mentor'
+  fullPaths: '/' | '/cf' | '/login' | '/mentor'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/mentor'
-  id: '__root__' | '/' | '/login' | '/mentor'
+  to: '/' | '/cf' | '/login' | '/mentor'
+  id: '__root__' | '/' | '/cf' | '/login' | '/mentor'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CfRoute: typeof CfRoute
   LoginRoute: typeof LoginRoute
   MentorRoute: typeof MentorRoute
 }
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cf': {
+      id: '/cf'
+      path: '/cf'
+      fullPath: '/cf'
+      preLoaderRoute: typeof CfRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CfRoute: CfRoute,
   LoginRoute: LoginRoute,
   MentorRoute: MentorRoute,
 }

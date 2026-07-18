@@ -1001,14 +1001,14 @@ function MentorDashboard() {
                                 </span>
                               </td>
                               <td className="px-4 py-3 max-w-xs">
-                                <p className="text-[13px] leading-relaxed line-clamp-3" style={{ color: "var(--foreground)" }}>{u.today}</p>
+                                <p className="text-[13px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--foreground)" }}>{u.today}</p>
                               </td>
                               <td className="px-4 py-3 max-w-xs">
-                                <p className="text-[13px] leading-relaxed line-clamp-3" style={{ color: "var(--foreground)" }}>{u.tomorrow}</p>
+                                <p className="text-[13px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--foreground)" }}>{u.tomorrow}</p>
                               </td>
                               <td className="px-4 py-3 max-w-xs">
                                 {u.blockers
-                                  ? <p className="text-[13px] leading-relaxed line-clamp-3" style={{ color: "oklch(0.55 0.15 50)" }}>{u.blockers}</p>
+                                  ? <p className="text-[13px] leading-relaxed whitespace-pre-wrap" style={{ color: "oklch(0.55 0.15 50)" }}>{u.blockers}</p>
                                   : <span className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>—</span>
                                 }
                               </td>

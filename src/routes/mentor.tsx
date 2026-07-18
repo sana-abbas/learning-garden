@@ -587,6 +587,7 @@ function MentorDashboard() {
   const [assignmentSearch, setAssignmentSearch] = useState("");
   const [assignmentCohort, setAssignmentCohort] = useState<"all" | "full-stack" | "coding-fundamentals">("all");
   const [expandedAssignmentId, setExpandedAssignmentId] = useState<string | null>(null);
+  const [expandedUpdateId, setExpandedUpdateId] = useState<string | null>(null);
   const [dailyUpdates, setDailyUpdates] = useState<DailyUpdateRow[]>([]);
   const [loadingUpdates, setLoadingUpdates] = useState(false);
   const [updateSearch, setUpdateSearch] = useState("");
@@ -979,6 +980,7 @@ function MentorDashboard() {
                           const name = p?.display_name || p?.email?.split("@")[0] || "Unknown";
                           const cohort = cohortMemberMap[u.user_id] ?? "full-stack";
                           const cohortLabel = cohort === "coding-fundamentals" ? "Coding Fundamentals" : "Full Stack";
+                          const isUpdateExpanded = expandedUpdateId === u.id;
                           return (
                             <tr
                               key={u.id}
@@ -1001,16 +1003,24 @@ function MentorDashboard() {
                                 </span>
                               </td>
                               <td className="px-4 py-3 max-w-xs">
-                                <p className="text-[13px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--foreground)" }}>{u.today}</p>
+                                <p className={`text-[13px] leading-relaxed whitespace-pre-wrap ${isUpdateExpanded ? "" : "line-clamp-2"}`} style={{ color: "var(--foreground)" }}>{u.today}</p>
                               </td>
                               <td className="px-4 py-3 max-w-xs">
-                                <p className="text-[13px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--foreground)" }}>{u.tomorrow}</p>
+                                <p className={`text-[13px] leading-relaxed whitespace-pre-wrap ${isUpdateExpanded ? "" : "line-clamp-2"}`} style={{ color: "var(--foreground)" }}>{u.tomorrow}</p>
                               </td>
                               <td className="px-4 py-3 max-w-xs">
                                 {u.blockers
-                                  ? <p className="text-[13px] leading-relaxed whitespace-pre-wrap" style={{ color: "oklch(0.55 0.15 50)" }}>{u.blockers}</p>
+                                  ? <p className={`text-[13px] leading-relaxed whitespace-pre-wrap ${isUpdateExpanded ? "" : "line-clamp-2"}`} style={{ color: "oklch(0.55 0.15 50)" }}>{u.blockers}</p>
                                   : <span className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>—</span>
                                 }
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedUpdateId(isUpdateExpanded ? null : u.id)}
+                                  className="text-[11px] mt-1"
+                                  style={{ color: "var(--primary)" }}
+                                >
+                                  {isUpdateExpanded ? "Show less" : "Show more"}
+                                </button>
                               </td>
                             </tr>
                           );

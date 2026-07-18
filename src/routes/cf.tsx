@@ -86,6 +86,7 @@ function CodingFundamentals() {
   const [userId, setUserId] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [isMentor, setIsMentor] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [submissionModal, setSubmissionModal] = useState<{
     step: Step;
@@ -165,6 +166,7 @@ function CodingFundamentals() {
       }
       const { data: mentorRow } = await supabase
         .from("mentors").select("id").eq("user_id", session.user.id).maybeSingle();
+      if (mentorRow) setIsMentor(true);
       if (!mentorRow) {
         // Check existing cohort assignment first
         const { data: member } = await supabase
@@ -454,8 +456,8 @@ function CodingFundamentals() {
             </button>
           </div>
 
-          {/* Back to dashboard button — mentor preview only */}
-          {garden && (
+          {/* Back to dashboard button — visible to mentors */}
+          {isMentor && (
             <button
               type="button"
               onClick={() => navigate({ to: "/mentor" })}

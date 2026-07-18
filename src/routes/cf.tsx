@@ -156,20 +156,15 @@ function CodingFundamentals() {
   const skipNextBloom = useRef(false);
   const bloomInitializedFor = useRef<string | null>(null);
 
-  // Auth guard — redirect to /login if not signed in, /mentor if mentor, / if wrong cohort
+  // Auth guard — redirect to /login if not signed in, / if wrong cohort
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) {
         navigate({ to: "/login" });
         return;
       }
-      // Mentor redirect (skip if ?garden=1)
       const { data: mentorRow } = await supabase
         .from("mentors").select("id").eq("user_id", session.user.id).maybeSingle();
-      if (mentorRow && !garden) {
-        navigate({ to: "/mentor" });
-        return;
-      }
       if (!mentorRow) {
         // Check existing cohort assignment first
         const { data: member } = await supabase

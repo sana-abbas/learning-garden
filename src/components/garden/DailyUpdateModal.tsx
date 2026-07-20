@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { X } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { X, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Existing {
@@ -15,16 +15,76 @@ interface Props {
   onSubmitted: (update: Existing) => void;
 }
 
+const todayStr = () => new Date().toISOString().split("T")[0];
+
+function formatDateLabel(dateStr: string) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+}
+
+function getWeekRange() {
+  const now = new Date();
+  const day = now.getDay(); // 0 Sun … 6 Sat
+  const diffToMon = (day === 0 ? -6 : 1 - day);
+  const mon = new Date(now); mon.setDate(now.getDate() + diffToMon);
+  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+  return {
+    start: mon.toISOString().split("T")[0],
+    end:   sun.toISOString().split("T")[0],
+  };
+}
+
+function weeklyMessage(posted: number, isNewSubmission: boolean) {
+  const target = 5;
+  const count = isNewSubmission ? Math.min(posted + 1, target) : posted;
+  const remaining = target - count;
+  if (count === 0) return { text: "No updates posted yet this week, let's get started! 💪", color: "var(--muted-foreground)" };
+  if (remaining <= 0) return { text: "All 5 updates posted this week, amazing work! 🌟", color: "var(--primary)" };
+  if (remaining === 1) return { text: `${count}/5 updates this week — just 1 more to go! 🔥`, color: "var(--primary)" };
+  return { text: `${count}/5 updates posted this week — keep it up!`, color: "var(--muted-foreground)" };
+}
+
 export function DailyUpdateModal({ userId, existing, onClose, onSubmitted }: Props) {
+  const [selectedDate, setSelectedDate] = useState(todayStr());
   const [today, setToday] = useState(existing?.today ?? "");
   const [tomorrow, setTomorrow] = useState(existing?.tomorrow ?? "");
   const [blockers, setBlockers] = useState(existing?.blockers ?? "");
   const [submitting, setSubmitting] = useState(false);
+  const [loadingDate, setLoadingDate] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [weeklyPosted, setWeeklyPosted] = useState<number | null>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const { start, end } = getWeekRange();
+    supabase
+      .from("daily_updates")
+      .select("date")
+      .eq("user_id", userId)
+      .gte("date", start)
+      .lte("date", end)
+      .then(({ data }) => setWeeklyPosted(data?.length ?? 0));
+  }, [userId]);
 
   const canSubmit = today.trim() !== "" && tomorrow.trim() !== "";
-  const dateStr = new Date().toISOString().split("T")[0];
-  const dateLabel = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+  const dateLabel = formatDateLabel(selectedDate);
+  const isToday = selectedDate === todayStr();
+
+  const handleDateChange = async (newDate: string) => {
+    setSelectedDate(newDate);
+    setLoadingDate(true);
+    setError(null);
+    const { data } = await supabase
+      .from("daily_updates")
+      .select("today, tomorrow, blockers")
+      .eq("user_id", userId)
+      .eq("date", newDate)
+      .maybeSingle();
+    setToday(data?.today ?? "");
+    setTomorrow(data?.tomorrow ?? "");
+    setBlockers(data?.blockers ?? "");
+    setLoadingDate(false);
+  };
 
   const handleSubmit = async () => {
     if (!canSubmit || submitting) return;
@@ -34,7 +94,7 @@ export function DailyUpdateModal({ userId, existing, onClose, onSubmitted }: Pro
     const { error: err } = await supabase
       .from("daily_updates")
       .upsert(
-        { user_id: userId, date: dateStr, today: today.trim(), tomorrow: tomorrow.trim(), blockers: blockers.trim() || null },
+        { user_id: userId, date: selectedDate, today: today.trim(), tomorrow: tomorrow.trim(), blockers: blockers.trim() || null },
         { onConflict: "user_id,date" },
       );
 
@@ -42,6 +102,9 @@ export function DailyUpdateModal({ userId, existing, onClose, onSubmitted }: Pro
     if (err) {
       setError("Something went wrong. Please try again.");
     } else {
+      // If this was a new post (not an edit), bump the weekly count
+      const wasNew = !existing && weeklyPosted !== null;
+      if (wasNew) setWeeklyPosted((n) => Math.min((n ?? 0) + 1, 5));
       onSubmitted({ today: today.trim(), tomorrow: tomorrow.trim(), blockers: blockers.trim() || null });
       onClose();
     }
@@ -60,13 +123,36 @@ export function DailyUpdateModal({ userId, existing, onClose, onSubmitted }: Pro
           className="flex items-center justify-between px-6 py-4 border-b"
           style={{ borderColor: "var(--sidebar-border)" }}
         >
-          <div>
+          <div className="flex-1 min-w-0">
             <h2 className="font-serif text-base font-semibold" style={{ color: "var(--foreground)" }}>
               Daily Update
             </h2>
-            <p className="text-[11px] mt-0.5" style={{ color: "var(--muted-foreground)" }}>
-              {dateLabel}
-            </p>
+            <button
+              type="button"
+              onClick={() => dateInputRef.current?.showPicker()}
+              className="flex items-center gap-1 mt-0.5 group"
+            >
+              <Calendar className="w-3 h-3" style={{ color: "var(--muted-foreground)" }} />
+              <span className="text-[11px] group-hover:underline" style={{ color: isToday ? "var(--muted-foreground)" : "var(--primary)" }}>
+                {isToday ? dateLabel : `${dateLabel} (past)`}
+              </span>
+            </button>
+            <input
+              ref={dateInputRef}
+              type="date"
+              value={selectedDate}
+              max={todayStr()}
+              onChange={(e) => e.target.value && handleDateChange(e.target.value)}
+              className="sr-only"
+            />
+            {weeklyPosted !== null && (() => {
+              const msg = weeklyMessage(weeklyPosted, false);
+              return (
+                <p className="text-[11px] mt-1 font-medium" style={{ color: msg.color }}>
+                  {msg.text}
+                </p>
+              );
+            })()}
           </div>
           <button type="button" onClick={onClose} className="p-1.5 rounded-lg" style={{ color: "var(--muted-foreground)" }}>
             <X className="w-4 h-4" />
@@ -118,6 +204,9 @@ export function DailyUpdateModal({ userId, existing, onClose, onSubmitted }: Pro
             />
           </div>
 
+          {loadingDate && (
+            <p className="text-[12px]" style={{ color: "var(--muted-foreground)" }}>Loading update for selected date…</p>
+          )}
           {error && (
             <p className="text-[12px]" style={{ color: "var(--destructive)" }}>{error}</p>
           )}

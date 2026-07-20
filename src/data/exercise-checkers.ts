@@ -107,10 +107,10 @@ const cf1c: Checker = (answer) => {
 
 const cf2b: Checker = (answer) => {
   const norm = answer.trim().replace(/\s+/g, " ");
-  const hasLog = /console\.log\s*\(\s*["']Hello World!["']\s*\)/.test(norm);
+  const hasLog = /console\.log\s*\(\s*["']hello world!["']\s*\)/i.test(norm);
   if (hasLog) return { correct: true, feedback: "Correct!" };
   if (norm.toLowerCase().includes("console.log"))
-    return { correct: false, feedback: 'Close — check the exact string: it should be "Hello World!" (capital H and W, with exclamation mark).' };
+    return { correct: false, feedback: 'Close — make sure the message is "Hello World!" with an exclamation mark.' };
   return { correct: false, feedback: 'Use console.log() to print the message.' };
 };
 
@@ -120,13 +120,13 @@ const cf2b: Checker = (answer) => {
 const cf2c: Checker = (answer) => {
   const norm = answer.trim().replace(/\s+/g, " ");
   const hasScript = /<script[\s>]/i.test(norm) && /<\/script>/i.test(norm);
-  const hasLog = /console\.log\s*\(\s*["']Hello World!["']\s*\)/.test(norm);
+  const hasLog = /console\.log\s*\(\s*["']hello world!["']\s*\)/i.test(norm);
   if (hasScript && hasLog) return { correct: true, feedback: "Correct!" };
   if (!hasScript)
     return { correct: false, feedback: 'Wrap your code in a <script>...</script> tag.' };
   if (!hasLog)
     return { correct: false, feedback: 'Add console.log("Hello World!") inside your script tag.' };
-  return { correct: false, feedback: 'Check that the message is exactly "Hello World!".' };
+  return { correct: false, feedback: 'Check that the message includes "Hello World!" with an exclamation mark.' };
 };
 
 // ── cf3-c: Declaration and assignments of variables ──────────────────────────

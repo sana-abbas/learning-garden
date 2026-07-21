@@ -378,7 +378,7 @@ These are collections used to organize and store values, which often have a rela
 > 👉 For example, a dresser with 4 drawers will have the indexes 0, 1, 2 and 3:
 > **array[4] -> array[0], array[1], array[2], array[3]**
 
-![Array diagram](/src/assets/array.png)
+![Array diagram](/assets/array.png)
 
 Let's assume you keep your clothes in this dresser. This is how you would declare an array and access each clothing item via its index:
 
@@ -449,15 +449,15 @@ This process of adding or removing a value from the top is called **LIFO** (**L*
 
 > 👉 Example: Imagine there's a pile ("stack") of plates in the kitchen and it's your turn to do the dishes. The pile in front of you is made up of 3 dirty plates:
 
-![array[3] -> array[0], array[1], array[2]](/src/assets/stack-1.png)
+![array[3] -> array[0], array[1], array[2]](/assets/stack-1.png)
 
 Just as you want to start washing them, someone brings you another dirty plate, which you add to the pile (plate 3):
 
-![array[4] -> array[0], array[1], array[2], array[3]](/src/assets/stack-2.png)
+![array[4] -> array[0], array[1], array[2], array[3]](/assets/stack-2.png)
 
 Now, logically you've put the plate *on top* of the pile. Also logically, once you start washing the plates, you'll first take the plate on top of the pile and not from the middle or the bottom of the pile, as the whole stack will fall otherwise:
 
-![array[3] -> array[0], array[1], array[2]](/src/assets/stack-3.png)
+![array[3] -> array[0], array[1], array[2]](/assets/stack-3.png)
 
 Let's simulate this example in Javascript:
 
@@ -507,15 +507,15 @@ Simulate also visiting a 6th website: http://www.my.website.
 > 👉 For example, imagine a line ("queue") at a supermarket checkout:
 > There are three people in that line:
 
-![array[3] -> array[0], array[1], array[2]](/src/assets/queue-1.png)
+![array[3] -> array[0], array[1], array[2]](/assets/queue-1.png)
 
 Then comes a fourth person, who joins at the end of the line:
 
-![array[4] -> array[0], array[1], array[2], array[3]](/src/assets/queue-2.png)
+![array[4] -> array[0], array[1], array[2], array[3]](/assets/queue-2.png)
 
 The person at the front of the line, is the first who gets to pay and therefore leaves the queue. So now, the queue shifts, with the next person in line moving up:
 
-![array[3] -> array[0], array[1], array[2]](/src/assets/queue-3.png)
+![array[3] -> array[0], array[1], array[2]](/assets/queue-3.png)
 
 Let's simulate this example in Javascript:
 
@@ -1684,11 +1684,11 @@ This is why, of course, you take orders from clients, submit them to the kitchen
 
 Let's translate this scenario into a simplified sequence diagram:
 
-![Synchronous calls diagram](/src/assets/sync-diagram.png)
+![Synchronous calls diagram](/assets/sync-diagram.png)
 
 ➡️ This is what the scenario would look like in synchronous calls.
 
-![Asynchronous calls diagram](/src/assets/async-diagram.png)
+![Asynchronous calls diagram](/assets/async-diagram.png)
 
 ➡️ This is what the scenario would look like in asynchronous calls.
 
@@ -2169,7 +2169,7 @@ Here you can find the shortcuts you need to open the console view depending on w
 | **Safari (must enable first)** | — | ⌘ + Option + C | Develop → Show JavaScript Console |
 | **Opera** | Ctrl + Shift + I (then select Console tab) | ⌘ + Option + I (then select Console tab) | Menu → Developer → Developer Tools |
 
-![Example of what the console can look like in Chrome on macOS.](/src/assets/console.png)
+![Example of what the console can look like in Chrome on macOS.](/assets/console.png)
 
 *Example of what the console can look like in Chrome on macOS.*
 `,

@@ -175,22 +175,26 @@ function CodingFundamentals() {
           .eq("user_id", session.user.id)
           .maybeSingle();
         const existingSlug = (member as any)?.cohorts?.slug;
+        // Only hard-redirect if we can positively confirm full-stack membership
         if (existingSlug === "full-stack") { navigate({ to: "/" }); return; }
-        // New student — check invite list by email
+        // New student — auto-enroll from invite list
         if (!member && session.user.email) {
           const { data: invite } = await supabase
             .from("cohort_invites")
             .select("cohort_id, cohorts(slug)")
             .eq("email", session.user.email.toLowerCase())
             .maybeSingle();
-          if (invite && (invite as any)?.cohorts?.slug === "coding-fundamentals") {
-            await supabase.from("cohort_members").insert({ user_id: session.user.id, cohort_id: (invite as any).cohort_id });
-            // CF student confirmed — stay on /cf
-          } else {
-            // Not in CF invite list → send to full-stack
+          const inviteSlug = (invite as any)?.cohorts?.slug;
+          if (inviteSlug === "full-stack") {
             navigate({ to: "/" });
             return;
           }
+          if (invite && inviteSlug === "coding-fundamentals") {
+            await supabase.from("cohort_members").insert({ user_id: session.user.id, cohort_id: (invite as any).cohort_id });
+          }
+          // If invite not found or slug unrecognised, allow through — admin may have
+          // added them directly to cohort_members by user_id already, or invite table
+          // is being set up. Don't punish the participant for a DB gap.
         }
       }
       // Save profile on login

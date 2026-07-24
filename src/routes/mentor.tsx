@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Leaf, LogOut, Flame, ChevronDown, ExternalLink,
   MessageCircle, CheckCircle2, Circle, X, Users, TrendingUp, Clock,
@@ -1131,55 +1131,71 @@ function MentorDashboard() {
                           const isExpanded = expandedAssignmentId === r.rowKey;
                           const cohortLabel = r.cohort === "coding-fundamentals" ? "Coding Fundamentals" : "Full Stack";
                           const dateStr = r.submittedAt ? new Date(r.submittedAt).toLocaleDateString() : "—";
+                          const hasMore = !!(r.paste || r.link || r.link2);
+                          const rowBg = i % 2 === 0 ? "transparent" : "var(--sidebar)";
                           return (
-                            <tr
-                              key={r.rowKey}
-                              style={{
-                                background: i % 2 === 0 ? "transparent" : "var(--sidebar)",
-                                borderBottom: "1px solid var(--sidebar-border)",
-                              }}
-                            >
-                              <td className="px-4 py-3 text-[12px] whitespace-nowrap" style={{ color: "var(--muted-foreground)" }}>{dateStr}</td>
-                              <td className="px-4 py-3 text-[13px] font-medium whitespace-nowrap" style={{ color: "var(--foreground)" }}>{r.participantName}</td>
-                              <td className="px-4 py-3 text-[12px] whitespace-nowrap" style={{ color: "var(--muted-foreground)" }}>{cohortLabel}</td>
-                              <td className="px-4 py-3 text-[12px] whitespace-nowrap" style={{ color: "var(--foreground)" }}>{r.chapter}</td>
-                              <td className="px-4 py-3 text-[12px] max-w-[180px] truncate" style={{ color: "var(--foreground)" }}>{r.exercise}</td>
-                              <td className="px-4 py-3 max-w-xs">
-                                {r.paste ? (
-                                  <div>
-                                    <p
-                                      className={`text-[12px] leading-relaxed whitespace-pre-wrap ${isExpanded ? "" : "line-clamp-2"}`}
-                                      style={{ color: "var(--foreground)" }}
-                                    >
+                            <React.Fragment key={r.rowKey}>
+                              <tr
+                                style={{
+                                  background: rowBg,
+                                  borderBottom: isExpanded ? "none" : "1px solid var(--sidebar-border)",
+                                }}
+                              >
+                                <td className="px-4 py-3 text-[12px] whitespace-nowrap" style={{ color: "var(--muted-foreground)" }}>{dateStr}</td>
+                                <td className="px-4 py-3 text-[13px] font-medium whitespace-nowrap" style={{ color: "var(--foreground)" }}>{r.participantName}</td>
+                                <td className="px-4 py-3 text-[12px] whitespace-nowrap" style={{ color: "var(--muted-foreground)" }}>{cohortLabel}</td>
+                                <td className="px-4 py-3 text-[12px] whitespace-nowrap" style={{ color: "var(--foreground)" }}>{r.chapter}</td>
+                                <td className="px-4 py-3 text-[12px] max-w-[180px] truncate" style={{ color: "var(--foreground)" }}>{r.exercise}</td>
+                                <td className="px-4 py-3 max-w-xs">
+                                  {r.paste ? (
+                                    <p className="text-[12px] leading-relaxed whitespace-pre-wrap line-clamp-2" style={{ color: "var(--foreground)" }}>
                                       {r.paste}
                                     </p>
-                                    {r.paste.length > 120 && (
-                                      <button
-                                        type="button"
-                                        onClick={() => setExpandedAssignmentId(isExpanded ? null : r.rowKey)}
-                                        className="text-[11px] mt-1"
-                                        style={{ color: "var(--primary)" }}
-                                      >
-                                        {isExpanded ? "Show less" : "Show more"}
-                                      </button>
-                                    )}
-                                    {(r.link || r.link2) && (
-                                      <div className="mt-1.5 flex flex-col gap-1">
-                                        {r.link && <a href={r.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[11px]" style={{ color: "var(--primary)" }}><LinkIcon className="w-3 h-3" /><span className="truncate max-w-[160px]">{r.link}</span></a>}
-                                        {r.link2 && <a href={r.link2} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[11px]" style={{ color: "var(--primary)" }}><LinkIcon className="w-3 h-3" /><span className="truncate max-w-[160px]">{r.link2}</span></a>}
+                                  ) : (r.link || r.link2) ? (
+                                    <div className="flex flex-col gap-1">
+                                      {r.link && <a href={r.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[11px]" style={{ color: "var(--primary)" }}><LinkIcon className="w-3 h-3" /><span className="truncate max-w-[160px]">{r.link}</span></a>}
+                                      {r.link2 && <a href={r.link2} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[11px]" style={{ color: "var(--primary)" }}><LinkIcon className="w-3 h-3" /><span className="truncate max-w-[160px]">{r.link2}</span></a>}
+                                    </div>
+                                  ) : (
+                                    <span className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>—</span>
+                                  )}
+                                  {hasMore && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setExpandedAssignmentId(isExpanded ? null : r.rowKey)}
+                                      className="text-[11px] mt-1"
+                                      style={{ color: "var(--primary)" }}
+                                    >
+                                      {isExpanded ? "Show less" : "Show more"}
+                                    </button>
+                                  )}
+                                </td>
+                              </tr>
+                              {isExpanded && (
+                                <tr key={`${r.rowKey}__expanded`} style={{ background: rowBg, borderBottom: "1px solid var(--sidebar-border)" }}>
+                                  <td colSpan={6} className="px-4 pb-4 pt-0">
+                                    <div className="rounded-xl p-4 space-y-3" style={{ background: "var(--background)", border: "1px solid var(--sidebar-border)" }}>
+                                      <div className="flex items-center gap-3 flex-wrap">
+                                        <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>{r.participantName}</span>
+                                        <span className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>·</span>
+                                        <span className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>{r.exercise}</span>
+                                        <span className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>·</span>
+                                        <span className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>{dateStr}</span>
                                       </div>
-                                    )}
-                                  </div>
-                                ) : (r.link || r.link2) ? (
-                                  <div className="flex flex-col gap-1">
-                                    {r.link && <a href={r.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[11px]" style={{ color: "var(--primary)" }}><LinkIcon className="w-3 h-3" /><span className="truncate max-w-[160px]">{r.link}</span></a>}
-                                    {r.link2 && <a href={r.link2} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[11px]" style={{ color: "var(--primary)" }}><LinkIcon className="w-3 h-3" /><span className="truncate max-w-[160px]">{r.link2}</span></a>}
-                                  </div>
-                                ) : (
-                                  <span className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>—</span>
-                                )}
-                              </td>
-                            </tr>
+                                      {r.paste && (
+                                        <p className="text-[13px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--foreground)" }}>{r.paste}</p>
+                                      )}
+                                      {(r.link || r.link2) && (
+                                        <div className="flex flex-col gap-1.5">
+                                          {r.link && <a href={r.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--primary)" }}><LinkIcon className="w-3.5 h-3.5" />{r.link}</a>}
+                                          {r.link2 && <a href={r.link2} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--primary)" }}><LinkIcon className="w-3.5 h-3.5" />{r.link2}</a>}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
                           );
                         })}
                       </tbody>

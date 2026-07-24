@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   ClipboardList,
+  Users,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -113,6 +114,20 @@ function CodingFundamentals() {
 
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+
+  const [sidebarTab, setSidebarTab] = useState<"curriculum" | "community">("curriculum");
+  type CommunityMember = { user_id: string; firstName: string; chaptersCompleted: number; isMe: boolean };
+  type CommunityUpdate = { user_id: string; firstName: string; date: string; today: string; tomorrow: string; blockers: string | null };
+  type Reaction = { update_user_id: string; update_date: string; reactor_user_id: string; emoji: string };
+  type CommunityComment = { id: string; update_user_id: string; update_date: string; commenter_user_id: string; commenter_name: string; text: string; created_at: string };
+  const [communityMembers, setCommunityMembers] = useState<CommunityMember[] | null>(null);
+  const [communityUpdates, setCommunityUpdates] = useState<CommunityUpdate[] | null>(null);
+  const [communityLoading, setCommunityLoading] = useState(false);
+  const [reactions, setReactions] = useState<Reaction[]>([]);
+  const [communityComments, setCommunityComments] = useState<CommunityComment[]>([]);
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
+  const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
+  const [submittingComment, setSubmittingComment] = useState<string | null>(null);
   const completionShownRef = useRef(false);
 
   const [savedNoteId, setSavedNoteId] = useState<string | null>(null);
@@ -186,10 +201,12 @@ function CodingFundamentals() {
             .maybeSingle();
           const inviteSlug = (invite as any)?.cohorts?.slug;
           if (inviteSlug === "full-stack") {
+            // Explicitly invited to full-stack → redirect
             navigate({ to: "/" });
             return;
           }
           if (invite && inviteSlug === "coding-fundamentals") {
+            // Auto-enroll CF student
             await supabase.from("cohort_members").insert({ user_id: session.user.id, cohort_id: (invite as any).cohort_id });
           }
           // If invite not found or slug unrecognised, allow through — admin may have
@@ -245,6 +262,122 @@ function CodingFundamentals() {
       setShowWelcomeModal(true);
     }
   }, [onboarded, progressReady]);
+
+  const getFirstName = (displayName: string | null, email: string | null) =>
+    displayName?.split(" ")[0] || email?.split("@")[0] || "Someone";
+
+  const computeChapters = (checked: Record<string, boolean>) =>
+    CF_CURRICULUM_STEPS.filter((s) => {
+      const step = CF_STEPS.find((x) => x.id === s.id);
+      if (!step) return false;
+      return step.subtasks?.length ? step.subtasks.every((sub) => checked[sub.id]) : !!checked[step.id];
+    }).length;
+
+  const loadCommunity = async () => {
+    if (communityMembers !== null || communityLoading) return;
+    setCommunityLoading(true);
+    // Get CF cohort ID then members
+    const { data: cohortRow } = await supabase
+      .from("cohorts")
+      .select("id")
+      .eq("slug", "coding-fundamentals")
+      .maybeSingle();
+    if (!cohortRow) { setCommunityMembers([]); setCommunityLoading(false); return; }
+    const { data: memberRows } = await supabase
+      .from("cohort_members")
+      .select("user_id")
+      .eq("cohort_id", cohortRow.id);
+    const cfUserIds = (memberRows ?? []).map((r: any) => r.user_id as string);
+
+    if (cfUserIds.length === 0) { setCommunityMembers([]); setCommunityLoading(false); return; }
+
+    // Fetch progress for all CF members
+    const { data: progressRows } = await supabase
+      .from("user_progress")
+      .select("user_id, display_name, email, checked")
+      .in("user_id", cfUserIds);
+
+    const members: CommunityMember[] = (progressRows ?? []).map((p: any) => ({
+      user_id: p.user_id,
+      firstName: getFirstName(p.display_name, p.email),
+      chaptersCompleted: computeChapters((p.checked as Record<string, boolean>) ?? {}),
+      isMe: p.user_id === userId,
+    })).sort((a: CommunityMember, b: CommunityMember) => b.chaptersCompleted - a.chaptersCompleted);
+
+    // Fetch recent daily updates for CF members
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const cutoff = sevenDaysAgo.toISOString().split("T")[0];
+
+    const { data: updateRows } = await supabase
+      .from("daily_updates")
+      .select("user_id, date, today, tomorrow, blockers, display_name")
+      .in("user_id", cfUserIds)
+      .gte("date", cutoff)
+      .order("date", { ascending: false })
+      .limit(50);
+
+const nameMap = Object.fromEntries((progressRows ?? []).map((p: any) => [p.user_id, getFirstName(p.display_name, p.email)]));
+    const updates: CommunityUpdate[] = (updateRows ?? []).map((u: any) => ({
+      ...u,
+      firstName: u.display_name?.split(" ")[0] || nameMap[u.user_id] || "Someone",
+    }));
+
+    // Fetch reactions and comments for these updates
+    const { data: reactionRows } = await supabase
+      .from("update_reactions")
+      .select("update_user_id, update_date, reactor_user_id, emoji")
+      .in("update_user_id", cfUserIds)
+      .gte("update_date", cutoff);
+
+    const { data: commentRows } = await supabase
+      .from("update_comments")
+      .select("id, update_user_id, update_date, commenter_user_id, commenter_name, text, created_at")
+      .in("update_user_id", cfUserIds)
+      .gte("update_date", cutoff)
+      .order("created_at", { ascending: true });
+
+    setCommunityMembers(members);
+    setCommunityUpdates(updates);
+    setReactions((reactionRows ?? []) as Reaction[]);
+    setCommunityComments((commentRows ?? []) as CommunityComment[]);
+    setCommunityLoading(false);
+  };
+
+  const toggleReaction = async (updateUserId: string, updateDate: string, emoji: string) => {
+    if (!userId) return;
+    const isReacted = reactions.some(r =>
+      r.update_user_id === updateUserId && r.update_date === updateDate && r.emoji === emoji && r.reactor_user_id === userId
+    );
+    if (isReacted) {
+      setReactions(prev => prev.filter(r => !(r.update_user_id === updateUserId && r.update_date === updateDate && r.emoji === emoji && r.reactor_user_id === userId)));
+      await supabase.from("update_reactions").delete()
+        .eq("update_user_id", updateUserId).eq("update_date", updateDate).eq("reactor_user_id", userId).eq("emoji", emoji);
+    } else {
+      setReactions(prev => [...prev, { update_user_id: updateUserId, update_date: updateDate, reactor_user_id: userId, emoji }]);
+      await supabase.from("update_reactions").insert({ update_user_id: updateUserId, update_date: updateDate, reactor_user_id: userId, emoji });
+    }
+  };
+
+  const submitComment = async (updateUserId: string, updateDate: string) => {
+    const key = `${updateUserId}_${updateDate}`;
+    const text = commentDrafts[key]?.trim();
+    if (!text || !userId) return;
+    setSubmittingComment(key);
+    const firstName = communityMembers?.find(m => m.user_id === userId)?.firstName || displayName.split(" ")[0] || "Someone";
+    const { data, error } = await supabase.from("update_comments").insert({
+      update_user_id: updateUserId,
+      update_date: updateDate,
+      commenter_user_id: userId,
+      commenter_name: firstName,
+      text,
+    }).select().single();
+    if (!error && data) {
+      setCommunityComments(prev => [...prev, data as CommunityComment]);
+      setCommentDrafts(prev => ({ ...prev, [key]: "" }));
+    }
+    setSubmittingComment(null);
+  };
 
   const completion = useMemo(() => {
     const map: Record<string, boolean> = {};
@@ -429,7 +562,7 @@ function CodingFundamentals() {
         bg-[color:var(--sidebar)] border-r border-[color:var(--sidebar-border)]
         transition-transform duration-300 ease-in-out
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-        lg:static lg:w-[420px] lg:translate-x-0 lg:shrink-0
+        ${sidebarTab === "community" ? "lg:hidden" : "lg:static lg:w-[420px] lg:translate-x-0 lg:shrink-0"}
       `}>
         <div className="p-6 border-b border-[color:var(--sidebar-border)] shrink-0 bg-[color:var(--sidebar)] z-10">
           <div className="flex items-center gap-3">
@@ -498,7 +631,7 @@ function CodingFundamentals() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-1.5">
-          {CF_STEPS.map((step, i) => {
+          {sidebarTab === "curriculum" && CF_STEPS.map((step, i) => {
             const isChecked = completion[step.id];
             const Icon = step.icon;
             const hasSubs = !!(step.subtasks && step.subtasks.length);
@@ -743,18 +876,38 @@ function CodingFundamentals() {
             <Menu className="w-5 h-5" />
           </button>
 
-          <div className="flex-1 min-w-0">
-            <h2 className="font-serif text-base lg:text-xl tracking-tight text-[color:var(--foreground)] leading-tight">
-              Code. Learn. Bloom.
-            </h2>
-            <p className="hidden lg:block text-[11px] text-[color:var(--muted-foreground)] italic mt-0.5">
-              {!rootsActive && "An empty plot, full of promise."}
-              {rootsActive && !sproutActive && "Roots, quiet and luminous, take hold."}
-              {sproutActive && !stemActive && "A sprout greets the morning sun."}
-              {stemActive && !flowerActive && "Leaves unfurl toward the sky."}
-              {flowerActive && !exoticActive && "First bloom — vivid and whole."}
-              {exoticActive && "A secret garden, fully alive."}
-            </p>
+          <div className="flex-1 min-w-0 flex items-center gap-3">
+            <div className="min-w-0">
+              <h2 className="font-serif text-base lg:text-xl tracking-tight text-[color:var(--foreground)] leading-tight">
+                Code. Learn. Bloom.
+              </h2>
+              <p className="hidden lg:block text-[11px] text-[color:var(--muted-foreground)] italic mt-0.5">
+                {!rootsActive && "An empty plot, full of promise."}
+                {rootsActive && !sproutActive && "Roots, quiet and luminous, take hold."}
+                {sproutActive && !stemActive && "A sprout greets the morning sun."}
+                {stemActive && !flowerActive && "Leaves unfurl toward the sky."}
+                {flowerActive && !exoticActive && "First bloom — vivid and whole."}
+                {exoticActive && "A secret garden, fully alive."}
+              </p>
+            </div>
+            {/* Curriculum / Community toggle */}
+            <div className="hidden lg:flex shrink-0 rounded-xl overflow-hidden border border-[color:var(--border)]" style={{ background: "var(--sidebar)" }}>
+              {(["curriculum", "community"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => { setSidebarTab(tab); if (tab === "community") loadCommunity(); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-all"
+                  style={{
+                    background: sidebarTab === tab ? "var(--primary)" : "transparent",
+                    color: sidebarTab === tab ? "white" : "var(--muted-foreground)",
+                  }}
+                >
+                  {tab === "curriculum" ? <Leaf className="w-3 h-3" /> : <Users className="w-3 h-3" />}
+                  {tab}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
@@ -847,17 +1000,140 @@ function CodingFundamentals() {
           </div>
         </div>
 
-        {/* Garden */}
-        <div className="flex-1 min-h-0">
-          <BotanicalGarden
-            rootsActive={rootsActive}
-            sproutActive={sproutActive}
-            stemActive={stemActive}
-            flowerActive={flowerActive}
-            exoticActive={exoticActive}
-            isDark={theme === "dark"}
-            bloomBurst={bloomBurst}
-          />
+        {/* Garden / Community */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          {sidebarTab === "community" ? (
+            <div className="h-full overflow-y-auto p-6">
+              {communityLoading ? (
+                <div className="flex items-center justify-center h-40 text-sm" style={{ color: "var(--muted-foreground)" }}>
+                  Loading community…
+                </div>
+              ) : (
+                <div className="max-w-2xl mx-auto space-y-4">
+                  {(communityUpdates ?? []).length === 0 && (
+                    <p className="text-sm text-center py-12" style={{ color: "var(--muted-foreground)" }}>No updates in the last 7 days.</p>
+                  )}
+                  {(communityUpdates ?? []).map((u, i) => {
+                    const [y, mo, d] = u.date.split("-").map(Number);
+                    const dateLabel = new Date(y, mo - 1, d).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+                    const key = `${u.user_id}_${u.date}`;
+                    const cardReactions = reactions.filter(r => r.update_user_id === u.user_id && r.update_date === u.date);
+                    const cardComments = communityComments.filter(c => c.update_user_id === u.user_id && c.update_date === u.date);
+                    const isExpanded = expandedComments.has(key);
+                    const EMOJIS = ["❤️", "🔥", "💪", "🙌"];
+
+                    return (
+                      <div
+                        key={i}
+                        className="rounded-2xl overflow-hidden"
+                        style={{ background: "var(--sidebar)", border: "1px solid var(--border)" }}
+                      >
+                        {/* Update body */}
+                        <div className="px-4 pt-4 pb-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>{u.firstName}</span>
+                            <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>{dateLabel}</span>
+                          </div>
+                          <p className="text-sm leading-relaxed" style={{ color: "var(--foreground)" }}>
+                            <span className="text-[10px] uppercase tracking-wide font-semibold mr-1.5" style={{ color: "var(--muted-foreground)" }}>Today</span>{u.today}
+                          </p>
+                          <p className="text-sm leading-relaxed" style={{ color: "var(--foreground)" }}>
+                            <span className="text-[10px] uppercase tracking-wide font-semibold mr-1.5" style={{ color: "var(--muted-foreground)" }}>Tomorrow</span>{u.tomorrow}
+                          </p>
+                          {u.blockers && (
+                            <p className="text-sm leading-relaxed" style={{ color: "oklch(0.55 0.15 50)" }}>
+                              <span className="text-[10px] uppercase tracking-wide font-semibold mr-1.5">Blocker</span>{u.blockers}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Reactions + Reply bar */}
+                        <div className="flex items-center gap-1 px-3 py-2 border-t" style={{ borderColor: "var(--border)" }}>
+                          {EMOJIS.map(emoji => {
+                            const count = cardReactions.filter(r => r.emoji === emoji).length;
+                            const iMine = cardReactions.some(r => r.emoji === emoji && r.reactor_user_id === userId);
+                            return (
+                              <button
+                                key={emoji}
+                                type="button"
+                                onClick={() => toggleReaction(u.user_id, u.date, emoji)}
+                                className="flex items-center gap-1 rounded-full px-2 py-1 text-[12px] transition-all"
+                                style={{
+                                  background: iMine ? "oklch(0.91 0.07 145 / 0.25)" : "transparent",
+                                  border: iMine ? "1px solid oklch(0.55 0.13 145 / 0.3)" : "1px solid transparent",
+                                  color: "var(--foreground)",
+                                }}
+                              >
+                                {emoji}{count > 0 && <span className="text-[11px] font-medium" style={{ color: "var(--muted-foreground)" }}>{count}</span>}
+                              </button>
+                            );
+                          })}
+                          <button
+                            type="button"
+                            onClick={() => setExpandedComments(prev => {
+                              const next = new Set(prev);
+                              next.has(key) ? next.delete(key) : next.add(key);
+                              return next;
+                            })}
+                            className="ml-auto text-[11px] font-medium px-2 py-1 rounded-full transition-colors"
+                            style={{ color: isExpanded ? "var(--primary)" : "var(--muted-foreground)" }}
+                          >
+                            {isExpanded ? "Hide" : `Reply${cardComments.length > 0 ? ` (${cardComments.length})` : ""}`}
+                          </button>
+                        </div>
+
+                        {/* Comments section */}
+                        {isExpanded && (
+                          <div className="px-4 pb-3 pt-2 border-t space-y-3" style={{ borderColor: "var(--border)", background: theme === "dark" ? "oklch(0.18 0.02 65 / 0.5)" : "oklch(0.97 0.01 85)" }}>
+                            {cardComments.length > 0 && (
+                              <div className="space-y-2">
+                                {cardComments.map(c => (
+                                  <div key={c.id} className="flex gap-2">
+                                    <span className="text-xs font-semibold shrink-0 mt-0.5" style={{ color: "var(--primary)" }}>{c.commenter_name}</span>
+                                    <span className="text-xs leading-relaxed" style={{ color: "var(--foreground)" }}>{c.text}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                placeholder="Write a reply…"
+                                value={commentDrafts[key] ?? ""}
+                                onChange={e => setCommentDrafts(prev => ({ ...prev, [key]: e.target.value }))}
+                                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitComment(u.user_id, u.date); } }}
+                                className="flex-1 text-xs px-3 py-1.5 rounded-xl border focus:outline-none focus:ring-2"
+                                style={{ background: "var(--background)", borderColor: "var(--border)", color: "var(--foreground)" }}
+                              />
+                              <button
+                                type="button"
+                                disabled={!commentDrafts[key]?.trim() || submittingComment === key}
+                                onClick={() => submitComment(u.user_id, u.date)}
+                                className="px-3 py-1.5 rounded-xl text-xs font-medium text-white transition-opacity disabled:opacity-40"
+                                style={{ background: "var(--primary)" }}
+                              >
+                                {submittingComment === key ? "…" : "Send"}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : (
+            <BotanicalGarden
+              rootsActive={rootsActive}
+              sproutActive={sproutActive}
+              stemActive={stemActive}
+              flowerActive={flowerActive}
+              exoticActive={exoticActive}
+              isDark={theme === "dark"}
+              bloomBurst={bloomBurst}
+            />
+          )}
         </div>
       </main>
 
@@ -892,6 +1168,7 @@ function CodingFundamentals() {
       {showUpdateModal && userId && (
         <DailyUpdateModal
           userId={userId}
+          displayName={displayName}
           existing={todayUpdate}
           onClose={() => setShowUpdateModal(false)}
           onSubmitted={(update) => setTodayUpdate(update)}

@@ -10,6 +10,7 @@ interface Existing {
 
 interface Props {
   userId: string;
+  displayName?: string;
   existing?: Existing | null;
   onClose: () => void;
   onSubmitted: (update: Existing) => void;
@@ -44,7 +45,7 @@ function weeklyMessage(posted: number, isNewSubmission: boolean) {
   return { text: `${count}/5 updates posted this week — keep it up!`, color: "var(--muted-foreground)" };
 }
 
-export function DailyUpdateModal({ userId, existing, onClose, onSubmitted }: Props) {
+export function DailyUpdateModal({ userId, displayName, existing, onClose, onSubmitted }: Props) {
   const [selectedDate, setSelectedDate] = useState(todayStr());
   const [today, setToday] = useState(existing?.today ?? "");
   const [tomorrow, setTomorrow] = useState(existing?.tomorrow ?? "");
@@ -94,7 +95,7 @@ export function DailyUpdateModal({ userId, existing, onClose, onSubmitted }: Pro
     const { error: err } = await supabase
       .from("daily_updates")
       .upsert(
-        { user_id: userId, date: selectedDate, today: today.trim(), tomorrow: tomorrow.trim(), blockers: blockers.trim() || null },
+        { user_id: userId, date: selectedDate, today: today.trim(), tomorrow: tomorrow.trim(), blockers: blockers.trim() || null, display_name: displayName ?? null },
         { onConflict: "user_id,date" },
       );
 

@@ -128,6 +128,9 @@ function CodingFundamentals() {
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
   const [submittingComment, setSubmittingComment] = useState<string | null>(null);
+  const [communityFilterDate, setCommunityFilterDate] = useState<string>("");
+  const [communityPage, setCommunityPage] = useState(0);
+  const COMMUNITY_PAGE_SIZE = 10;
   const completionShownRef = useRef(false);
 
   const [savedNoteId, setSavedNoteId] = useState<string | null>(null);
@@ -1010,10 +1013,48 @@ const nameMap = Object.fromEntries((progressRows ?? []).map((p: any) => [p.user_
                 </div>
               ) : (
                 <div className="max-w-2xl mx-auto space-y-4">
-                  {(communityUpdates ?? []).length === 0 && (
-                    <p className="text-sm text-center py-12" style={{ color: "var(--muted-foreground)" }}>No updates in the last 7 days.</p>
-                  )}
-                  {(communityUpdates ?? []).map((u, i) => {
+                  {/* Filter toolbar */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center gap-2 rounded-xl px-3 py-1.5" style={{ background: "var(--sidebar)", border: "1px solid var(--border)" }}>
+                      <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Date</span>
+                      <input
+                        type="date"
+                        value={communityFilterDate}
+                        onChange={e => { setCommunityFilterDate(e.target.value); setCommunityPage(0); }}
+                        className="text-xs bg-transparent focus:outline-none"
+                        style={{ color: communityFilterDate ? "var(--foreground)" : "var(--muted-foreground)" }}
+                      />
+                    </div>
+                    {communityFilterDate && (
+                      <button
+                        type="button"
+                        onClick={() => { setCommunityFilterDate(""); setCommunityPage(0); }}
+                        className="text-[11px] font-medium px-3 py-1.5 rounded-xl"
+                        style={{ background: "var(--sidebar)", border: "1px solid var(--border)", color: "var(--muted-foreground)" }}
+                      >
+                        Clear filter
+                      </button>
+                    )}
+                    <span className="ml-auto text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+                      {(() => {
+                        const filtered = (communityUpdates ?? []).filter(u => !communityFilterDate || u.date === communityFilterDate);
+                        return `${filtered.length} update${filtered.length !== 1 ? "s" : ""}`;
+                      })()}
+                    </span>
+                  </div>
+
+                  {(() => {
+                    const filtered = (communityUpdates ?? []).filter(u => !communityFilterDate || u.date === communityFilterDate);
+                    const totalPages = Math.ceil(filtered.length / COMMUNITY_PAGE_SIZE);
+                    const paged = filtered.slice(communityPage * COMMUNITY_PAGE_SIZE, (communityPage + 1) * COMMUNITY_PAGE_SIZE);
+                    return (
+                      <>
+                        {filtered.length === 0 && (
+                          <p className="text-sm text-center py-12" style={{ color: "var(--muted-foreground)" }}>
+                            {communityFilterDate ? "No updates for this date." : "No updates in the last 7 days."}
+                          </p>
+                        )}
+                        {paged.map((u, i) => {
                     const [y, mo, d] = u.date.split("-").map(Number);
                     const dateLabel = new Date(y, mo - 1, d).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
                     const key = `${u.user_id}_${u.date}`;
@@ -1119,7 +1160,35 @@ const nameMap = Object.fromEntries((progressRows ?? []).map((p: any) => [p.user_
                         )}
                       </div>
                     );
-                  })}
+                        })}
+                        {totalPages > 1 && (
+                          <div className="flex items-center justify-center gap-3 pt-2 pb-4">
+                            <button
+                              type="button"
+                              disabled={communityPage === 0}
+                              onClick={() => setCommunityPage(p => p - 1)}
+                              className="px-4 py-1.5 rounded-xl text-xs font-medium transition-opacity disabled:opacity-30"
+                              style={{ background: "var(--sidebar)", border: "1px solid var(--border)", color: "var(--foreground)" }}
+                            >
+                              ← Prev
+                            </button>
+                            <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+                              Page {communityPage + 1} of {totalPages}
+                            </span>
+                            <button
+                              type="button"
+                              disabled={communityPage >= totalPages - 1}
+                              onClick={() => setCommunityPage(p => p + 1)}
+                              className="px-4 py-1.5 rounded-xl text-xs font-medium transition-opacity disabled:opacity-30"
+                              style={{ background: "var(--sidebar)", border: "1px solid var(--border)", color: "var(--foreground)" }}
+                            >
+                              Next →
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               )}
             </div>

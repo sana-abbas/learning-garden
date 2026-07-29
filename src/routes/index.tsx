@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Leaf,
@@ -16,6 +16,7 @@ import {
   Menu,
   X,
   ClipboardList,
+  Users,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -213,7 +214,24 @@ function Index() {
   };
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarTab, setSidebarTab] = useState<"curriculum" | "community">("curriculum");
   const [bloomBurst, setBloomBurst] = useState(false);
+
+  type FsCommunityMember = { user_id: string; firstName: string };
+  type FsCommunityUpdate = { user_id: string; firstName: string; date: string; today: string; tomorrow: string; blockers: string | null };
+  type FsReaction = { update_user_id: string; update_date: string; reactor_user_id: string; emoji: string };
+  type FsComment = { id: string; update_user_id: string; update_date: string; commenter_user_id: string; commenter_name: string; text: string; created_at: string };
+  const [fsMembers, setFsMembers] = useState<FsCommunityMember[] | null>(null);
+  const [fsUpdates, setFsUpdates] = useState<FsCommunityUpdate[] | null>(null);
+  const [fsLoading, setFsLoading] = useState(false);
+  const [fsReactions, setFsReactions] = useState<FsReaction[]>([]);
+  const [fsComments, setFsComments] = useState<FsComment[]>([]);
+  const [fsExpandedComments, setFsExpandedComments] = useState<Set<string>>(new Set());
+  const [fsCommentDrafts, setFsCommentDrafts] = useState<Record<string, string>>({});
+  const [fsSubmittingComment, setFsSubmittingComment] = useState<string | null>(null);
+  const [fsFilterDate, setFsFilterDate] = useState<string>("");
+  const [fsPage, setFsPage] = useState(0);
+  const FS_PAGE_SIZE = 10;
   const prevCompletionRef = useRef<Record<string, boolean>>({});
   // Suppress bloom burst when onboarding pre-checks many chapters at once
   const skipNextBloom = useRef(false);
@@ -543,6 +561,55 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
     completion["ch5"] && completion["ch6"] && completion["ch7"] && completion["ch8"];
   const exoticActive = completion["ch9"] && completion["paid2"];
 
+  const loadFsCommunity = async () => {
+    if (fsMembers !== null || fsLoading) return;
+    setFsLoading(true);
+    const { data: cohortRow } = await supabase.from("cohorts").select("id").eq("slug", "full-stack").maybeSingle();
+    if (!cohortRow) { setFsMembers([]); setFsLoading(false); return; }
+    const { data: memberRows } = await supabase.from("cohort_members").select("user_id").eq("cohort_id", (cohortRow as any).id);
+    const fsUserIds = (memberRows ?? []).map((r: any) => r.user_id as string);
+    if (fsUserIds.length === 0) { setFsMembers([]); setFsLoading(false); return; }
+    const { data: progressRows } = await supabase.from("user_progress").select("user_id, display_name, email").in("user_id", fsUserIds);
+    const nameMap = Object.fromEntries((progressRows ?? []).map((p: any) => [p.user_id, (p.display_name?.split(" ")[0] || p.email?.split("@")[0] || "Someone")]));
+    const members: FsCommunityMember[] = fsUserIds.map(id => ({ user_id: id, firstName: nameMap[id] || "Someone" }));
+    const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const cutoff = sevenDaysAgo.toISOString().split("T")[0];
+    const { data: updateRows } = await supabase.from("daily_updates").select("user_id, date, today, tomorrow, blockers, display_name").in("user_id", fsUserIds).gte("date", cutoff).order("date", { ascending: false }).limit(50);
+    const updates: FsCommunityUpdate[] = (updateRows ?? []).map((u: any) => ({ ...u, firstName: u.display_name?.split(" ")[0] || nameMap[u.user_id] || "Someone" }));
+    const { data: reactionRows } = await supabase.from("update_reactions").select("update_user_id, update_date, reactor_user_id, emoji").in("update_user_id", fsUserIds).gte("update_date", cutoff);
+    const { data: commentRows } = await supabase.from("update_comments").select("id, update_user_id, update_date, commenter_user_id, commenter_name, text, created_at").in("update_user_id", fsUserIds).gte("update_date", cutoff).order("created_at", { ascending: true });
+    setFsMembers(members);
+    setFsUpdates(updates);
+    setFsReactions((reactionRows ?? []) as FsReaction[]);
+    setFsComments((commentRows ?? []) as FsComment[]);
+    setFsLoading(false);
+  };
+
+  const toggleFsReaction = async (updateUserId: string, updateDate: string, emoji: string) => {
+    if (!userId) return;
+    const isReacted = fsReactions.some(r => r.update_user_id === updateUserId && r.update_date === updateDate && r.emoji === emoji && r.reactor_user_id === userId);
+    if (isReacted) {
+      setFsReactions(prev => prev.filter(r => !(r.update_user_id === updateUserId && r.update_date === updateDate && r.emoji === emoji && r.reactor_user_id === userId)));
+      await supabase.from("update_reactions").delete().eq("update_user_id", updateUserId).eq("update_date", updateDate).eq("reactor_user_id", userId).eq("emoji", emoji);
+    } else {
+      setFsReactions(prev => [...prev, { update_user_id: updateUserId, update_date: updateDate, reactor_user_id: userId, emoji }]);
+      await supabase.from("update_reactions").insert({ update_user_id: updateUserId, update_date: updateDate, reactor_user_id: userId, emoji });
+    }
+  };
+
+  const submitFsComment = async (updateUserId: string, updateDate: string) => {
+    const key = `${updateUserId}_${updateDate}`;
+    const text = fsCommentDrafts[key]?.trim();
+    if (!text || !userId) return;
+    setFsSubmittingComment(key);
+    const firstName = fsMembers?.find(m => m.user_id === userId)?.firstName || displayName.split(" ")[0] || "Someone";
+    const { data, error } = await supabase.from("update_comments").insert({ update_user_id: updateUserId, update_date: updateDate, commenter_user_id: userId, commenter_name: firstName, text }).select().single();
+    if (!error && data) {
+      setFsComments(prev => [...prev, data as FsComment]);
+      setFsCommentDrafts(prev => ({ ...prev, [key]: "" }));
+    }
+    setFsSubmittingComment(null);
+  };
 
   return (
     <div className="h-screen overflow-hidden bg-[color:var(--background)] flex flex-col lg:flex-row">
@@ -561,7 +628,7 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
         bg-[color:var(--sidebar)] border-r border-[color:var(--sidebar-border)]
         transition-transform duration-300 ease-in-out
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-        lg:static lg:w-[420px] lg:translate-x-0 lg:shrink-0
+        ${sidebarTab === "community" ? "lg:hidden" : "lg:static lg:w-[420px] lg:translate-x-0 lg:shrink-0"}
       `}>
         <div className="p-6 border-b border-[color:var(--sidebar-border)] shrink-0 bg-[color:var(--sidebar)] z-10">
           <div className="flex items-center gap-3">
@@ -879,6 +946,23 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
             <Menu className="w-5 h-5" />
           </button>
 
+          {/* Tab toggle — desktop only */}
+          <div className="hidden lg:flex shrink-0 rounded-xl overflow-hidden border border-[color:var(--border)]" style={{ background: "var(--sidebar)" }}>
+            {(["curriculum", "community"] as const).map((tab) => (
+              <button key={tab} type="button"
+                onClick={() => { setSidebarTab(tab); if (tab === "community") loadFsCommunity(); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-all"
+                style={{
+                  background: sidebarTab === tab ? "var(--primary)" : "transparent",
+                  color: sidebarTab === tab ? "white" : "var(--muted-foreground)",
+                }}
+              >
+                {tab === "curriculum" ? <Leaf className="w-3 h-3" /> : <Users className="w-3 h-3" />}
+                {tab}
+              </button>
+            ))}
+          </div>
+
           {/* Tagline + garden state caption */}
           <div className="flex-1 min-w-0">
             <h2 className="font-serif text-base lg:text-xl tracking-tight text-[color:var(--foreground)] leading-tight">
@@ -988,17 +1072,168 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
           </div>
         </div>
 
-        {/* ── Garden — takes all remaining space ──────────────────── */}
+        {/* ── Main content — Garden or Community ──────────────────── */}
         <div className="flex-1 min-h-0">
-          <BotanicalGarden
-            rootsActive={rootsActive}
-            sproutActive={sproutActive}
-            stemActive={stemActive}
-            flowerActive={flowerActive}
-            exoticActive={exoticActive}
-            isDark={theme === "dark"}
-            bloomBurst={bloomBurst}
-          />
+          {sidebarTab === "community" ? (
+            <div className="h-full overflow-y-auto p-6">
+              {fsLoading ? (
+                <div className="flex items-center justify-center h-40 text-sm" style={{ color: "var(--muted-foreground)" }}>Loading community…</div>
+              ) : (
+                <div className="max-w-2xl mx-auto space-y-4">
+                  {/* Filter toolbar */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center gap-2 rounded-xl px-3 py-1.5" style={{ background: "var(--sidebar)", border: "1px solid var(--border)" }}>
+                      <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Date</span>
+                      <input
+                        type="date"
+                        value={fsFilterDate}
+                        onChange={e => { setFsFilterDate(e.target.value); setFsPage(0); }}
+                        className="text-xs bg-transparent focus:outline-none"
+                        style={{ color: fsFilterDate ? "var(--foreground)" : "var(--muted-foreground)" }}
+                      />
+                    </div>
+                    {fsFilterDate && (
+                      <button type="button" onClick={() => { setFsFilterDate(""); setFsPage(0); }}
+                        className="text-[11px] font-medium px-3 py-1.5 rounded-xl"
+                        style={{ background: "var(--sidebar)", border: "1px solid var(--border)", color: "var(--muted-foreground)" }}>
+                        Clear filter
+                      </button>
+                    )}
+                    <span className="ml-auto text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+                      {(() => { const n = (fsUpdates ?? []).filter(u => !fsFilterDate || u.date === fsFilterDate).length; return `${n} update${n !== 1 ? "s" : ""}`; })()}
+                    </span>
+                  </div>
+
+                  {(() => {
+                    const filtered = (fsUpdates ?? []).filter(u => !fsFilterDate || u.date === fsFilterDate);
+                    const totalPages = Math.ceil(filtered.length / FS_PAGE_SIZE);
+                    const paged = filtered.slice(fsPage * FS_PAGE_SIZE, (fsPage + 1) * FS_PAGE_SIZE);
+                    const EMOJIS = ["❤️", "🔥", "💪", "🙌"];
+                    return (
+                      <>
+                        {filtered.length === 0 && (
+                          <p className="text-sm text-center py-12" style={{ color: "var(--muted-foreground)" }}>
+                            {fsFilterDate ? "No updates for this date." : "No updates in the last 7 days."}
+                          </p>
+                        )}
+                        {paged.map((u, i) => {
+                          const [y, mo, d] = u.date.split("-").map(Number);
+                          const dateLabel = new Date(y, mo - 1, d).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+                          const key = `${u.user_id}_${u.date}`;
+                          const cardReactions = fsReactions.filter(r => r.update_user_id === u.user_id && r.update_date === u.date);
+                          const cardComments = fsComments.filter(c => c.update_user_id === u.user_id && c.update_date === u.date);
+                          const isExpanded = fsExpandedComments.has(key);
+                          return (
+                            <div key={i} className="rounded-2xl overflow-hidden" style={{ background: "var(--sidebar)", border: "1px solid var(--border)" }}>
+                              <div className="px-4 pt-4 pb-3 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>{u.firstName}</span>
+                                  <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>{dateLabel}</span>
+                                </div>
+                                <p className="text-sm leading-relaxed" style={{ color: "var(--foreground)" }}>
+                                  <span className="text-[10px] uppercase tracking-wide font-semibold mr-1.5" style={{ color: "var(--muted-foreground)" }}>Today</span>{u.today}
+                                </p>
+                                <p className="text-sm leading-relaxed" style={{ color: "var(--foreground)" }}>
+                                  <span className="text-[10px] uppercase tracking-wide font-semibold mr-1.5" style={{ color: "var(--muted-foreground)" }}>Tomorrow</span>{u.tomorrow}
+                                </p>
+                                {u.blockers && (
+                                  <p className="text-sm leading-relaxed" style={{ color: "oklch(0.55 0.15 50)" }}>
+                                    <span className="text-[10px] uppercase tracking-wide font-semibold mr-1.5">Blocker</span>{u.blockers}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1 px-3 py-2 border-t" style={{ borderColor: "var(--border)" }}>
+                                {EMOJIS.map(emoji => {
+                                  const count = cardReactions.filter(r => r.emoji === emoji).length;
+                                  const iMine = cardReactions.some(r => r.emoji === emoji && r.reactor_user_id === userId);
+                                  return (
+                                    <button key={emoji} type="button"
+                                      onClick={() => toggleFsReaction(u.user_id, u.date, emoji)}
+                                      className="flex items-center gap-1 rounded-full px-2 py-1 text-[12px] transition-all"
+                                      style={{
+                                        background: iMine ? "oklch(0.91 0.07 145 / 0.25)" : "transparent",
+                                        border: iMine ? "1px solid oklch(0.55 0.13 145 / 0.3)" : "1px solid transparent",
+                                        color: "var(--foreground)",
+                                      }}
+                                    >
+                                      {emoji}{count > 0 && <span className="text-[11px] font-medium" style={{ color: "var(--muted-foreground)" }}>{count}</span>}
+                                    </button>
+                                  );
+                                })}
+                                <button type="button"
+                                  onClick={() => setFsExpandedComments(prev => { const next = new Set(prev); next.has(key) ? next.delete(key) : next.add(key); return next; })}
+                                  className="ml-auto text-[11px] font-medium px-2 py-1 rounded-full transition-colors"
+                                  style={{ color: isExpanded ? "var(--primary)" : "var(--muted-foreground)" }}
+                                >
+                                  {isExpanded ? "Hide" : `Reply${cardComments.length > 0 ? ` (${cardComments.length})` : ""}`}
+                                </button>
+                              </div>
+                              {isExpanded && (
+                                <div className="px-4 pb-3 pt-2 border-t space-y-3" style={{ borderColor: "var(--border)", background: theme === "dark" ? "oklch(0.18 0.02 65 / 0.5)" : "oklch(0.97 0.01 85)" }}>
+                                  {cardComments.length > 0 && (
+                                    <div className="space-y-2">
+                                      {cardComments.map(c => (
+                                        <div key={c.id} className="flex gap-2">
+                                          <span className="text-xs font-semibold shrink-0 mt-0.5" style={{ color: "var(--primary)" }}>{c.commenter_name}</span>
+                                          <span className="text-xs leading-relaxed" style={{ color: "var(--foreground)" }}>{c.text}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                  <div className="flex gap-2">
+                                    <input type="text" placeholder="Write a reply…"
+                                      value={fsCommentDrafts[key] ?? ""}
+                                      onChange={e => setFsCommentDrafts(prev => ({ ...prev, [key]: e.target.value }))}
+                                      onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitFsComment(u.user_id, u.date); } }}
+                                      className="flex-1 text-xs px-3 py-1.5 rounded-xl border focus:outline-none focus:ring-2"
+                                      style={{ background: "var(--background)", borderColor: "var(--border)", color: "var(--foreground)" }}
+                                    />
+                                    <button type="button"
+                                      disabled={!fsCommentDrafts[key]?.trim() || fsSubmittingComment === key}
+                                      onClick={() => submitFsComment(u.user_id, u.date)}
+                                      className="px-3 py-1.5 rounded-xl text-xs font-medium text-white transition-opacity disabled:opacity-40"
+                                      style={{ background: "var(--primary)" }}
+                                    >
+                                      {fsSubmittingComment === key ? "…" : "Send"}
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                        {totalPages > 1 && (
+                          <div className="flex items-center justify-center gap-3 pt-2 pb-4">
+                            <button type="button" disabled={fsPage === 0} onClick={() => setFsPage(p => p - 1)}
+                              className="px-4 py-1.5 rounded-xl text-xs font-medium transition-opacity disabled:opacity-30"
+                              style={{ background: "var(--sidebar)", border: "1px solid var(--border)", color: "var(--foreground)" }}>
+                              ← Prev
+                            </button>
+                            <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>Page {fsPage + 1} of {totalPages}</span>
+                            <button type="button" disabled={fsPage >= totalPages - 1} onClick={() => setFsPage(p => p + 1)}
+                              className="px-4 py-1.5 rounded-xl text-xs font-medium transition-opacity disabled:opacity-30"
+                              style={{ background: "var(--sidebar)", border: "1px solid var(--border)", color: "var(--foreground)" }}>
+                              Next →
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+            </div>
+          ) : (
+            <BotanicalGarden
+              rootsActive={rootsActive}
+              sproutActive={sproutActive}
+              stemActive={stemActive}
+              flowerActive={flowerActive}
+              exoticActive={exoticActive}
+              isDark={theme === "dark"}
+              bloomBurst={bloomBurst}
+            />
+          )}
         </div>
       </main>
 

@@ -946,6 +946,21 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
             <Menu className="w-5 h-5" />
           </button>
 
+          {/* Tagline + garden state caption */}
+          <div className="flex-1 min-w-0">
+            <h2 className="font-serif text-base lg:text-xl tracking-tight text-[color:var(--foreground)] leading-tight">
+              Code. Learn. Bloom.
+            </h2>
+            <p className="hidden lg:block text-[11px] text-[color:var(--muted-foreground)] italic mt-0.5">
+              {!rootsActive && "An empty plot, full of promise."}
+              {rootsActive && !sproutActive && "Roots, quiet and luminous, take hold."}
+              {sproutActive && !stemActive && "A sprout greets the morning sun."}
+              {stemActive && !flowerActive && "Leaves unfurl toward the sky."}
+              {flowerActive && !exoticActive && "First bloom — vivid and whole."}
+              {exoticActive && "A secret garden, fully alive."}
+            </p>
+          </div>
+
           {/* Tab toggle — desktop only */}
           <div className="hidden lg:flex shrink-0 rounded-xl overflow-hidden border border-[color:var(--border)]" style={{ background: "var(--sidebar)" }}>
             {(["curriculum", "community"] as const).map((tab) => (
@@ -961,21 +976,6 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
                 {tab}
               </button>
             ))}
-          </div>
-
-          {/* Tagline + garden state caption */}
-          <div className="flex-1 min-w-0">
-            <h2 className="font-serif text-base lg:text-xl tracking-tight text-[color:var(--foreground)] leading-tight">
-              Code. Learn. Bloom.
-            </h2>
-            <p className="hidden lg:block text-[11px] text-[color:var(--muted-foreground)] italic mt-0.5">
-              {!rootsActive && "An empty plot, full of promise."}
-              {rootsActive && !sproutActive && "Roots, quiet and luminous, take hold."}
-              {sproutActive && !stemActive && "A sprout greets the morning sun."}
-              {stemActive && !flowerActive && "Leaves unfurl toward the sky."}
-              {flowerActive && !exoticActive && "First bloom — vivid and whole."}
-              {exoticActive && "A secret garden, fully alive."}
-            </p>
           </div>
 
           {/* Right: controls + profile */}

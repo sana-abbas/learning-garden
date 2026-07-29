@@ -194,27 +194,11 @@ function Index() {
     if (savedNoteTimer.current) clearTimeout(savedNoteTimer.current);
     setSavedNoteId(stepId);
     savedNoteTimer.current = setTimeout(() => setSavedNoteId(null), 2000);
-    // Notify mentor via edge function (fails silently if not deployed)
-    const step = STEPS.find((s) => s.id === stepId);
-    const noteText = notes[stepId];
-    if (step && noteText) {
-      try {
-        await supabase.functions.invoke("notify-note-saved", {
-          body: {
-            chapterTitle: step.title,
-            noteText,
-            userName: (user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? "A participant",
-            userEmail: user?.email ?? "",
-          },
-        });
-      } catch {
-        // Edge function not deployed yet — that's fine
-      }
-    }
   };
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<"curriculum" | "community">("curriculum");
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
   const [bloomBurst, setBloomBurst] = useState(false);
 
   type FsCommunityMember = { user_id: string; firstName: string };
@@ -468,22 +452,6 @@ function Index() {
     bumpStreak();
     showRandomQuote();
     setSubmissionModal(null);
-    // Notify mentor via edge function (fails silently if not deployed)
-    try {
-      await supabase.functions.invoke("notify-assignment-submitted", {
-        body: {
-          chapterTitle: step.title,
-          subtaskLabel: sub.label,
-          link: data.link,
-          link2: data.link2,
-          video: data.video,
-          userName: (user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? "A participant",
-          userEmail: user?.email ?? "",
-        },
-      });
-    } catch {
-      // Edge function not deployed yet — that's fine
-    }
   };
 
   const handleCallClaim = async () => {
@@ -986,10 +954,10 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
               </span>
             )}
 
-            {/* Streak pill */}
+            {/* Streak — icon + number only */}
             {streak > 0 && (
               <div
-                className="flex items-center gap-1.5 rounded-full font-semibold px-3 py-1.5 text-[12px]"
+                className="flex items-center gap-1 rounded-full font-semibold px-2.5 py-1.5 text-[12px]"
                 title={`${streak}-day streak! Keep it up 🔥`}
                 style={{
                   background: theme === "dark" ? "oklch(0.35 0.08 55 / 0.5)" : "oklch(0.95 0.08 60 / 0.3)",
@@ -997,76 +965,71 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
                 }}
               >
                 <Flame className="w-3.5 h-3.5 shrink-0" />
-                {streak} day streak
+                {streak}
               </div>
             )}
 
+            {/* Daily update — icon only */}
             <button
               type="button"
               onClick={() => setShowUpdateModal(true)}
-              className="flex items-center gap-1.5 rounded-full font-semibold px-3 py-1.5 text-[12px] transition-colors"
+              title={todayUpdate ? "Edit today's update" : "Post daily update"}
+              className="p-2 rounded-xl transition-colors"
               style={todayUpdate ? {
-                background: theme === "dark" ? "oklch(0.32 0.08 145 / 0.5)" : "oklch(0.93 0.07 145 / 0.35)",
                 color: "var(--primary)",
+                background: theme === "dark" ? "oklch(0.32 0.08 145 / 0.5)" : "oklch(0.93 0.07 145 / 0.35)",
               } : {
-                background: theme === "dark" ? "oklch(0.27 0.03 65)" : "oklch(0.93 0.02 85)",
                 color: "var(--muted-foreground)",
               }}
             >
-              <ClipboardList className="w-3.5 h-3.5 shrink-0" />
-              {todayUpdate ? "Update" : "Daily Update"}
+              <ClipboardList className="w-4 h-4" />
             </button>
 
-            <button
-              type="button"
-              onClick={toggleTheme}
-              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              className="p-2 rounded-xl text-[color:var(--muted-foreground)] hover:bg-[oklch(0.92_0.025_85)] dark:hover:bg-[oklch(0.27_0.03_65)] hover:text-[color:var(--foreground)] transition-colors"
-            >
-              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-            <button
-              type="button"
-              onClick={handleSignOut}
-              title="Sign out"
-              className="p-2 rounded-xl text-[color:var(--muted-foreground)] hover:bg-[oklch(0.92_0.025_85)] dark:hover:bg-[oklch(0.27_0.03_65)] hover:text-[color:var(--foreground)] transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
+            {/* Divider */}
+            <div className="hidden lg:block w-px h-7 bg-[color:var(--border)] mx-0.5" />
 
-            {/* Divider + avatar — desktop only */}
-            <div className="hidden lg:flex items-center gap-2.5">
-              <div className="w-px h-7 bg-[color:var(--border)] mx-0.5" />
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt={displayName}
-                  className="w-8 h-8 rounded-full object-cover ring-2 ring-[color:var(--primary)]/30 shrink-0"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                    e.currentTarget.nextElementSibling?.removeAttribute("style");
-                  }}
-                />
-              ) : null}
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold text-white shrink-0"
-                style={{
-                  background: "linear-gradient(135deg, var(--primary), var(--bloom-pink))",
-                  display: avatarUrl ? "none" : undefined,
-                }}
+            {/* Avatar dropdown */}
+            <div className="hidden lg:block relative">
+              <button
+                type="button"
+                onClick={() => setAvatarMenuOpen(prev => !prev)}
+                className="flex items-center gap-2 rounded-xl px-2 py-1 hover:bg-[oklch(0.92_0.025_85)] dark:hover:bg-[oklch(0.27_0.03_65)] transition-colors"
               >
-                {initials}
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-semibold text-[color:var(--foreground)] leading-tight">
-                  {displayName}
-                </p>
-                {lastActive && (
-                  <p className="text-[11px] text-[color:var(--muted-foreground)] leading-tight mt-0.5">
-                    Last active {lastActive}
-                  </p>
-                )}
-              </div>
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt={displayName} className="w-8 h-8 rounded-full object-cover ring-2 ring-[color:var(--primary)]/30 shrink-0"
+                    onError={(e) => { e.currentTarget.style.display = "none"; (e.currentTarget.nextElementSibling as HTMLElement)?.style.removeProperty("display"); }} />
+                ) : null}
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold text-white shrink-0"
+                  style={{ background: "linear-gradient(135deg, var(--primary), var(--bloom-pink))", display: avatarUrl ? "none" : undefined }}>
+                  {initials}
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-semibold text-[color:var(--foreground)] leading-tight">{displayName}</p>
+                  {lastActive && <p className="text-[11px] text-[color:var(--muted-foreground)] leading-tight mt-0.5">Last active {lastActive}</p>}
+                </div>
+                <ChevronDown className="w-3.5 h-3.5 text-[color:var(--muted-foreground)] ml-0.5" />
+              </button>
+              {avatarMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setAvatarMenuOpen(false)} />
+                  <div className="absolute right-0 top-full mt-2 z-20 rounded-xl shadow-lg overflow-hidden min-w-[160px]"
+                    style={{ background: "var(--sidebar)", border: "1px solid var(--border)" }}>
+                    <button type="button" onClick={() => { toggleTheme(); setAvatarMenuOpen(false); }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-[oklch(0.92_0.025_85)] dark:hover:bg-[oklch(0.27_0.03_65)] transition-colors text-left"
+                      style={{ color: "var(--foreground)" }}>
+                      {theme === "dark" ? <Sun className="w-4 h-4 shrink-0" /> : <Moon className="w-4 h-4 shrink-0" />}
+                      {theme === "dark" ? "Light mode" : "Dark mode"}
+                    </button>
+                    <div className="h-px mx-3" style={{ background: "var(--border)" }} />
+                    <button type="button" onClick={handleSignOut}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-[oklch(0.92_0.025_85)] dark:hover:bg-[oklch(0.27_0.03_65)] transition-colors text-left"
+                      style={{ color: "var(--muted-foreground)" }}>
+                      <LogOut className="w-4 h-4 shrink-0" />
+                      Sign out
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
 
           </div>

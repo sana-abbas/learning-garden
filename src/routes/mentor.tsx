@@ -583,11 +583,19 @@ function MentorDashboard() {
   const [sort, setSort] = useState<"progress" | "active" | "streak">("progress");
 
   // Daily updates view
-  const [view, setView] = useState<"participants" | "daily-updates" | "assignments">("participants");
+  const [view, setView] = useState<"participants" | "daily-updates" | "assignments" | "reflections">("participants");
   const [assignmentSearch, setAssignmentSearch] = useState("");
   const [assignmentCohort, setAssignmentCohort] = useState<"all" | "full-stack" | "coding-fundamentals">("all");
   const [expandedAssignmentId, setExpandedAssignmentId] = useState<string | null>(null);
   const [expandedUpdateId, setExpandedUpdateId] = useState<string | null>(null);
+  const [assignmentPage, setAssignmentPage] = useState(0);
+  const [reflectionSearch, setReflectionSearch] = useState("");
+  const [reflectionCohort, setReflectionCohort] = useState<"all" | "full-stack" | "coding-fundamentals">("all");
+  const [reflectionPage, setReflectionPage] = useState(0);
+  const [expandedChapterIds, setExpandedChapterIds] = useState<Set<string>>(new Set());
+  const toggleChapter = (id: string) => setExpandedChapterIds(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
+  const [updatesPage, setUpdatesPage] = useState(0);
+  const MENTOR_PAGE_SIZE = 15;
   const [dailyUpdates, setDailyUpdates] = useState<DailyUpdateRow[]>([]);
   const [loadingUpdates, setLoadingUpdates] = useState(false);
   const [updateSearch, setUpdateSearch] = useState("");
@@ -785,6 +793,19 @@ function MentorDashboard() {
               <CheckCircle2 className="w-3.5 h-3.5" />
               Assignments
             </button>
+            <button
+              type="button"
+              onClick={() => setView("reflections")}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
+              style={{
+                background: view === "reflections" ? "var(--primary)" : "var(--sidebar)",
+                color: view === "reflections" ? "white" : "var(--muted-foreground)",
+                border: "1px solid var(--sidebar-border)",
+              }}
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              Reflections
+            </button>
           </div>
         </div>
 
@@ -898,6 +919,21 @@ function MentorDashboard() {
             return matchesSearch && matchesCohort && matchesFrom && matchesTo;
           });
 
+          // Weekly count per user (Mon–Sun of current week)
+          const now = new Date();
+          const dayOfWeek = now.getDay();
+          const diffToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+          const mon = new Date(now); mon.setDate(now.getDate() + diffToMon);
+          const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+          const weekStart = mon.toISOString().split("T")[0];
+          const weekEnd = sun.toISOString().split("T")[0];
+          const weeklyCountMap: Record<string, number> = {};
+          dailyUpdates.forEach((u) => {
+            if (u.date >= weekStart && u.date <= weekEnd) {
+              weeklyCountMap[u.user_id] = (weeklyCountMap[u.user_id] ?? 0) + 1;
+            }
+          });
+
           return (
             <>
               {/* Filters + export */}
@@ -910,13 +946,13 @@ function MentorDashboard() {
                   type="text"
                   placeholder="Search by name…"
                   value={updateSearch}
-                  onChange={(e) => setUpdateSearch(e.target.value)}
+                  onChange={(e) => { setUpdateSearch(e.target.value); setUpdatesPage(0); }}
                   className="text-sm px-3 py-2 rounded-xl outline-none"
                   style={{ background: "var(--sidebar)", border: "1px solid var(--sidebar-border)", color: "var(--foreground)", minWidth: "160px" }}
                 />
                 <select
                   value={updateCohort}
-                  onChange={(e) => setUpdateCohort(e.target.value as typeof updateCohort)}
+                  onChange={(e) => { setUpdateCohort(e.target.value as typeof updateCohort); setUpdatesPage(0); }}
                   className="text-sm px-3 py-2 rounded-xl outline-none"
                   style={{ background: "var(--sidebar)", border: "1px solid var(--sidebar-border)", color: "var(--foreground)" }}
                 >
@@ -927,7 +963,7 @@ function MentorDashboard() {
                 <input
                   type="date"
                   value={updateDateFrom}
-                  onChange={(e) => setUpdateDateFrom(e.target.value)}
+                  onChange={(e) => { setUpdateDateFrom(e.target.value); setUpdatesPage(0); }}
                   className="text-sm px-3 py-2 rounded-xl outline-none"
                   style={{ background: "var(--sidebar)", border: "1px solid var(--sidebar-border)", color: "var(--foreground)" }}
                 />
@@ -935,7 +971,7 @@ function MentorDashboard() {
                 <input
                   type="date"
                   value={updateDateTo}
-                  onChange={(e) => setUpdateDateTo(e.target.value)}
+                  onChange={(e) => { setUpdateDateTo(e.target.value); setUpdatesPage(0); }}
                   className="text-sm px-3 py-2 rounded-xl outline-none"
                   style={{ background: "var(--sidebar)", border: "1px solid var(--sidebar-border)", color: "var(--foreground)" }}
                 />
@@ -967,7 +1003,7 @@ function MentorDashboard() {
                     <table className="w-full text-sm">
                       <thead>
                         <tr style={{ background: "var(--sidebar)", borderBottom: "1px solid var(--sidebar-border)" }}>
-                          {["Date", "Participant", "Cohort", "What I did today", "What I'll do tomorrow", "Blockers"].map((h) => (
+                          {["Date", "Participant", "Cohort", "This week", "What I did today", "What I'll do tomorrow", "Blockers"].map((h) => (
                             <th key={h} className="text-left px-4 py-3 text-[11px] uppercase tracking-wider font-semibold whitespace-nowrap" style={{ color: "var(--muted-foreground)" }}>
                               {h}
                             </th>
@@ -975,7 +1011,7 @@ function MentorDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredUpdates.map((u, i) => {
+                        {filteredUpdates.slice(updatesPage * MENTOR_PAGE_SIZE, (updatesPage + 1) * MENTOR_PAGE_SIZE).map((u, i) => {
                           const p = participants.find((pr) => pr.user_id === u.user_id);
                           const name = p?.display_name || p?.email?.split("@")[0] || "Unknown";
                           const cohort = cohortMemberMap[u.user_id] ?? "full-stack";
@@ -1001,6 +1037,17 @@ function MentorDashboard() {
                                   style={{ background: "oklch(0.92 0.07 145 / 0.3)", color: "var(--primary)" }}>
                                   {cohortLabel}
                                 </span>
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap text-center">
+                                {(() => {
+                                  const count = weeklyCountMap[u.user_id] ?? 0;
+                                  const color = count >= 5 ? "var(--primary)" : count >= 3 ? "oklch(0.65 0.15 50)" : "var(--muted-foreground)";
+                                  return (
+                                    <span className="text-[12px] font-semibold tabular-nums" style={{ color }} title={`${count}/5 updates this week`}>
+                                      {count}/5
+                                    </span>
+                                  );
+                                })()}
                               </td>
                               <td className="px-4 py-3 max-w-xs">
                                 <p className={`text-[13px] leading-relaxed whitespace-pre-wrap ${isUpdateExpanded ? "" : "line-clamp-2"}`} style={{ color: "var(--foreground)" }}>{u.today}</p>
@@ -1028,8 +1075,23 @@ function MentorDashboard() {
                       </tbody>
                     </table>
                   </div>
-                  <div className="px-4 py-2.5 text-[11px]" style={{ color: "var(--muted-foreground)", borderTop: "1px solid var(--sidebar-border)" }}>
-                    {filteredUpdates.length} {filteredUpdates.length === 1 ? "update" : "updates"}
+                  <div className="px-4 py-2.5 flex items-center justify-between text-[11px]" style={{ color: "var(--muted-foreground)", borderTop: "1px solid var(--sidebar-border)" }}>
+                    <span>{filteredUpdates.length} {filteredUpdates.length === 1 ? "update" : "updates"}</span>
+                    {Math.ceil(filteredUpdates.length / MENTOR_PAGE_SIZE) > 1 && (
+                      <div className="flex items-center gap-2">
+                        <button type="button" disabled={updatesPage === 0} onClick={() => setUpdatesPage(p => p - 1)}
+                          className="px-3 py-1 rounded-lg text-[11px] font-medium transition-opacity disabled:opacity-30"
+                          style={{ background: "var(--sidebar)", border: "1px solid var(--sidebar-border)", color: "var(--foreground)" }}>
+                          ← Prev
+                        </button>
+                        <span>Page {updatesPage + 1} of {Math.ceil(filteredUpdates.length / MENTOR_PAGE_SIZE)}</span>
+                        <button type="button" disabled={updatesPage >= Math.ceil(filteredUpdates.length / MENTOR_PAGE_SIZE) - 1} onClick={() => setUpdatesPage(p => p + 1)}
+                          className="px-3 py-1 rounded-lg text-[11px] font-medium transition-opacity disabled:opacity-30"
+                          style={{ background: "var(--sidebar)", border: "1px solid var(--sidebar-border)", color: "var(--foreground)" }}>
+                          Next →
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1081,7 +1143,7 @@ function MentorDashboard() {
                     <button
                       key={value}
                       type="button"
-                      onClick={() => setAssignmentCohort(value)}
+                      onClick={() => { setAssignmentCohort(value); setAssignmentPage(0); }}
                       className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
                       style={{
                         background: assignmentCohort === value ? "var(--primary)" : "var(--sidebar)",
@@ -1099,7 +1161,7 @@ function MentorDashboard() {
                     type="text"
                     placeholder="Search by name or exercise…"
                     value={assignmentSearch}
-                    onChange={(e) => setAssignmentSearch(e.target.value)}
+                    onChange={(e) => { setAssignmentSearch(e.target.value); setAssignmentPage(0); }}
                     className="w-full pl-8 pr-3 py-2 rounded-xl text-sm border focus:outline-none focus:ring-2"
                     style={{ background: "var(--sidebar)", borderColor: "var(--sidebar-border)", color: "var(--foreground)" }}
                   />
@@ -1127,7 +1189,7 @@ function MentorDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {filtered.map((r, i) => {
+                        {filtered.slice(assignmentPage * MENTOR_PAGE_SIZE, (assignmentPage + 1) * MENTOR_PAGE_SIZE).map((r, i) => {
                           const isExpanded = expandedAssignmentId === r.rowKey;
                           const cohortLabel = r.cohort === "coding-fundamentals" ? "Coding Fundamentals" : "Full Stack";
                           const dateStr = r.submittedAt ? new Date(r.submittedAt).toLocaleDateString() : "—";
@@ -1201,6 +1263,178 @@ function MentorDashboard() {
                       </tbody>
                     </table>
                   </div>
+                  <div className="px-4 py-2.5 flex items-center justify-between text-[11px]" style={{ color: "var(--muted-foreground)", borderTop: "1px solid var(--sidebar-border)" }}>
+                    <span>{filtered.length} {filtered.length === 1 ? "submission" : "submissions"}</span>
+                    {Math.ceil(filtered.length / MENTOR_PAGE_SIZE) > 1 && (
+                      <div className="flex items-center gap-2">
+                        <button type="button" disabled={assignmentPage === 0} onClick={() => setAssignmentPage(p => p - 1)}
+                          className="px-3 py-1 rounded-lg text-[11px] font-medium transition-opacity disabled:opacity-30"
+                          style={{ background: "var(--sidebar)", border: "1px solid var(--sidebar-border)", color: "var(--foreground)" }}>
+                          ← Prev
+                        </button>
+                        <span>Page {assignmentPage + 1} of {Math.ceil(filtered.length / MENTOR_PAGE_SIZE)}</span>
+                        <button type="button" disabled={assignmentPage >= Math.ceil(filtered.length / MENTOR_PAGE_SIZE) - 1} onClick={() => setAssignmentPage(p => p + 1)}
+                          className="px-3 py-1 rounded-lg text-[11px] font-medium transition-opacity disabled:opacity-30"
+                          style={{ background: "var(--sidebar)", border: "1px solid var(--sidebar-border)", color: "var(--foreground)" }}>
+                          Next →
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
+          );
+        })()}
+
+        {view === "reflections" && (() => {
+          const allSteps = [...STEPS, ...CF_STEPS];
+          const stepMap: Record<string, string> = {};
+          allSteps.forEach((s) => { stepMap[s.id] = s.title; });
+
+          // Build per-participant rows keyed by user+chapter
+          const rowMap = new Map<string, {
+            rowKey: string; user_id: string; participantName: string; email: string;
+            cohort: string; baseStepId: string; note: string; reflection: string;
+          }>();
+          participants.forEach((p) => {
+            Object.entries(p.notes as Record<string, string>).forEach(([key, text]) => {
+              if (!text?.trim()) return;
+              const isFeedback = key.endsWith("__fb");
+              const baseStepId = isFeedback ? key.slice(0, -4) : key;
+              const mapKey = `${p.user_id}__${baseStepId}`;
+              if (!rowMap.has(mapKey)) {
+                rowMap.set(mapKey, {
+                  rowKey: mapKey,
+                  user_id: p.user_id,
+                  participantName: p.display_name || p.email?.split("@")[0] || "Unknown",
+                  email: p.email || "",
+                  cohort: cohortMemberMap[p.user_id] ?? "full-stack",
+                  baseStepId,
+                  note: "",
+                  reflection: "",
+                });
+              }
+              const row = rowMap.get(mapKey)!;
+              if (isFeedback) row.reflection = text;
+              else row.note = text;
+            });
+          });
+
+          const q = reflectionSearch.toLowerCase();
+          const allRows = Array.from(rowMap.values()).filter((r) => {
+            const matchesSearch = !q || r.participantName.toLowerCase().includes(q) || (stepMap[r.baseStepId] || r.baseStepId).toLowerCase().includes(q) || r.note.toLowerCase().includes(q) || r.reflection.toLowerCase().includes(q);
+            const matchesCohort = reflectionCohort === "all" || r.cohort === reflectionCohort;
+            return matchesSearch && matchesCohort;
+          });
+
+          // Group by chapter in curriculum order
+          const chapterGroups: { stepId: string; title: string; rows: typeof allRows }[] = [];
+          allSteps.forEach((s) => {
+            const rows = allRows.filter(r => r.baseStepId === s.id);
+            if (rows.length > 0) chapterGroups.push({ stepId: s.id, title: s.title, rows });
+          });
+
+          const totalResponses = allRows.length;
+
+          return (
+            <>
+              <div className="flex items-center gap-3 flex-wrap mb-4">
+                {([{ value: "all", label: "All cohorts" }, { value: "full-stack", label: "Full Stack" }, { value: "coding-fundamentals", label: "Coding Fundamentals" }] as const).map(({ value, label }) => (
+                  <button key={value} type="button"
+                    onClick={() => { setReflectionCohort(value); setReflectionPage(0); }}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                    style={{
+                      background: reflectionCohort === value ? "var(--primary)" : "var(--sidebar)",
+                      color: reflectionCohort === value ? "white" : "var(--muted-foreground)",
+                      border: "1px solid var(--sidebar-border)",
+                    }}
+                  >{label}</button>
+                ))}
+                <input
+                  type="text"
+                  placeholder="Search by name, chapter, or text…"
+                  value={reflectionSearch}
+                  onChange={(e) => { setReflectionSearch(e.target.value); setReflectionPage(0); }}
+                  className="w-64 pl-3 pr-3 py-2 rounded-xl text-sm border focus:outline-none focus:ring-2"
+                  style={{ background: "var(--sidebar)", borderColor: "var(--sidebar-border)", color: "var(--foreground)" }}
+                />
+                <span className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+                  {chapterGroups.length} {chapterGroups.length === 1 ? "chapter" : "chapters"} · {totalResponses} responses
+                </span>
+              </div>
+
+              {chapterGroups.length === 0 ? (
+                <div className="py-16 text-center text-sm" style={{ color: "var(--muted-foreground)" }}>No reflections found.</div>
+              ) : (
+                <div className="space-y-3">
+                  {chapterGroups.map(({ stepId, title, rows }) => {
+                    const isOpen = expandedChapterIds.has(stepId);
+                    return (
+                      <div key={stepId} className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--sidebar-border)" }}>
+                        {/* Chapter header */}
+                        <button
+                          type="button"
+                          onClick={() => toggleChapter(stepId)}
+                          className="w-full flex items-center justify-between px-5 py-3.5 text-left transition-colors"
+                          style={{ background: "var(--sidebar)" }}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="font-medium text-[14px]" style={{ color: "var(--foreground)" }}>{title}</span>
+                            <span className="text-[11px] px-2 py-0.5 rounded-full font-medium" style={{ background: "oklch(0.92 0.07 145 / 0.3)", color: "var(--primary)" }}>
+                              {rows.length} {rows.length === 1 ? "response" : "responses"}
+                            </span>
+                          </div>
+                          <span className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>{isOpen ? "▲" : "▼"}</span>
+                        </button>
+
+                        {/* Participant rows */}
+                        {isOpen && (
+                          <div style={{ borderTop: "1px solid var(--sidebar-border)" }}>
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr style={{ background: "var(--background)", borderBottom: "1px solid var(--sidebar-border)" }}>
+                                  {["Participant", "Cohort", "Notes", "Reflections"].map((h) => (
+                                    <th key={h} className="text-left px-4 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: "var(--muted-foreground)" }}>{h}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {rows.map((r, i) => {
+                                  const cohortLabel = r.cohort === "coding-fundamentals" ? "Coding Fundamentals" : "Full Stack";
+                                  const rowBg = i % 2 === 0 ? "transparent" : "var(--sidebar)";
+                                  return (
+                                    <tr key={r.rowKey} style={{ background: rowBg, borderBottom: "1px solid var(--sidebar-border)" }}>
+                                      <td className="px-4 py-3 whitespace-nowrap">
+                                        <div className="font-medium text-[13px]" style={{ color: "var(--foreground)" }}>{r.participantName}</div>
+                                        <div className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>{r.email}</div>
+                                      </td>
+                                      <td className="px-4 py-3 whitespace-nowrap">
+                                        <span className="text-[11px] px-2 py-0.5 rounded-full font-medium"
+                                          style={{ background: "oklch(0.92 0.07 145 / 0.3)", color: "var(--primary)" }}>
+                                          {cohortLabel}
+                                        </span>
+                                      </td>
+                                      <td className="px-4 py-3 max-w-xs">
+                                        {r.note
+                                          ? <p className="text-[12px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--foreground)" }}>{r.note}</p>
+                                          : <span className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>—</span>}
+                                      </td>
+                                      <td className="px-4 py-3 max-w-xs">
+                                        {r.reflection
+                                          ? <p className="text-[12px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--foreground)" }}>{r.reflection}</p>
+                                          : <span className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>—</span>}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </>

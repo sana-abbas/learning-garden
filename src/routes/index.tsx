@@ -518,9 +518,7 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
     ?? "Gardener";
   const avatarUrl = user?.user_metadata?.avatar_url as string | undefined;
   const initials = displayName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
-  const lastActive = user?.last_sign_in_at
-    ? new Date(user.last_sign_in_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })
-    : null;
+  const lastActive = user ? new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }) : null;
 
   const rootsActive = completion["ch1"] || completion["ch2"];
   const sproutActive = completion["ch2"] && completion["ch3"];
@@ -570,7 +568,7 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
     const text = fsCommentDrafts[key]?.trim();
     if (!text || !userId) return;
     setFsSubmittingComment(key);
-    const firstName = fsMembers?.find(m => m.user_id === userId)?.firstName || displayName.split(" ")[0] || "Someone";
+    const firstName = displayName.split(" ")[0] || "Gardener";
     const { data, error } = await supabase.from("update_comments").insert({ update_user_id: updateUserId, update_date: updateDate, commenter_user_id: userId, commenter_name: firstName, text }).select().single();
     if (!error && data) {
       setFsComments(prev => [...prev, data as FsComment]);

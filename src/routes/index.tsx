@@ -199,6 +199,8 @@ function Index() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<"curriculum" | "community">("curriculum");
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const [todayDateLabel, setTodayDateLabel] = useState<string | null>(null);
+  useEffect(() => { setTodayDateLabel(new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })); }, []);
   const [bloomBurst, setBloomBurst] = useState(false);
 
   type FsCommunityMember = { user_id: string; firstName: string };
@@ -518,7 +520,7 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
     ?? "Gardener";
   const avatarUrl = user?.user_metadata?.avatar_url as string | undefined;
   const initials = displayName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
-  const lastActive = user ? new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }) : null;
+  const lastActive = user ? todayDateLabel : null;
 
   const rootsActive = completion["ch1"] || completion["ch2"];
   const sproutActive = completion["ch2"] && completion["ch3"];

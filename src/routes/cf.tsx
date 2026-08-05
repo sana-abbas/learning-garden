@@ -155,6 +155,8 @@ function CodingFundamentals() {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const [todayDateLabel, setTodayDateLabel] = useState<string | null>(null);
+  useEffect(() => { setTodayDateLabel(new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })); }, []);
   const [bloomBurst, setBloomBurst] = useState(false);
   const prevCompletionRef = useRef<Record<string, boolean>>({});
   const skipNextBloom = useRef(false);
@@ -522,7 +524,7 @@ const nameMap = Object.fromEntries((progressRows ?? []).map((p: any) => [p.user_
     ?? "Gardener";
   const avatarUrl = user?.user_metadata?.avatar_url as string | undefined;
   const initials = displayName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
-  const lastActive = user ? new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }) : null;
+  const lastActive = user ? todayDateLabel : null;
 
   // Garden stage mapping for CF curriculum
   const rootsActive = completion["cf0"] || completion["cf1"];

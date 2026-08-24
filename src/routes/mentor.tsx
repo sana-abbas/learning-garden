@@ -695,6 +695,11 @@ function MentorDashboard() {
   }).length;
   const onStreak = cohortParticipants.filter((p) => (p.streak_count || 0) > 0).length;
 
+  // Participants with no cohort_members row. They are shown in the Full Stack
+  // tab by the default above, which is exactly how the CF-routing bug stayed
+  // invisible — so surface them instead of letting the default hide them.
+  const unassigned = participants.filter((p) => !cohortMemberMap[p.user_id]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--background)" }}>
@@ -881,6 +886,25 @@ function MentorDashboard() {
                 ))}
               </div>
             </div>
+
+            {/* No-cohort warning — these participants are only in this tab by
+                default, and can drift into the wrong garden. */}
+            {unassigned.length > 0 && (
+              <div
+                className="mb-4 rounded-xl px-4 py-3 text-sm"
+                style={{
+                  background: "var(--sidebar)",
+                  border: "1px solid var(--destructive)",
+                  color: "var(--foreground)",
+                }}
+              >
+                <strong>
+                  {unassigned.length} participant{unassigned.length === 1 ? "" : "s"} have no cohort
+                </strong>{" "}
+                — shown here by default, and may see the wrong curriculum:{" "}
+                {unassigned.map((p) => p.email || displayName(p)).join(", ")}
+              </div>
+            )}
 
             {/* Card grid */}
             {filtered.length === 0 ? (

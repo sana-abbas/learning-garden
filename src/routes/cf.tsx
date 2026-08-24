@@ -18,6 +18,8 @@ import {
   Users,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { resolveMyCohort } from "@/lib/cohort";
+import { fetchDirectory, firstNameOf } from "@/lib/directory";
 import type { User } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useTheme } from "@/hooks/useTheme";
@@ -173,36 +175,11 @@ function CodingFundamentals() {
         .from("mentors").select("id").eq("user_id", session.user.id).maybeSingle();
       if (mentorRow) setIsMentor(true);
       if (!mentorRow) {
-        // Check existing cohort assignment first
-        const { data: member } = await supabase
-          .from("cohort_members")
-          .select("cohort_id, cohorts(slug)")
-          .eq("user_id", session.user.id)
-          .maybeSingle();
-        const existingSlug = (member as any)?.cohorts?.slug;
-        // Only hard-redirect if we can positively confirm full-stack membership
-        if (existingSlug === "full-stack") { navigate({ to: "/" }); return; }
-        // New student — auto-enroll from invite list
-        if (!member && session.user.email) {
-          const { data: invite } = await supabase
-            .from("cohort_invites")
-            .select("cohort_id, cohorts(slug)")
-            .eq("email", session.user.email.toLowerCase())
-            .maybeSingle();
-          const inviteSlug = (invite as any)?.cohorts?.slug;
-          if (inviteSlug === "full-stack") {
-            // Explicitly invited to full-stack → redirect
-            navigate({ to: "/" });
-            return;
-          }
-          if (invite && inviteSlug === "coding-fundamentals") {
-            // Auto-enroll CF student
-            await supabase.from("cohort_members").insert({ user_id: session.user.id, cohort_id: (invite as any).cohort_id });
-          }
-          // If invite not found or slug unrecognised, allow through — admin may have
-          // added them directly to cohort_members by user_id already, or invite table
-          // is being set up. Don't punish the participant for a DB gap.
-        }
+        // Only CF participants belong here. ensure_my_cohort() enrols anyone
+        // who has no membership row yet, so an unknown cohort now means "not
+        // CF" rather than "database gap" — safe to turn away.
+        const slug = await resolveMyCohort(session.user.id);
+        if (slug !== "coding-fundamentals") { navigate({ to: "/" }); return; }
       }
       // Save profile on login
       const name = (session.user.user_metadata?.full_name as string | undefined) ?? session.user.email?.split("@")[0] ?? "Gardener";
@@ -253,9 +230,6 @@ function CodingFundamentals() {
     }
   }, [onboarded, progressReady]);
 
-  const getFirstName = (displayName: string | null, email: string | null) =>
-    displayName?.split(" ")[0] || email?.split("@")[0] || "Someone";
-
   const computeChapters = (checked: Record<string, boolean>) =>
     CF_CURRICULUM_STEPS.filter((s) => {
       const step = CF_STEPS.find((x) => x.id === s.id);
@@ -281,16 +255,15 @@ function CodingFundamentals() {
 
     if (cfUserIds.length === 0) { setCommunityMembers([]); setCommunityLoading(false); return; }
 
-    // Fetch progress for all CF members
-    const { data: progressRows } = await supabase
-      .from("user_progress")
-      .select("user_id, display_name, email, checked")
-      .in("user_id", cfUserIds);
+    // Names and progress come from participant_directory, not user_progress —
+    // a participant can only read their own user_progress row, so this list
+    // used to contain nobody but the reader.
+    const progressRows = await fetchDirectory(cfUserIds);
 
-    const members: CommunityMember[] = (progressRows ?? []).map((p: any) => ({
+    const members: CommunityMember[] = progressRows.map((p) => ({
       user_id: p.user_id,
-      firstName: getFirstName(p.display_name, p.email),
-      chaptersCompleted: computeChapters((p.checked as Record<string, boolean>) ?? {}),
+      firstName: firstNameOf(p.display_name),
+      chaptersCompleted: computeChapters(p.checked ?? {}),
       isMe: p.user_id === userId,
     })).sort((a: CommunityMember, b: CommunityMember) => b.chaptersCompleted - a.chaptersCompleted);
 
@@ -307,7 +280,7 @@ function CodingFundamentals() {
       .order("date", { ascending: false })
       .limit(50);
 
-const nameMap = Object.fromEntries((progressRows ?? []).map((p: any) => [p.user_id, getFirstName(p.display_name, p.email)]));
+    const nameMap = Object.fromEntries(progressRows.map((p) => [p.user_id, firstNameOf(p.display_name)]));
     const updates: CommunityUpdate[] = (updateRows ?? []).map((u: any) => ({
       ...u,
       firstName: u.display_name?.split(" ")[0] || nameMap[u.user_id] || "Someone",

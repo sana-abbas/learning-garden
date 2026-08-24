@@ -19,6 +19,8 @@ import {
   Users,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { resolveMyCohort } from "@/lib/cohort";
+import { fetchFirstNames } from "@/lib/directory";
 import type { User } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useTheme } from "@/hooks/useTheme";
@@ -234,29 +236,12 @@ function Index() {
         const { data: mentorRow } = await supabase.from("mentors").select("id").eq("user_id", session.user.id).maybeSingle();
         if (mentorRow && !garden) { navigate({ to: "/mentor" }); return; }
         if (!mentorRow) {
-          // Check existing cohort assignment first
-          const { data: member } = await supabase
-            .from("cohort_members")
-            .select("cohort_id, cohorts(slug)")
-            .eq("user_id", session.user.id)
-            .maybeSingle();
-          const existingSlug = (member as any)?.cohorts?.slug;
-          if (existingSlug === "coding-fundamentals") { navigate({ to: "/cf" }); return; }
-          // New student — check invite list by email
-          if (!member && session.user.email) {
-            const { data: invite } = await supabase
-              .from("cohort_invites")
-              .select("cohort_id, cohorts(slug)")
-              .eq("email", session.user.email.toLowerCase())
-              .maybeSingle();
-            if (invite && (invite as any)?.cohorts?.slug === "coding-fundamentals") {
-              await supabase.from("cohort_members").insert({ user_id: session.user.id, cohort_id: (invite as any).cohort_id });
-              navigate({ to: "/cf" });
-              return;
-            }
-          }
+          // The database owns cohort assignment (ensure_my_cohort), so this is
+          // the same answer /cf gets — the two routes can no longer disagree.
+          const slug = await resolveMyCohort(session.user.id);
+          if (slug === "coding-fundamentals") { navigate({ to: "/cf" }); return; }
         }
-        // Not a CF student — stay on / (full-stack, default)
+        // Full-stack (or cohort unknown) — stay on /
         // Save display_name and email so the mentor dashboard can read them
         const name = (session.user.user_metadata?.full_name as string | undefined) ?? session.user.email?.split("@")[0] ?? "Gardener";
         const avatarUrl = (session.user.user_metadata?.avatar_url as string | undefined) ?? null;
@@ -537,8 +522,10 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
     const { data: memberRows } = await supabase.from("cohort_members").select("user_id").eq("cohort_id", (cohortRow as any).id);
     const fsUserIds = (memberRows ?? []).map((r: any) => r.user_id as string);
     if (fsUserIds.length === 0) { setFsMembers([]); setFsLoading(false); return; }
-    const { data: progressRows } = await supabase.from("user_progress").select("user_id, display_name, email").in("user_id", fsUserIds);
-    const nameMap = Object.fromEntries((progressRows ?? []).map((p: any) => [p.user_id, (p.display_name?.split(" ")[0] || p.email?.split("@")[0] || "Someone")]));
+    // Names come from participant_directory, not user_progress — a participant
+    // can only read their own user_progress row, which is why every name here
+    // used to fall through to "Someone".
+    const nameMap = await fetchFirstNames(fsUserIds);
     const members: FsCommunityMember[] = fsUserIds.map(id => ({ user_id: id, firstName: nameMap[id] || "Someone" }));
     const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const cutoff = sevenDaysAgo.toISOString().split("T")[0];

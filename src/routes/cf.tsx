@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import type { SearchSchemaInput } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -34,7 +35,8 @@ import { CF_CONTENT } from "@/data/content-cf";
 import type { Step, SubTask } from "@/data/curriculum";
 
 export const Route = createFileRoute("/cf")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  // See the note on the "/" route — keeps `garden` optional for callers.
+  validateSearch: (search: { garden?: boolean | string } & SearchSchemaInput) => ({
     garden: search.garden === "1" || search.garden === true || search.garden === "true",
   }),
   component: CodingFundamentals,

@@ -738,7 +738,7 @@ function MentorDashboard() {
         </button>
         <button
           type="button"
-          onClick={() => navigate({ to: "/cf" })}
+          onClick={() => navigate({ to: "/cf", search: { garden: true } })}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-medium transition-colors"
           style={{ border: "1px solid var(--sidebar-border)", color: "var(--muted-foreground)" }}
           title="Preview CF garden"

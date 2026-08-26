@@ -12,44 +12,265 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
-      user_progress: {
+      cohort_invites: {
         Row: {
+          cohort_id: string
+          created_at: string | null
+          email: string
+          id: string
+        }
+        Insert: {
+          cohort_id: string
+          created_at?: string | null
+          email: string
+          id?: string
+        }
+        Update: {
+          cohort_id?: string
+          created_at?: string | null
+          email?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cohort_invites_cohort_id_fkey"
+            columns: ["cohort_id"]
+            isOneToOne: false
+            referencedRelation: "cohorts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cohort_members: {
+        Row: {
+          cohort_id: string
+          created_at: string | null
           id: string
           user_id: string
-          checked: Json
-          notes: Json
-          submissions: Json
-          onboarded: boolean
-          streak_count: number
-          streak_date: string | null
-          created_at: string
-          updated_at: string
+        }
+        Insert: {
+          cohort_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          cohort_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cohort_members_cohort_id_fkey"
+            columns: ["cohort_id"]
+            isOneToOne: false
+            referencedRelation: "cohorts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cohorts: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      daily_updates: {
+        Row: {
+          blockers: string | null
+          created_at: string | null
+          date: string
+          display_name: string | null
+          id: string
+          today: string
+          tomorrow: string
+          user_id: string
+        }
+        Insert: {
+          blockers?: string | null
+          created_at?: string | null
+          date?: string
+          display_name?: string | null
+          id?: string
+          today: string
+          tomorrow: string
+          user_id: string
+        }
+        Update: {
+          blockers?: string | null
+          created_at?: string | null
+          date?: string
+          display_name?: string | null
+          id?: string
+          today?: string
+          tomorrow?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mentors: {
+        Row: {
+          id: string
+          name: string | null
+          user_id: string
         }
         Insert: {
           id?: string
+          name?: string | null
           user_id: string
-          checked?: Json
-          notes?: Json
-          submissions?: Json
-          onboarded?: boolean
-          streak_count?: number
-          streak_date?: string | null
-          created_at?: string
-          updated_at?: string
         }
         Update: {
           id?: string
+          name?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      update_comments: {
+        Row: {
+          commenter_name: string
+          commenter_user_id: string
+          created_at: string | null
+          id: string
+          text: string
+          update_date: string
+          update_user_id: string
+        }
+        Insert: {
+          commenter_name: string
+          commenter_user_id: string
+          created_at?: string | null
+          id?: string
+          text: string
+          update_date: string
+          update_user_id: string
+        }
+        Update: {
+          commenter_name?: string
+          commenter_user_id?: string
+          created_at?: string | null
+          id?: string
+          text?: string
+          update_date?: string
+          update_user_id?: string
+        }
+        Relationships: []
+      }
+      update_reactions: {
+        Row: {
+          created_at: string | null
+          emoji: string
+          id: string
+          reactor_user_id: string
+          update_date: string
+          update_user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          emoji: string
+          id?: string
+          reactor_user_id: string
+          update_date: string
+          update_user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          emoji?: string
+          id?: string
+          reactor_user_id?: string
+          update_date?: string
+          update_user_id?: string
+        }
+        Relationships: []
+      }
+      user_progress: {
+        Row: {
+          avatar_url: string | null
+          checked: Json
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          notes: Json
+          onboarded: boolean | null
+          streak_count: number
+          streak_date: string | null
+          submissions: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
           checked?: Json
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
           notes?: Json
-          submissions?: Json
-          onboarded?: boolean
+          onboarded?: boolean | null
           streak_count?: number
           streak_date?: string | null
-          created_at?: string
+          submissions?: Json | null
           updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          checked?: Json
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          notes?: Json
+          onboarded?: boolean | null
+          streak_count?: number
+          streak_date?: string | null
+          submissions?: Json | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -58,7 +279,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cohort_directory: {
+        Args: never
+        Returns: {
+          checked: Json
+          display_name: string
+          user_id: string
+        }[]
+      }
+      ensure_my_cohort: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never
@@ -187,6 +416,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

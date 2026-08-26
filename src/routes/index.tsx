@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import type { SearchSchemaInput } from "@tanstack/react-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -33,10 +34,13 @@ import { CallClaimModal } from "@/components/garden/CallClaimModal";
 import { DailyUpdateModal } from "@/components/garden/DailyUpdateModal";
 import { OnboardingScreen, ONBOARDING_OPTIONS } from "@/components/garden/OnboardingScreen";
 import { STEPS, CURRICULUM_STEPS } from "@/data/curriculum";
-import type { Step } from "@/data/curriculum";
+import type { Step, SubTask } from "@/data/curriculum";
 
 export const Route = createFileRoute("/")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  // SearchSchemaInput keeps `garden` optional for callers (so plain
+  // navigate({ to: "/" }) stays clean and does not append ?garden=false),
+  // while readers still get a plain boolean.
+  validateSearch: (search: { garden?: boolean | string } & SearchSchemaInput) => ({
     garden: search.garden === "1" || search.garden === true || search.garden === "true",
   }),
   component: Index,

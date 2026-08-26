@@ -6,17 +6,6 @@ export type DirectoryEntry = {
   checked: Record<string, boolean>;
 };
 
-/**
- * types.ts is stale (it only declares user_progress), so this module talks to a
- * narrow hand-written shape rather than adding to the type errors that staleness
- * already causes. Regenerate types.ts and the cast can go.
- */
-type DirectoryQuery = {
-  rpc: (fn: "cohort_directory") => Promise<{ data: unknown; error: unknown }>;
-};
-
-const db = supabase as unknown as DirectoryQuery;
-
 /** First name only — the community feed is on first-name terms. */
 export function firstNameOf(displayName: string | null | undefined): string {
   return displayName?.trim().split(" ")[0] || "Someone";
@@ -37,10 +26,16 @@ export function firstNameOf(displayName: string | null | undefined): string {
  */
 export async function fetchDirectory(userIds: string[]): Promise<DirectoryEntry[]> {
   if (userIds.length === 0) return [];
-  const { data, error } = await db.rpc("cohort_directory");
-  if (error || !Array.isArray(data)) return [];
+  const { data, error } = await supabase.rpc("cohort_directory");
+  if (error || !data) return [];
   const wanted = new Set(userIds);
-  return (data as DirectoryEntry[]).filter((row) => wanted.has(row.user_id));
+  return data
+    .filter((row) => wanted.has(row.user_id))
+    .map((row) => ({
+      user_id: row.user_id,
+      display_name: row.display_name,
+      checked: (row.checked ?? {}) as Record<string, boolean>,
+    }));
 }
 
 /** user_id → first name, for resolving names on updates and comments. */

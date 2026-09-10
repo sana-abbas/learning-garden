@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as MentorRouteImport } from './routes/mentor'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as FounderRouteImport } from './routes/founder'
 import { Route as CfRouteImport } from './routes/cf'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -22,6 +23,11 @@ const MentorRoute = MentorRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FounderRoute = FounderRouteImport.update({
+  id: '/founder',
+  path: '/founder',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CfRoute = CfRouteImport.update({
@@ -38,12 +44,14 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cf': typeof CfRoute
+  '/founder': typeof FounderRoute
   '/login': typeof LoginRoute
   '/mentor': typeof MentorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cf': typeof CfRoute
+  '/founder': typeof FounderRoute
   '/login': typeof LoginRoute
   '/mentor': typeof MentorRoute
 }
@@ -51,20 +59,22 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/cf': typeof CfRoute
+  '/founder': typeof FounderRoute
   '/login': typeof LoginRoute
   '/mentor': typeof MentorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/cf' | '/login' | '/mentor'
+  fullPaths: '/' | '/cf' | '/founder' | '/login' | '/mentor'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/cf' | '/login' | '/mentor'
-  id: '__root__' | '/' | '/cf' | '/login' | '/mentor'
+  to: '/' | '/cf' | '/founder' | '/login' | '/mentor'
+  id: '__root__' | '/' | '/cf' | '/founder' | '/login' | '/mentor'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CfRoute: typeof CfRoute
+  FounderRoute: typeof FounderRoute
   LoginRoute: typeof LoginRoute
   MentorRoute: typeof MentorRoute
 }
@@ -83,6 +93,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/founder': {
+      id: '/founder'
+      path: '/founder'
+      fullPath: '/founder'
+      preLoaderRoute: typeof FounderRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cf': {
@@ -105,6 +122,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CfRoute: CfRoute,
+  FounderRoute: FounderRoute,
   LoginRoute: LoginRoute,
   MentorRoute: MentorRoute,
 }

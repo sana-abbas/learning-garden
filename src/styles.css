@@ -119,6 +119,22 @@
   --sidebar-primary: oklch(0.55 0.13 145);
   --sidebar-primary-foreground: oklch(0.99 0.01 100);
   --sidebar-ring: oklch(0.55 0.13 145);
+
+  /* Participant-status palette (founder dashboard).
+     Four hues, one per lifecycle status, kept separate from --chart-* because
+     these are fills on a card surface rather than garden decoration. The steps
+     are not free choices: they clear the lightness band, chroma floor, CVD
+     separation and normal-vision floor in BOTH themes — light warns only on
+     contrast-vs-surface, which is why every segment that uses them carries a
+     visible label and a legend. Re-validate before changing any of them. */
+  --status-enrolled: #008300;
+  --status-paused: #eda100;
+  --status-graduated: #e87ba4;
+  --status-offboarded: #2a78d6;
+  /* Applied / Accepted / Declined — nobody is in the programme yet, so they get
+     a neutral rather than competing for a hue (adding a fifth hue broke the
+     dark-mode gate against Enrolled). */
+  --status-other: oklch(0.62 0.02 80);
 }
 
 @keyframes float-soft {
@@ -197,6 +213,18 @@
   --chart-3: oklch(0.78 0.18 180);
   --chart-4: oklch(0.80 0.22 60);
   --chart-5: oklch(0.62 0.22 305);
+
+  /* Participant-status palette — dark mode's own steps, not a flip of light's.
+     The dark lightness band (0.48–0.67) is narrower, so each hue is re-stepped
+     and re-validated against the dark card surface. Enrolled/Paused sit in the
+     6–8 CVD floor band here, which is why the stacked bar keeps 2px gaps and
+     direct labels. */
+  --status-enrolled: #008300;
+  --status-paused: #c98500;
+  --status-graduated: #d55181;
+  --status-offboarded: #3987e5;
+  --status-other: oklch(0.55 0.02 80);
+
   /* Garden scene tokens */
   --sky-top: oklch(0.22 0.05 240);
   --sky-bottom: oklch(0.18 0.06 230);

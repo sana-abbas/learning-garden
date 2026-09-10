@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveMyCohort } from "@/lib/cohort";
+import { resolveMyRole } from "@/lib/role";
 import { fetchFirstNames } from "@/lib/directory";
 import type { User } from "@supabase/supabase-js";
 import { toast } from "sonner";
@@ -169,6 +170,8 @@ function Index() {
   const { theme, toggle: toggleTheme } = useTheme();
   const [userId, setUserId] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  // Which staff dashboard the garden-preview link goes back to, if any.
+  const [staffHome, setStaffHome] = useState<"/mentor" | "/founder">("/mentor");
   const [authReady, setAuthReady] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [todayUpdate, setTodayUpdate] = useState<{ today: string; tomorrow: string; blockers: string | null } | null | undefined>(undefined);
@@ -231,15 +234,26 @@ function Index() {
   // Reset whenever a new user's progress loads so we don't fire on login
   const bloomInitializedFor = useRef<string | null>(null);
 
-  // Auth guard — redirect to /login if not signed in, /mentor if mentor role
+  // Auth guard — /login if not signed in, else the dashboard for their role.
+  // Founder is checked first: a founder who is also a mentor should land on the
+  // dashboard that contains both, and neither should be enrolled as a
+  // participant by ensure_my_cohort() below.
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) {
         navigate({ to: "/login" });
       } else {
-        const { data: mentorRow } = await supabase.from("mentors").select("id").eq("user_id", session.user.id).maybeSingle();
-        if (mentorRow && !garden) { navigate({ to: "/mentor" }); return; }
-        if (!mentorRow) {
+        // claim_my_role() decides this, and promotes an invited founder on
+        // their very first sign-in — which has to happen before
+        // ensure_my_cohort() below, or they get enrolled as a Full Stack
+        // learner on the way past.
+        const { isFounder, isMentor } = await resolveMyRole(session.user.id);
+        const isStaff = isFounder || isMentor;
+        if (isFounder) setStaffHome("/founder");
+        else if (isMentor) setStaffHome("/mentor");
+        if (isFounder && !garden) { navigate({ to: "/founder" }); return; }
+        if (isMentor && !garden) { navigate({ to: "/mentor" }); return; }
+        if (!isStaff) {
           // The database owns cohort assignment (ensure_my_cohort), so this is
           // the same answer /cf gets — the two routes can no longer disagree.
           const slug = await resolveMyCohort(session.user.id);
@@ -619,14 +633,14 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
             </button>
           </div>
 
-          {/* Back to dashboard button — mentor garden preview only */}
+          {/* Back to dashboard button — staff garden preview only */}
           {garden && (
             <button
               type="button"
-              onClick={() => navigate({ to: "/mentor" })}
+              onClick={() => navigate({ to: staffHome })}
               className="mt-3 w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-medium text-[color:var(--muted-foreground)] hover:bg-[oklch(0.92_0.025_85)] dark:hover:bg-[oklch(0.27_0.03_65)] transition-colors border border-[color:var(--sidebar-border)]"
             >
-              ← Back to mentor dashboard
+              ← Back to {staffHome === "/founder" ? "founder" : "mentor"} dashboard
             </button>
           )}
 

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveMyCohort } from "@/lib/cohort";
+import { resolveMyRole } from "@/lib/role";
 import { fetchDirectory, firstNameOf } from "@/lib/directory";
 import type { User } from "@supabase/supabase-js";
 import { toast } from "sonner";
@@ -91,7 +92,8 @@ function CodingFundamentals() {
   const [userId, setUserId] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
-  const [isMentor, setIsMentor] = useState(false);
+  // Which staff dashboard to offer a way back to, or null for a participant.
+  const [staffHome, setStaffHome] = useState<"/mentor" | "/founder" | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [submissionModal, setSubmissionModal] = useState<{
     step: Step;
@@ -173,10 +175,13 @@ function CodingFundamentals() {
         navigate({ to: "/login" });
         return;
       }
-      const { data: mentorRow } = await supabase
-        .from("mentors").select("id").eq("user_id", session.user.id).maybeSingle();
-      if (mentorRow) setIsMentor(true);
-      if (!mentorRow) {
+      // Same as on "/": claim_my_role() promotes an invited founder before
+      // resolveMyCohort() can enrol them as a learner.
+      const { isFounder, isMentor } = await resolveMyRole(session.user.id);
+      // Founders preview this garden too, and their dashboard is /founder.
+      if (isFounder) setStaffHome("/founder");
+      else if (isMentor) setStaffHome("/mentor");
+      if (!isFounder && !isMentor) {
         // Only CF participants belong here. ensure_my_cohort() enrols anyone
         // who has no membership row yet, so an unknown cohort now means "not
         // CF" rather than "database gap" — safe to turn away.
@@ -556,14 +561,14 @@ function CodingFundamentals() {
             </button>
           </div>
 
-          {/* Back to dashboard button — visible to mentors */}
-          {isMentor && (
+          {/* Back to dashboard button — visible to mentors and founders */}
+          {staffHome && (
             <button
               type="button"
-              onClick={() => navigate({ to: "/mentor" })}
+              onClick={() => navigate({ to: staffHome })}
               className="mt-3 w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-medium text-[color:var(--muted-foreground)] hover:bg-[oklch(0.92_0.025_85)] dark:hover:bg-[oklch(0.27_0.03_65)] transition-colors border border-[color:var(--sidebar-border)]"
             >
-              ← Back to mentor dashboard
+              ← Back to {staffHome === "/founder" ? "founder" : "mentor"} dashboard
             </button>
           )}
 

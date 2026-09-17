@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Info } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 /**
@@ -26,6 +27,7 @@ export function StatCard({
   label,
   value,
   sub,
+  formula,
   accent = "var(--muted-foreground)",
   emphasis = false,
 }: {
@@ -33,12 +35,14 @@ export function StatCard({
   label: string;
   value: string | number;
   sub?: string;
+  /** Plain-English derivation, shown behind the ⓘ. */
+  formula?: string;
   accent?: string;
   emphasis?: boolean;
 }) {
   return (
     <div
-      className="rounded-2xl p-5"
+      className="relative rounded-2xl p-5"
       style={{
         background: "var(--sidebar)",
         border: emphasis ? "1px solid var(--primary)" : "1px solid var(--sidebar-border)",
@@ -52,6 +56,7 @@ export function StatCard({
         >
           {label}
         </span>
+        {formula && <InfoTip label={label} text={formula} />}
       </div>
       <p
         className="text-2xl font-bold font-serif tabular-nums"
@@ -65,6 +70,68 @@ export function StatCard({
         </p>
       )}
     </div>
+  );
+}
+
+/**
+ * The derivation behind a KPI, one tap away.
+ *
+ * Kept off the card face on purpose: a founder reading the dashboard wants the
+ * number, and a founder about to quote the number outside the company wants the
+ * population it was measured over. Printing both at all times served neither.
+ *
+ * Opens on hover for the mouse and on click for touch, where there is no hover
+ * to speak of. Escape and blur close it, so it can never strand a panel open
+ * over the card beneath.
+ */
+function InfoTip({ label, text }: { label: string; text: string }) {
+  // Hover and click are tracked apart. Sharing one flag meant the mouse opened
+  // the panel on the way to the icon and the click that followed toggled it
+  // straight back shut, so it was impossible to click open.
+  const [pinned, setPinned] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const open = pinned || hovered;
+
+  // No `relative` here on purpose: the panel positions against the card, which
+  // lets it hang below the whole card instead of landing on top of the number
+  // it is there to explain.
+  return (
+    <span className="inline-flex ml-auto">
+      <button
+        type="button"
+        aria-label={`How ${label} is calculated`}
+        aria-expanded={open}
+        onClick={() => setPinned((prev) => !prev)}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onFocus={() => setHovered(true)}
+        onBlur={() => {
+          setHovered(false);
+          setPinned(false);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") setPinned(false);
+        }}
+        className="rounded-full opacity-50 hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+        style={{ color: "var(--muted-foreground)" }}
+      >
+        <Info className="w-3.5 h-3.5" />
+      </button>
+      {open && (
+        <span
+          role="tooltip"
+          className="absolute right-0 top-full mt-2 z-20 w-64 max-w-[80vw] rounded-xl p-3 text-[11px] leading-snug font-normal normal-case tracking-normal"
+          style={{
+            background: "var(--background)",
+            border: "1px solid var(--sidebar-border)",
+            color: "var(--muted-foreground)",
+            boxShadow: "0 8px 24px rgb(0 0 0 / 0.18)",
+          }}
+        >
+          {text}
+        </span>
+      )}
+    </span>
   );
 }
 

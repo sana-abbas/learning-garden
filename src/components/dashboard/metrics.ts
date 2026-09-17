@@ -2,8 +2,10 @@ import type { RosterRow } from "./types";
 import { STATUS_ORDER } from "./types";
 import { DAY_MS, median, pct } from "./format";
 import {
+  CF_SLUG,
   completedCountFor,
   completionFor,
+  gardenCohortForTrack,
   isGraduate,
   totalChapters,
   trackUsesGarden,
@@ -81,6 +83,33 @@ export function countMultiTrackPeople(rows: RosterRow[]): number {
   return [...seen.values()].filter((n) => n > 1).length;
 }
 
+// ── Track scope, for the Overview tabs ───────────────────────────────────────
+
+/**
+ * Which slice of the roster the Overview is showing.
+ *
+ * "all" is every track including the five the garden does not teach; the other
+ * two are the cohorts with a curriculum. Scoping is by Notion's Curriculum
+ * Track, not by the garden account, so someone enrolled on Full Stack who has
+ * never signed in still counts towards Full Stack — which is the whole point of
+ * asking "how is this track doing".
+ */
+export type TrackScope = "all" | "full-stack" | typeof CF_SLUG;
+
+/**
+ * Notion has "full-stack 1.0" and "full-stack 2.0" as separate options and will
+ * have more; gardenCohortForTrack() already folds them by prefix, so a new
+ * version appears in the right tab without a code change.
+ */
+export function inScope(r: RosterRow, scope: TrackScope): boolean {
+  if (scope === "all") return true;
+  return gardenCohortForTrack(r.track) === scope;
+}
+
+export function scopeRows(rows: RosterRow[], scope: TrackScope): RosterRow[] {
+  return scope === "all" ? rows : rows.filter((r) => inScope(r, scope));
+}
+
 /** Days since this participant last touched the garden; null if never. */
 export function idleDays(r: RosterRow): number | null {
   if (!r.last_active) return null;
@@ -125,20 +154,31 @@ export interface HeadlineKpis {
   /** Applied + accepted-but-not-enrolled — the top of the funnel. */
   pipeline: number;
   declined: number;
-  /**
-   * Of the enrolments that have ended, the share that ended in graduation.
-   * Per enrolment rather than per person, deliberately: someone who graduated
-   * one track and left another genuinely had both outcomes, and collapsing
-   * them to one would have to discard the true one.
-   *
-   * Excludes anyone still enrolled or paused, whose outcome is not yet known —
-   * dividing by the whole roster would understate it and drift as you enrol.
-   */
-  graduationRate: number;
   /** Distinct people who have graduated at least one track. */
   graduatedPeople: number;
-  /** Share of all people who have graduated at least one track. */
-  graduationRateAllTime: number;
+  /**
+   * Of the people who reached a first paid project, how many also graduated.
+   *
+   * The denominator is `reachedPaidWork`, so numerator and denominator describe
+   * the same population — the previous all-time rate divided graduates by the
+   * entire roster, which included applicants and declined candidates who were
+   * never enrolled at all, and sank every time a new application was added.
+   *
+   * Both halves are measured on the same enrolment: "graduated" and "paid" have
+   * to be true of one row, not of two different tracks the person took.
+   */
+  graduatedOfPaid: number;
+  /** graduatedOfPaid ÷ reachedPaidWork. Meaningless where nothing is recorded. */
+  graduationRateOfPaid: number;
+  /**
+   * True when this scope records paid projects at all.
+   *
+   * Only the Full Stack tracks use the "1st Paid Project" column — every Coding
+   * Fundamentals row is "N/A" and the remaining tracks are blank. Without this,
+   * a cohort that has simply never recorded a paid project is indistinguishable
+   * from one where nobody ever reached one, and the card would read 0%.
+   */
+  tracksPaidWork: boolean;
   reachedPaidWork: number;
   reachedSecondPaidWork: number;
   countries: number;
@@ -155,7 +195,6 @@ export function headlineKpis(rows: RosterRow[]): HeadlineKpis {
 
   const graduated = by("Graduated");
   const offboarded = by("Offboarded");
-  const ended = graduated + offboarded;
 
   const activeInGarden = roster.filter((r) => {
     if (r.status !== "Enrolled") return false;
@@ -165,6 +204,12 @@ export function headlineKpis(rows: RosterRow[]): HeadlineKpis {
 
   const people = countPeople(roster);
   const graduatedPeople = countPeople(roster.filter((r) => r.status === "Graduated"));
+
+  // "Paid" only. "Unpaid" and "N/A" are both recorded values that mean the
+  // person did not reach a paid project, and neither belongs in this population.
+  const paidRows = roster.filter((r) => r.paid_project_1 === "Paid");
+  const reachedPaidWork = countPeople(paidRows);
+  const graduatedOfPaid = countPeople(paidRows.filter((r) => r.status === "Graduated"));
 
   return {
     rosterTotal: roster.length,
@@ -176,11 +221,12 @@ export function headlineKpis(rows: RosterRow[]): HeadlineKpis {
     offboarded,
     pipeline: by("Applied") + by("Accepted; not yet enrolled"),
     declined: by("Declined"),
-    graduationRate: pct(graduated, ended),
     graduatedPeople,
-    graduationRateAllTime: pct(graduatedPeople, people),
+    graduatedOfPaid,
+    graduationRateOfPaid: pct(graduatedOfPaid, reachedPaidWork),
+    tracksPaidWork: reachedPaidWork > 0,
     // Per person: someone paid on two tracks has still reached paid work once.
-    reachedPaidWork: countPeople(roster.filter((r) => r.paid_project_1 === "Paid")),
+    reachedPaidWork,
     reachedSecondPaidWork: countPeople(roster.filter((r) => r.paid_project_2 === "Paid")),
     countries: new Set(roster.map((r) => normaliseCountry(r.country)).filter(Boolean)).size,
     tracks: new Set(roster.map((r) => r.track).filter(Boolean)).size,
@@ -305,12 +351,6 @@ export function startsByMonth(rows: RosterRow[]): { month: string; count: number
 
 // ── Job outcomes ─────────────────────────────────────────────────────────────
 
-/** The Full Stack programme, either version of the curriculum. */
-export function isFullStackTrack(track: string | null | undefined): boolean {
-  const name = track?.trim().toLowerCase();
-  return !!name && (name.startsWith("full-stack") || name.startsWith("full stack"));
-}
-
 export interface JobOutcomes {
   /** People in scope. */
   total: number;
@@ -345,7 +385,24 @@ export function jobOutcomes(rows: RosterRow[]): JobOutcomes {
   };
 }
 
-/** Job outcomes for people who graduated a Full Stack track. */
+/** The Full Stack programme, either version of the curriculum. */
+export function isFullStackTrack(track: string | null | undefined): boolean {
+  const name = track?.trim().toLowerCase();
+  return !!name && (name.startsWith("full-stack") || name.startsWith("full stack"));
+}
+
+/**
+ * Job outcomes for people who graduated a Full Stack track.
+ *
+ * The one metric on the Overview that ignores the track tab: it is always Full
+ * Stack, whichever tab is selected. Employment is only tracked for that
+ * programme in practice — Job Status is blank on 92% of the roster and the
+ * recorded outcomes are Full Stack's — so scoping it to the tab would have put
+ * an authoritative-looking fraction on a track nobody has followed up.
+ *
+ * Because it ignores the tab, it must be passed the *unscoped* rows, and the
+ * card has to name Full Stack on its face rather than only in its tooltip.
+ */
 export function fullStackGraduateJobs(rows: RosterRow[]): JobOutcomes {
   return jobOutcomes(
     rows.filter((r) => isOnRoster(r) && r.status === "Graduated" && isFullStackTrack(r.track)),

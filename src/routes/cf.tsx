@@ -33,6 +33,7 @@ import { ContentModal } from "@/components/garden/ContentModal";
 import { DailyUpdateModal } from "@/components/garden/DailyUpdateModal";
 import { CF_STEPS, CF_CURRICULUM_STEPS } from "@/data/curriculum-cf";
 import { CF_CONTENT } from "@/data/content-cf";
+import { EXERCISE_CHECKERS } from "@/data/exercise-checkers";
 import type { Step, SubTask } from "@/data/curriculum";
 
 export const Route = createFileRoute("/cf")({
@@ -420,6 +421,14 @@ function CodingFundamentals() {
       return;
     }
     if (sub.gate) {
+      // Exercises with an auto-checker must go through ContentModal, which runs
+      // it. SubmissionModal only checks the box isn't empty, so routing here
+      // would let a student skip validation just by ticking the checkbox.
+      const content = CF_CONTENT[subId];
+      if (content && EXERCISE_CHECKERS[subId]) {
+        setContentModal({ title: sub.label, content, gate: sub.gate, step, sub, subId });
+        return;
+      }
       setSubmissionModal({ step, sub });
       return;
     }

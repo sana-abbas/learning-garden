@@ -1574,6 +1574,8 @@ Implement a restaurant management system considering the instructions and the co
 \`\`\`jsx
 // collections
 const mainComponents = ["Pasta", "Steak"];
+const specialIngredients = ["Truffles", "Saffron", "Fries"];
+const optionalIngredients = ["Chilli", "Sugar", "Eggs", "Milk"];
 
 // testing
 console.log(sendDelivery("Truffles", "Chilli", "Sugar"));
@@ -1672,7 +1674,7 @@ Based on the string variables below, use a single Template Literal to create a s
 \`\`\`jsx
 const firstName = "Joana";
 const role = "Developer";
-const yearsExperience = 3;
+const yearsExperience = 5;
 \`\`\`
 `,
 
@@ -2043,8 +2045,8 @@ console.log(7 % 3 === RESULT_REST);
 console.log(5 > 2 === RESULT_GT);
 console.log(10 === "10" === RESULT_EQ_STRICT);
 console.log(8 !== 8 === RESULT_NEQ_STRICT);
-console.log(true && false === RESULT_LOG_AND);
-console.log(true || false === RESULT_LOG_OR);
+console.log((true && false) === RESULT_LOG_AND);
+console.log((true || false) === RESULT_LOG_OR);
 console.log(!false === RESULT_LOG_NOT);
 \`\`\`
 `,

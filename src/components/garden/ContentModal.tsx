@@ -5,7 +5,7 @@ import remarkGfm from "remark-gfm";
 import type { ReactNode } from "react";
 import type { SubmissionGate } from "@/components/garden/SubmissionModal";
 import type { Submission } from "@/hooks/useProgress";
-import { EXERCISE_CHECKERS } from "@/data/exercise-checkers";
+import { EXERCISE_CHECKERS, type CheckResult } from "@/data/exercise-checkers";
 
 interface Props {
   title: string;
@@ -76,8 +76,9 @@ export function ContentModal({ title, content, onClose, gate, subId, existing, o
   const [paste, setPaste] = useState(existing?.paste ?? "");
   const [link, setLink] = useState(existing?.link ?? "");
   const [link2, setLink2] = useState(existing?.link2 ?? "");
-  const [checkResult, setCheckResult] = useState<{ correct: boolean; feedback: string } | null>(null);
+  const [checkResult, setCheckResult] = useState<CheckResult | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [submittedWithHint, setSubmittedWithHint] = useState(false);
 
   const pasteTrimmed = paste.trim();
   const linkTrimmed = link.trim();
@@ -97,10 +98,14 @@ export function ContentModal({ title, content, onClose, gate, subId, existing, o
 
     // Run checker if one exists for this subtask
     const checker = subId ? EXERCISE_CHECKERS[subId] : undefined;
+    let advisory = false;
     if (checker && gate.pasteLabel) {
       const result = checker(pasteTrimmed);
       setCheckResult(result);
-      if (!result.correct) return; // don't mark complete until correct
+      // Only block when the checker can prove the answer wrong. Advisory
+      // results show the hint but let the student through for mentor review.
+      if (!result.correct && result.blocking !== false) return;
+      advisory = !result.correct;
     }
 
     const data: Submission = { submittedAt: new Date().toISOString() };
@@ -108,6 +113,7 @@ export function ContentModal({ title, content, onClose, gate, subId, existing, o
     if (gate.linkLabel) data.link = linkTrimmed;
     if (gate.link2Label) data.link2 = link2Trimmed;
     onSubmit(data);
+    setSubmittedWithHint(advisory);
     setSubmitted(true);
   };
 
@@ -211,23 +217,27 @@ export function ContentModal({ title, content, onClose, gate, subId, existing, o
                 </div>
               )}
 
-              {/* Checker feedback */}
-              {checkResult && (
-                <div
-                  className="px-3 py-2.5 rounded-lg text-[12.5px] font-medium"
-                  style={{
-                    background: checkResult.correct
-                      ? "oklch(0.91 0.07 145 / 0.25)"
-                      : "oklch(0.93 0.07 25 / 0.2)",
-                    color: checkResult.correct
-                      ? "var(--primary)"
-                      : "var(--destructive)",
-                    border: `1px solid ${checkResult.correct ? "oklch(0.55 0.13 145 / 0.3)" : "oklch(0.6 0.22 25 / 0.3)"}`,
-                  }}
-                >
-                  {checkResult.correct ? "✓ " : "✗ "}{checkResult.feedback}
-                </div>
-              )}
+              {/* Checker feedback — pass, a hint you can submit past, or a hard stop */}
+              {checkResult && (() => {
+                const tone = checkResult.correct
+                  ? { bg: "oklch(0.91 0.07 145 / 0.25)", fg: "var(--primary)", border: "oklch(0.55 0.13 145 / 0.3)", icon: "✓ " }
+                  : checkResult.blocking === false
+                    ? { bg: "oklch(0.94 0.08 85 / 0.25)", fg: "oklch(0.45 0.12 70)", border: "oklch(0.7 0.14 80 / 0.4)", icon: "💡 " }
+                    : { bg: "oklch(0.93 0.07 25 / 0.2)", fg: "var(--destructive)", border: "oklch(0.6 0.22 25 / 0.3)", icon: "✗ " };
+                return (
+                  <div
+                    className="px-3 py-2.5 rounded-lg text-[12.5px] font-medium space-y-1"
+                    style={{ background: tone.bg, color: tone.fg, border: `1px solid ${tone.border}` }}
+                  >
+                    <div>{tone.icon}{checkResult.feedback}</div>
+                    {!checkResult.correct && checkResult.blocking === false && (
+                      <div className="font-normal opacity-80">
+                        You can still submit — your mentor will take a look.
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               <button
                 type="button"
@@ -247,13 +257,15 @@ export function ContentModal({ title, content, onClose, gate, subId, existing, o
               className="mt-6 pt-5 border-t space-y-4 text-center"
               style={{ borderColor: "var(--sidebar-border)" }}
             >
-              <div className="text-4xl">🎉</div>
+              <div className="text-4xl">{submittedWithHint ? "🌱" : "🎉"}</div>
               <div className="space-y-1.5">
                 <p className="font-semibold text-sm" style={{ color: "var(--primary)" }}>
-                  That's correct! Great job!
+                  {submittedWithHint ? "Submitted — nice work!" : "That's correct! Great job!"}
                 </p>
                 <p className="text-sm leading-relaxed" style={{ color: "var(--foreground)" }}>
-                  You've completed this exercise. Keep up the amazing work. Every exercise you finish is a step forward. You're doing brilliantly! 🌱
+                  {submittedWithHint
+                    ? "Your answer is saved and your mentor will review it. Have another look at the hint above if you'd like to refine it — you can come back and update your answer any time. 🌱"
+                    : "You've completed this exercise. Keep up the amazing work. Every exercise you finish is a step forward. You're doing brilliantly! 🌱"}
                 </p>
               </div>
               <button

@@ -1,0 +1,5 @@
+# Normalise all text files to LF in the repository and in the working tree, on
+# every platform. Without this, a Windows checkout (core.autocrlf=true) writes
+# CRLF to disk while prettier is configured for LF, so every line of every file
+# fails the lint.
+* text=auto eol=lf

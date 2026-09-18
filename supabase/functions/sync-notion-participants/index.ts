@@ -40,7 +40,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-sync-secret",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-sync-secret",
 };
 
 const json = (body: unknown, status = 200) =>
@@ -61,7 +62,10 @@ type NotionPage = { id: string; url?: string; properties?: Record<string, Notion
 function richText(prop: NotionProp | undefined): string | null {
   const parts = (prop?.rich_text ?? prop?.title) as { plain_text?: string }[] | undefined;
   if (!Array.isArray(parts)) return null;
-  const text = parts.map((p) => p.plain_text ?? "").join("").trim();
+  const text = parts
+    .map((p) => p.plain_text ?? "")
+    .join("")
+    .trim();
   return text || null;
 }
 
@@ -92,10 +96,10 @@ function numberValue(prop: NotionProp | undefined): number | null {
 // ── Notion fetch ─────────────────────────────────────────────────────────────
 
 async function fetchAllPages(token: string): Promise<NotionPage[]> {
-  const dataSourceId = Deno.env.get("NOTION_PARTICIPANTS_DATA_SOURCE_ID")
-    ?? "c794e850-b75d-48f0-a50b-574f8efe7681";
-  const databaseId = Deno.env.get("NOTION_PARTICIPANTS_DATABASE_ID")
-    ?? "f7529f9db45749f58618410e72e3d123";
+  const dataSourceId =
+    Deno.env.get("NOTION_PARTICIPANTS_DATA_SOURCE_ID") ?? "c794e850-b75d-48f0-a50b-574f8efe7681";
+  const databaseId =
+    Deno.env.get("NOTION_PARTICIPANTS_DATABASE_ID") ?? "f7529f9db45749f58618410e72e3d123";
   const version = Deno.env.get("NOTION_VERSION") ?? "2025-09-03";
 
   // The database has more than one data source, so the data_sources endpoint is
@@ -129,7 +133,11 @@ async function fetchAllPages(token: string): Promise<NotionPage[]> {
         break;
       }
 
-      const body = await res.json() as { results?: NotionPage[]; next_cursor?: string | null; has_more?: boolean };
+      const body = (await res.json()) as {
+        results?: NotionPage[];
+        next_cursor?: string | null;
+        has_more?: boolean;
+      };
       pages.push(...(body.results ?? []));
       cursor = body.has_more ? (body.next_cursor ?? undefined) : undefined;
     } while (cursor);

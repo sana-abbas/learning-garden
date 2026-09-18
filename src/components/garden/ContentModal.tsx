@@ -19,7 +19,8 @@ interface Props {
 
 function extractText(children: ReactNode): string {
   if (typeof children === "string") return children;
-  if (Array.isArray(children)) return children.map(c => (typeof c === "string" ? c : "")).join("");
+  if (Array.isArray(children))
+    return children.map((c) => (typeof c === "string" ? c : "")).join("");
   return "";
 }
 
@@ -40,17 +41,39 @@ const mdComponents = {
           </p>
         );
       }
-      return <p className="cf-exercise"><strong>{children}</strong></p>;
+      return (
+        <p className="cf-exercise">
+          <strong>{children}</strong>
+        </p>
+      );
     }
     return <p>{children}</p>;
   },
   img({ src, alt }: { src?: string; alt?: string }) {
     if (src?.includes("stack-") || src?.includes("queue-")) {
       return (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.4rem", margin: "0.75rem 0" }}>
-          <img src={src} alt={alt} style={{ maxWidth: "400px", width: "100%", height: "auto", borderRadius: "8px" }} />
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "0.4rem",
+            margin: "0.75rem 0",
+          }}
+        >
+          <img
+            src={src}
+            alt={alt}
+            style={{ maxWidth: "400px", width: "100%", height: "auto", borderRadius: "8px" }}
+          />
           {alt && (
-            <span style={{ fontFamily: "monospace", fontSize: "0.78rem", color: "var(--muted-foreground)" }}>
+            <span
+              style={{
+                fontFamily: "monospace",
+                fontSize: "0.78rem",
+                color: "var(--muted-foreground)",
+              }}
+            >
               {alt}
             </span>
           )}
@@ -62,14 +85,21 @@ const mdComponents = {
 };
 
 function isValidUrl(val: string) {
-  try { new URL(val); return true; } catch { return false; }
+  try {
+    new URL(val);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function matchesDomain(val: string, domains: string[]) {
   try {
     const hostname = new URL(val).hostname.toLowerCase();
     return domains.some((d) => hostname === d || hostname.endsWith("." + d));
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 }
 
 export function ContentModal({ title, content, onClose, gate, subId, existing, onSubmit }: Props) {
@@ -86,10 +116,12 @@ export function ContentModal({ title, content, onClose, gate, subId, existing, o
 
   const pasteOk = !gate?.pasteLabel || pasteTrimmed !== "";
   const linkValidUrl = linkTrimmed !== "" && isValidUrl(linkTrimmed);
-  const linkDomainOk = !gate?.linkDomains || !linkValidUrl || matchesDomain(linkTrimmed, gate.linkDomains);
+  const linkDomainOk =
+    !gate?.linkDomains || !linkValidUrl || matchesDomain(linkTrimmed, gate.linkDomains);
   const linkOk = !gate?.linkLabel || (linkValidUrl && linkDomainOk);
   const link2ValidUrl = link2Trimmed !== "" && isValidUrl(link2Trimmed);
-  const link2DomainOk = !gate?.link2Domains || !link2ValidUrl || matchesDomain(link2Trimmed, gate.link2Domains!);
+  const link2DomainOk =
+    !gate?.link2Domains || !link2ValidUrl || matchesDomain(link2Trimmed, gate.link2Domains!);
   const link2Ok = !gate?.link2Label || (link2ValidUrl && link2DomainOk);
   const canSubmit = pasteOk && linkOk && link2Ok;
 
@@ -160,7 +192,10 @@ export function ContentModal({ title, content, onClose, gate, subId, existing, o
               className="mt-6 pt-5 border-t space-y-3"
               style={{ borderColor: "var(--sidebar-border)" }}
             >
-              <p className="text-[11px] uppercase tracking-wider font-medium" style={{ color: "var(--muted-foreground)" }}>
+              <p
+                className="text-[11px] uppercase tracking-wider font-medium"
+                style={{ color: "var(--muted-foreground)" }}
+              >
                 Submit your work
               </p>
               {existing?.submittedAt && (
@@ -178,7 +213,10 @@ export function ContentModal({ title, content, onClose, gate, subId, existing, o
                     rows={5}
                     placeholder="Type or paste your answer here…"
                     value={paste}
-                    onChange={(e) => { setPaste(e.target.value); setCheckResult(null); }}
+                    onChange={(e) => {
+                      setPaste(e.target.value);
+                      setCheckResult(null);
+                    }}
                     className="w-full text-sm px-3 py-2 rounded-lg border resize-none focus:outline-none focus:ring-2"
                     style={{
                       background: "var(--background)",
@@ -207,7 +245,9 @@ export function ContentModal({ title, content, onClose, gate, subId, existing, o
                     }}
                   />
                   {linkTrimmed && !linkValidUrl && (
-                    <p className="text-[11px]" style={{ color: "var(--destructive)" }}>Please enter a valid URL</p>
+                    <p className="text-[11px]" style={{ color: "var(--destructive)" }}>
+                      Please enter a valid URL
+                    </p>
                   )}
                   {linkValidUrl && !linkDomainOk && gate.linkDomains && (
                     <p className="text-[11px]" style={{ color: "var(--destructive)" }}>
@@ -218,26 +258,49 @@ export function ContentModal({ title, content, onClose, gate, subId, existing, o
               )}
 
               {/* Checker feedback — pass, a hint you can submit past, or a hard stop */}
-              {checkResult && (() => {
-                const tone = checkResult.correct
-                  ? { bg: "oklch(0.91 0.07 145 / 0.25)", fg: "var(--primary)", border: "oklch(0.55 0.13 145 / 0.3)", icon: "✓ " }
-                  : checkResult.blocking === false
-                    ? { bg: "oklch(0.94 0.08 85 / 0.25)", fg: "oklch(0.45 0.12 70)", border: "oklch(0.7 0.14 80 / 0.4)", icon: "💡 " }
-                    : { bg: "oklch(0.93 0.07 25 / 0.2)", fg: "var(--destructive)", border: "oklch(0.6 0.22 25 / 0.3)", icon: "✗ " };
-                return (
-                  <div
-                    className="px-3 py-2.5 rounded-lg text-[12.5px] font-medium space-y-1"
-                    style={{ background: tone.bg, color: tone.fg, border: `1px solid ${tone.border}` }}
-                  >
-                    <div>{tone.icon}{checkResult.feedback}</div>
-                    {!checkResult.correct && checkResult.blocking === false && (
-                      <div className="font-normal opacity-80">
-                        You can still submit — your mentor will take a look.
+              {checkResult &&
+                (() => {
+                  const tone = checkResult.correct
+                    ? {
+                        bg: "oklch(0.91 0.07 145 / 0.25)",
+                        fg: "var(--primary)",
+                        border: "oklch(0.55 0.13 145 / 0.3)",
+                        icon: "✓ ",
+                      }
+                    : checkResult.blocking === false
+                      ? {
+                          bg: "oklch(0.94 0.08 85 / 0.25)",
+                          fg: "oklch(0.45 0.12 70)",
+                          border: "oklch(0.7 0.14 80 / 0.4)",
+                          icon: "💡 ",
+                        }
+                      : {
+                          bg: "oklch(0.93 0.07 25 / 0.2)",
+                          fg: "var(--destructive)",
+                          border: "oklch(0.6 0.22 25 / 0.3)",
+                          icon: "✗ ",
+                        };
+                  return (
+                    <div
+                      className="px-3 py-2.5 rounded-lg text-[12.5px] font-medium space-y-1"
+                      style={{
+                        background: tone.bg,
+                        color: tone.fg,
+                        border: `1px solid ${tone.border}`,
+                      }}
+                    >
+                      <div>
+                        {tone.icon}
+                        {checkResult.feedback}
                       </div>
-                    )}
-                  </div>
-                );
-              })()}
+                      {!checkResult.correct && checkResult.blocking === false && (
+                        <div className="font-normal opacity-80">
+                          You can still submit — your mentor will take a look.
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
               <button
                 type="button"

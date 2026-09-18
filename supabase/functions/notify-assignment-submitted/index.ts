@@ -18,24 +18,38 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { chapterTitle, subtaskLabel, link, link2, video, userName, userEmail } = await req.json();
+    const { chapterTitle, subtaskLabel, link, link2, video, userName, userEmail } =
+      await req.json();
 
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    const adminEmails = (Deno.env.get("ADMIN_EMAILS") ?? "").split(",").map((e: string) => e.trim()).filter(Boolean);
+    const adminEmails = (Deno.env.get("ADMIN_EMAILS") ?? "")
+      .split(",")
+      .map((e: string) => e.trim())
+      .filter(Boolean);
     const fromEmail = Deno.env.get("FROM_EMAIL") ?? "noreply@example.com";
 
     if (!RESEND_API_KEY || adminEmails.length === 0) {
-      console.log(`[notify-assignment-submitted] Email not configured. Submission from ${userName} <${userEmail}> on "${subtaskLabel}" (${chapterTitle})`);
+      console.log(
+        `[notify-assignment-submitted] Email not configured. Submission from ${userName} <${userEmail}> on "${subtaskLabel}" (${chapterTitle})`,
+      );
       return new Response(JSON.stringify({ ok: true, skipped: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const submissionRows = [
-      link ? `<tr><td style="padding: 8px 0; color: #666; font-size: 13px; white-space: nowrap; padding-right: 16px;">Link</td><td style="padding: 8px 0;"><a href="${link}" style="color: #4caf72;">${link}</a></td></tr>` : "",
-      link2 ? `<tr><td style="padding: 8px 0; color: #666; font-size: 13px; white-space: nowrap; padding-right: 16px;">Live demo</td><td style="padding: 8px 0;"><a href="${link2}" style="color: #4caf72;">${link2}</a></td></tr>` : "",
-      video ? `<tr><td style="padding: 8px 0; color: #666; font-size: 13px; white-space: nowrap; padding-right: 16px;">Video</td><td style="padding: 8px 0;"><a href="${video}" style="color: #4caf72;">${video}</a></td></tr>` : "",
-    ].filter(Boolean).join("");
+      link
+        ? `<tr><td style="padding: 8px 0; color: #666; font-size: 13px; white-space: nowrap; padding-right: 16px;">Link</td><td style="padding: 8px 0;"><a href="${link}" style="color: #4caf72;">${link}</a></td></tr>`
+        : "",
+      link2
+        ? `<tr><td style="padding: 8px 0; color: #666; font-size: 13px; white-space: nowrap; padding-right: 16px;">Live demo</td><td style="padding: 8px 0;"><a href="${link2}" style="color: #4caf72;">${link2}</a></td></tr>`
+        : "",
+      video
+        ? `<tr><td style="padding: 8px 0; color: #666; font-size: 13px; white-space: nowrap; padding-right: 16px;">Video</td><td style="padding: 8px 0;"><a href="${video}" style="color: #4caf72;">${video}</a></td></tr>`
+        : "",
+    ]
+      .filter(Boolean)
+      .join("");
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",

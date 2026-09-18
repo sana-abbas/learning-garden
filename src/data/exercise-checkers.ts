@@ -57,7 +57,9 @@ function checkJsSyntax(answer: string): CheckResult | null {
       /* genuinely broken — fall through and report the original error */
     }
     const message = err instanceof Error ? err.message : String(err);
-    return fail(`There's a syntax error in your code: ${message}. Check your brackets, braces and quotes.`);
+    return fail(
+      `There's a syntax error in your code: ${message}. Check your brackets, braces and quotes.`,
+    );
   }
 }
 
@@ -81,16 +83,16 @@ const CF1C_CORRECT = [2, 1, 8, 7, 3, 9, 4, 10, 6, 5];
 
 // Keywords that identify each shuffled step (index 0 = step 1, etc.)
 const CF1C_KEYWORDS = [
-  ["rinse", "almost clear"],                          // step 1
-  ["separate", "100g"],                               // step 2
+  ["rinse", "almost clear"], // step 1
+  ["separate", "100g"], // step 2
   ["cover the pot", "lid", "high temperature", "high fire"], // step 3
-  ["cook for 8", "8 minutes"],                        // step 4
-  ["serve"],                                          // step 5
-  ["remove the pot", "from the stove"],               // step 6
-  ["200ml", "salted water"],                          // step 7
-  ["add rice to a pot", "rice to a pot"],             // step 8
-  ["boil", "decrease"],                               // step 9
-  ["too hard", "2 more minutes", "more 2 minutes"],   // step 10
+  ["cook for 8", "8 minutes"], // step 4
+  ["serve"], // step 5
+  ["remove the pot", "from the stove"], // step 6
+  ["200ml", "salted water"], // step 7
+  ["add rice to a pot", "rice to a pot"], // step 8
+  ["boil", "decrease"], // step 9
+  ["too hard", "2 more minutes", "more 2 minutes"], // step 10
 ];
 
 function matchesStep(text: string, stepIndex: number): boolean {
@@ -112,12 +114,17 @@ function checkByNumbers(nums: number[]): CheckResult {
     return pass("Correct! That's the right order.");
   }
   // A numbered answer has one correct order, so this one is provable.
-  return fail(`Position ${wrong + 1} looks off — got step ${seq[wrong]}, expected step ${CF1C_CORRECT[wrong]}.`);
+  return fail(
+    `Position ${wrong + 1} looks off — got step ${seq[wrong]}, expected step ${CF1C_CORRECT[wrong]}.`,
+  );
 }
 
 function checkByText(answer: string): CheckResult {
   // Split into lines/sentences and detect which original steps appear, in order
-  const parts = answer.split(/[\n,;.]+/).map((s) => s.trim()).filter(Boolean);
+  const parts = answer
+    .split(/[\n,;.]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
   const detected: number[] = [];
   for (const part of parts) {
     for (let i = 0; i < CF1C_KEYWORDS.length; i++) {
@@ -129,7 +136,9 @@ function checkByText(answer: string): CheckResult {
   // Recognising free-written steps by keyword is a guess, so everything on this
   // path is advisory — we can't prove a paraphrased answer wrong.
   if (detected.length < 5) {
-    return hint("Couldn't recognise enough steps. Try numbering your answer (e.g. 2, 1, 8…) or write the steps more clearly.");
+    return hint(
+      "Couldn't recognise enough steps. Try numbering your answer (e.g. 2, 1, 8…) or write the steps more clearly.",
+    );
   }
   // Compare recognised order against correct
   const correctSubset = CF1C_CORRECT.filter((n) => detected.includes(n));
@@ -176,10 +185,13 @@ const cf2c: Checker = (answer) => {
   const hasLog = HELLO_WORLD.test(norm);
   if (hasScript && hasLog) return { correct: true, feedback: "Correct!" };
   if (!hasScript)
-    return { correct: false, feedback: 'Wrap your code in a <script>...</script> tag.' };
+    return { correct: false, feedback: "Wrap your code in a <script>...</script> tag." };
   if (!hasLog)
     return { correct: false, feedback: 'Add console.log("Hello World!") inside your script tag.' };
-  return { correct: false, feedback: 'Check that the message includes "Hello World!" with an exclamation mark.' };
+  return {
+    correct: false,
+    feedback: 'Check that the message includes "Hello World!" with an exclamation mark.',
+  };
 };
 
 // ── cf3-c: Declaration and assignments of variables ──────────────────────────
@@ -201,10 +213,14 @@ const cf3c: Checker = (answer) => {
   // The point of the exercise is observing that reassigning a const throws.
   const constNames = [...answer.matchAll(/\bconst\s+([a-z_$][\w$]*)/gi)].map((m) => m[1]);
   const triedConstReassign = constNames.some((name) =>
-    new RegExp(`(^|[^.\\w])${name}\\s*=[^=]`, "m").test(answer.replace(new RegExp(`const\\s+${name}\\s*=`, "g"), "")),
+    new RegExp(`(^|[^.\\w])${name}\\s*=[^=]`, "m").test(
+      answer.replace(new RegExp(`const\\s+${name}\\s*=`, "g"), ""),
+    ),
   );
   if (!triedConstReassign)
-    return hint("Try reassigning the const one too, and see what the console says — that's the part worth observing here.");
+    return hint(
+      "Try reassigning the const one too, and see what the console says — that's the part worth observing here.",
+    );
 
   return pass();
 };
@@ -213,24 +229,25 @@ const cf3c: Checker = (answer) => {
 // Must use typeof on at least 5 of the 7 primitive types.
 
 const CF3D_TYPES: Array<[string, RegExp]> = [
-  ["boolean",   /\btrue\b|\bfalse\b/],
-  ["null",      /\bnull\b/],
+  ["boolean", /\btrue\b|\bfalse\b/],
+  ["null", /\bnull\b/],
   ["undefined", /\bundefined\b|\bnotAssigned|let\s+\w+\s*;/],
-  ["number",    /\b\d+\b/],
-  ["string",    /["'][^"']+["']/],
-  ["symbol",    /\bSymbol\s*\(/i],
-  ["object",    /\{[^}]+\}/],
+  ["number", /\b\d+\b/],
+  ["string", /["'][^"']+["']/],
+  ["symbol", /\bSymbol\s*\(/i],
+  ["object", /\{[^}]+\}/],
 ];
 
 const cf3d: Checker = (answer) => {
-  if (!/typeof/.test(answer))
-    return fail("Use the typeof operator to check data types.");
+  if (!/typeof/.test(answer)) return fail("Use the typeof operator to check data types.");
 
   // The type regexes are loose enough that a comment can satisfy them, so also
   // require typeof to be used more than once — the prompt says "each variable".
   const typeofCount = (answer.match(/typeof/g) ?? []).length;
   if (typeofCount < 3)
-    return fail("Log the type of each of your variables — use typeof on each one, not just the first.");
+    return fail(
+      "Log the type of each of your variables — use typeof on each one, not just the first.",
+    );
 
   const found = CF3D_TYPES.filter(([, re]) => re.test(answer)).map(([name]) => name);
   if (found.length >= 5) return pass();
@@ -243,12 +260,12 @@ const cf3d: Checker = (answer) => {
 // Correct results: 7, 4, 10, 3, 1, true, true, false, false, false, true, true
 
 const CF4C_CHECKS: Array<{ expr: RegExp; result: RegExp; label: string }> = [
-  { expr: /4\s*\+\s*3/, result: /=+\s*7/,     label: "4 + 3 → 7" },
-  { expr: /10\s*-\s*6/, result: /=+\s*4/,     label: "10 - 6 → 4" },
-  { expr: /2\s*\*\s*5/, result: /=+\s*10/,    label: "2 * 5 → 10" },
-  { expr: /9\s*\/\s*3/, result: /=+\s*3/,     label: "9 / 3 → 3" },
-  { expr: /7\s*%\s*3/,  result: /=+\s*1/,     label: "7 % 3 → 1" },
-  { expr: /5\s*>\s*2/,  result: /=+\s*true/,  label: "5 > 2 → true" },
+  { expr: /4\s*\+\s*3/, result: /=+\s*7/, label: "4 + 3 → 7" },
+  { expr: /10\s*-\s*6/, result: /=+\s*4/, label: "10 - 6 → 4" },
+  { expr: /2\s*\*\s*5/, result: /=+\s*10/, label: "2 * 5 → 10" },
+  { expr: /9\s*\/\s*3/, result: /=+\s*3/, label: "9 / 3 → 3" },
+  { expr: /7\s*%\s*3/, result: /=+\s*1/, label: "7 % 3 → 1" },
+  { expr: /5\s*>\s*2/, result: /=+\s*true/, label: "5 > 2 → true" },
   { expr: /10\s*===\s*["']10["']/, result: /=+\s*false/, label: '10 === "10" → false' },
   { expr: /8\s*!==\s*8/, result: /=+\s*false/, label: "8 !== 8 → false" },
   { expr: /true\s*&&\s*false/, result: /=+\s*false/, label: "true && false → false" },
@@ -260,14 +277,15 @@ const CF4C_CHECKS: Array<{ expr: RegExp; result: RegExp; label: string }> = [
 ];
 
 const cf4c: Checker = (answer) => {
-  if (!/console\.log/.test(answer))
-    return fail("Use console.log() to print each result.");
+  if (!/console\.log/.test(answer)) return fail("Use console.log() to print each result.");
 
   // Previously a missing expression was silently skipped, so deleting a line
   // counted as correct. Missing lines are now reported.
   const missing = CF4C_CHECKS.filter(({ expr }) => !expr.test(answer));
   if (missing.length)
-    return fail(`These lines are missing from your answer: ${missing.map((m) => m.label).join(", ")}.`);
+    return fail(
+      `These lines are missing from your answer: ${missing.map((m) => m.label).join(", ")}.`,
+    );
 
   const wrong = CF4C_CHECKS.filter(({ expr, result }) => {
     const match = answer.match(expr);
@@ -284,9 +302,9 @@ const cf4c: Checker = (answer) => {
 // Correct operators: +, *, /, ==, >, &&/!
 
 const CF4D_CHECKS: Array<{ expr: RegExp; label: string }> = [
-  { expr: /6\s*\+\s*4/,          label: "6 + 4 = 10" },
-  { expr: /5\s*\*\s*5/,          label: "5 * 5 = 25" },
-  { expr: /24\s*\/\s*8/,         label: "24 / 8 = 3" },
+  { expr: /6\s*\+\s*4/, label: "6 + 4 = 10" },
+  { expr: /5\s*\*\s*5/, label: "5 * 5 = 25" },
+  { expr: /24\s*\/\s*8/, label: "24 / 8 = 3" },
   { expr: /12\s*==\s*["']12["']/, label: '12 == "12"' },
   // These last two lines are under-determined: the exercise's rule is "it should
   // print true", and more than one operator satisfies each. Rejecting the
@@ -298,8 +316,7 @@ const CF4D_CHECKS: Array<{ expr: RegExp; label: string }> = [
 ];
 
 const cf4d: Checker = (answer) => {
-  if (!/console\.log/.test(answer))
-    return fail("Use console.log() to print each result.");
+  if (!/console\.log/.test(answer)) return fail("Use console.log() to print each result.");
 
   const missing = CF4D_CHECKS.filter(({ expr }) => !expr.test(answer));
   if (missing.length === 0) return pass();
@@ -311,14 +328,13 @@ const cf4d: Checker = (answer) => {
 
 const cf5b: Checker = (answer) => {
   const norm = answer.toLowerCase();
-  if (!/\bif\b/.test(norm))
-    return fail("Use an if statement to check the number.");
+  if (!/\bif\b/.test(norm)) return fail("Use an if statement to check the number.");
   if (!/else\s+if\s*\(/.test(norm))
-    return fail("Use else if (with a condition in brackets) to handle all three cases: positive, negative, and zero.");
-  if (!/\belse\b/.test(norm))
-    return fail("Add an else branch to handle the zero case.");
-  if (!/console\.log/.test(norm))
-    return fail("Use console.log() to print the result.");
+    return fail(
+      "Use else if (with a condition in brackets) to handle all three cases: positive, negative, and zero.",
+    );
+  if (!/\belse\b/.test(norm)) return fail("Add an else branch to handle the zero case.");
+  if (!/console\.log/.test(norm)) return fail("Use console.log() to print the result.");
 
   const hasPositive = />\s*0/.test(answer);
   const hasNegative = /<\s*0/.test(answer);
@@ -328,7 +344,9 @@ const cf5b: Checker = (answer) => {
   // The prompt says "a number n" without saying to declare it, so this is a
   // nudge rather than a gate — but the code can't run without it.
   if (!/\b(let|const|var)\s+n\b/.test(answer))
-    return hint("Declare n before the if statement (e.g. let n = -5;) so the code can actually run.");
+    return hint(
+      "Declare n before the if statement (e.g. let n = -5;) so the code can actually run.",
+    );
 
   return pass();
 };
@@ -340,38 +358,38 @@ const CF5E_SEASONS: Array<{ name: string; months: number[] }> = [
   { name: "winter", months: [12, 1, 2] },
   { name: "spring", months: [3, 4, 5] },
   { name: "summer", months: [6, 7, 8] },
-  { name: "fall",   months: [9, 10, 11] },
+  { name: "fall", months: [9, 10, 11] },
 ];
 
 const cf5e: Checker = (answer) => {
   const norm = answer.toLowerCase();
-  if (!/\bswitch\b/.test(norm))
-    return fail("Use a switch statement.");
+  if (!/\bswitch\b/.test(norm)) return fail("Use a switch statement.");
 
   // One switch, not one per season — nested/repeated switches were the most
   // common way this exercise went wrong.
   const switchCount = (norm.match(/\bswitch\s*\(/g) ?? []).length;
   if (switchCount > 1)
-    return fail(`You've opened ${switchCount} switch statements. Use a single switch on "month" and group the cases for each season inside it.`);
+    return fail(
+      `You've opened ${switchCount} switch statements. Use a single switch on "month" and group the cases for each season inside it.`,
+    );
 
-  if (!/\bdefault\b/.test(norm))
-    return fail("Add a default case for invalid month values.");
+  if (!/\bdefault\b/.test(norm)) return fail("Add a default case for invalid month values.");
 
   const breakCount = (norm.match(/\bbreak\b/g) ?? []).length;
   if (breakCount < 4)
-    return fail(`Each season needs its own break to prevent fall-through — found ${breakCount}, expected 4.`);
+    return fail(
+      `Each season needs its own break to prevent fall-through — found ${breakCount}, expected 4.`,
+    );
 
   const missingSeason = CF5E_SEASONS.find(({ name }) => !norm.includes(name));
-  if (missingSeason)
-    return fail(`Missing season: "${missingSeason.name}".`);
+  if (missingSeason) return fail(`Missing season: "${missingSeason.name}".`);
 
-  const missingMonth = CF5E_SEASONS.flatMap(({ months }) => months)
-    .find((m) => !new RegExp(`\\bcase\\s+${m}\\b`).test(norm));
-  if (missingMonth !== undefined)
-    return fail(`Missing case for month ${missingMonth}.`);
+  const missingMonth = CF5E_SEASONS.flatMap(({ months }) => months).find(
+    (m) => !new RegExp(`\\bcase\\s+${m}\\b`).test(norm),
+  );
+  if (missingMonth !== undefined) return fail(`Missing case for month ${missingMonth}.`);
 
-  if (!/\bconsole\.log/.test(norm))
-    return fail("Use console.log() to print the season.");
+  if (!/\bconsole\.log/.test(norm)) return fail("Use console.log() to print the season.");
 
   // The prompt asks for an error *message* in the default case, so the default
   // branch has to print something rather than just reassigning month.
@@ -380,7 +398,9 @@ const cf5e: Checker = (answer) => {
     return fail("Your default case should log an error message, not just assign it to a variable.");
 
   if (!/\b(let|const|var)\s+month\b/.test(norm))
-    return hint("Declare month before the switch (e.g. let month = 4;) so the code can actually run.");
+    return hint(
+      "Declare month before the switch (e.g. let month = 4;) so the code can actually run.",
+    );
 
   return pass();
 };
@@ -396,8 +416,7 @@ const cf6c: Checker = (answer) => {
     return { correct: false, feedback: "Use % 10 to extract the last digit." };
   if (!/math\.(floor|trunc)|parseint|>>\s*0|\|\s*0/i.test(answer))
     return fail("Remove the last digit after each iteration (e.g. with Math.floor()).");
-  if (!/console\.log/.test(norm))
-    return fail("Use console.log() to print the reversed number.");
+  if (!/console\.log/.test(norm)) return fail("Use console.log() to print the reversed number.");
   return pass();
 };
 
@@ -406,24 +425,25 @@ const cf6c: Checker = (answer) => {
 
 const cf6f: Checker = (answer) => {
   const norm = answer.toLowerCase();
-  if (!/\bfor\b/.test(norm))
-    return fail("Use a for loop to iterate over the numbers.");
+  if (!/\bfor\b/.test(norm)) return fail("Use a for loop to iterate over the numbers.");
 
   // The prompt never names the loop variable, so accept any identifier —
   // counting up to 10 or down from it.
   const IDENT = String.raw`[a-z_$][\w$]*`;
-  const countsUp = new RegExp(`\\b${IDENT}\\s*<=\\s*10\\b|\\b${IDENT}\\s*<\\s*11\\b`, "i").test(answer);
-  const countsDown = new RegExp(`\\b${IDENT}\\s*>=\\s*1\\b|\\b${IDENT}\\s*>\\s*0\\b`, "i").test(answer);
-  if (!countsUp && !countsDown)
-    return fail("Make sure your loop runs up to and including 10.");
+  const countsUp = new RegExp(`\\b${IDENT}\\s*<=\\s*10\\b|\\b${IDENT}\\s*<\\s*11\\b`, "i").test(
+    answer,
+  );
+  const countsDown = new RegExp(`\\b${IDENT}\\s*>=\\s*1\\b|\\b${IDENT}\\s*>\\s*0\\b`, "i").test(
+    answer,
+  );
+  if (!countsUp && !countsDown) return fail("Make sure your loop runs up to and including 10.");
 
   // `total += i`, or `anyName = anyName + anyOther` via a backreference.
-  const accumulates = /\+=/.test(answer) || new RegExp(`\\b(${IDENT})\\s*=\\s*\\1\\s*\\+`, "i").test(answer);
-  if (!accumulates)
-    return fail("Accumulate the sum inside the loop (e.g. total += i).");
+  const accumulates =
+    /\+=/.test(answer) || new RegExp(`\\b(${IDENT})\\s*=\\s*\\1\\s*\\+`, "i").test(answer);
+  if (!accumulates) return fail("Accumulate the sum inside the loop (e.g. total += i).");
 
-  if (!/console\.log/.test(norm))
-    return fail("Use console.log() to print the result.");
+  if (!/console\.log/.test(norm)) return fail("Use console.log() to print the result.");
   return pass("Correct! The sum of 1 to 10 is 55.");
 };
 
@@ -431,21 +451,20 @@ const cf6f: Checker = (answer) => {
 // Must use filter() with a % 2 even check.
 
 const cf7c: Checker = (answer) => {
-  if (!/\.filter\s*\(/.test(answer))
-    return fail("Use the filter() method on your array.");
-  if (!/%\s*2/.test(answer))
-    return fail("Use % 2 inside filter() to check for even numbers.");
+  if (!/\.filter\s*\(/.test(answer)) return fail("Use the filter() method on your array.");
+  if (!/%\s*2/.test(answer)) return fail("Use % 2 inside filter() to check for even numbers.");
 
   // `% 2` alone used to pass, so filtering for ODD numbers counted as correct.
   const keepsEven = /%\s*2\s*={2,3}\s*0/.test(answer) || /!\s*\(?[^)]*%\s*2/.test(answer);
   const keepsOdd = /%\s*2\s*={2,3}\s*1/.test(answer) || /%\s*2\s*!={1,2}\s*0/.test(answer);
   if (keepsOdd && !keepsEven)
-    return fail("That filter keeps the odd numbers — the exercise asks for the even ones (n % 2 === 0).");
+    return fail(
+      "That filter keeps the odd numbers — the exercise asks for the even ones (n % 2 === 0).",
+    );
   if (!keepsEven)
     return hint("Check your filter condition — an even number is one where n % 2 === 0.");
 
-  if (!/console\.log/.test(answer))
-    return fail("Use console.log() to print the result.");
+  if (!/console\.log/.test(answer)) return fail("Use console.log() to print the result.");
   return pass();
 };
 
@@ -457,18 +476,21 @@ const cf7d: Checker = (answer) => {
   // \bfor\b deliberately does not match forEach, so array methods are listed
   // explicitly — the prompt doesn't prescribe how to traverse, only that
   // indexes aren't hardcoded.
-  const traverses = /\bwhile\b|\bfor\b/.test(norm) || /\.(forEach|map|filter|reduce|flat|flatMap)\s*\(/i.test(answer);
+  const traverses =
+    /\bwhile\b|\bfor\b/.test(norm) ||
+    /\.(forEach|map|filter|reduce|flat|flatMap)\s*\(/i.test(answer);
   if (!traverses)
     return fail("Use a loop or an array method (forEach, map, filter…) to traverse the family.");
   if (!/>=\s*18|18\s*<=|>\s*17/.test(answer))
     return fail("Check age >= 18 to determine if someone is an adult.");
-  if (!/console\.log/.test(norm))
-    return fail("Use console.log() to print the adults.");
+  if (!/console\.log/.test(norm)) return fail("Use console.log() to print the adults.");
 
   // "Do not hardcode the access to a specific person by index" is an explicit
   // instruction, so a literal family[0][1] style index is worth flagging.
   if (/\[\s*[0-9]\s*\]\s*\[\s*[0-9]\s*\]/.test(answer))
-    return hint("Looks like you're indexing into the array directly — the exercise asks for a solution that works on any family, without hardcoded positions.");
+    return hint(
+      "Looks like you're indexing into the array directly — the exercise asks for a solution that works on any family, without hardcoded positions.",
+    );
 
   return pass();
 };
@@ -478,10 +500,8 @@ const cf7d: Checker = (answer) => {
 
 const cf7g: Checker = (answer) => {
   const norm = answer.toLowerCase();
-  if (!/\.push\s*\(/.test(answer))
-    return fail("Use push() to add pages to your stack(s).");
-  if (!/\.pop\s*\(\)/.test(answer))
-    return fail("Use pop() to go back/forward in your stack.");
+  if (!/\.push\s*\(/.test(answer)) return fail("Use push() to add pages to your stack(s).");
+  if (!/\.pop\s*\(\)/.test(answer)) return fail("Use pop() to go back/forward in your stack.");
 
   // Two array variables, however they're initialised — seeding one with the
   // first URL is perfectly valid and used to fail the old "two []" rule.
@@ -490,11 +510,16 @@ const cf7g: Checker = (answer) => {
     return fail("Use two separate stacks — one for back history and one for forward history.");
 
   // Clearing the forward stack on a new visit, under any variable name.
-  if (!/=\s*\[\s*\]/.test(answer) && !/\.length\s*=\s*0/.test(answer) && !/\.splice\s*\(/.test(answer))
-    return hint("Remember to clear the forward history when you visit a new page — otherwise 'forth' would jump to a page you've navigated away from.");
+  if (
+    !/=\s*\[\s*\]/.test(answer) &&
+    !/\.length\s*=\s*0/.test(answer) &&
+    !/\.splice\s*\(/.test(answer)
+  )
+    return hint(
+      "Remember to clear the forward history when you visit a new page — otherwise 'forth' would jump to a page you've navigated away from.",
+    );
 
-  if (!/console\.log/.test(norm))
-    return fail("Use console.log() to log each page visited.");
+  if (!/console\.log/.test(norm)) return fail("Use console.log() to log each page visited.");
   return pass();
 };
 
@@ -503,13 +528,21 @@ const cf7g: Checker = (answer) => {
 
 const cf7j: Checker = (answer) => {
   if (!/\.shift\s*\(\)/.test(answer))
-    return { correct: false, feedback: "Use shift() to remove and print the first file in the queue (FIFO)." };
+    return {
+      correct: false,
+      feedback: "Use shift() to remove and print the first file in the queue (FIFO).",
+    };
   if (!/\.push\s*\(/.test(answer))
     return { correct: false, feedback: "Use push() to add the new file to the queue." };
   if (!/statistics_?data/i.test(answer))
-    return fail("Make sure to add Statistics_data.json to the queue after the first file is printed.");
+    return fail(
+      "Make sure to add Statistics_data.json to the queue after the first file is printed.",
+    );
   if (!/console\.log/.test(answer))
-    return { correct: false, feedback: "Use console.log() to log each printed file and the current queue." };
+    return {
+      correct: false,
+      feedback: "Use console.log() to log each printed file and the current queue.",
+    };
   return { correct: true, feedback: "Correct!" };
 };
 
@@ -527,11 +560,16 @@ const cf7m: Checker = (answer) => {
   if (!/readerCount\s*\+\+|readerCount\s*\+=\s*1/i.test(answer))
     return { correct: false, feedback: "Increment readerCount when the book is borrowed." };
   if (!/>=\s*150|150\s*<=/.test(answer))
-    return { correct: false, feedback: "Set isPopular to true when readerCount reaches 150 or more." };
+    return {
+      correct: false,
+      feedback: "Set isPopular to true when readerCount reaches 150 or more.",
+    };
   // Counting occurrences is a proxy for "you updated it in both places", which
   // a helper-function solution legitimately fails — so advise, don't block.
   if ((norm.match(/\bisavailable\b/g) ?? []).length < 3)
-    return hint("Check that isAvailable is updated both when the book is borrowed and when it's returned.");
+    return hint(
+      "Check that isAvailable is updated both when the book is borrowed and when it's returned.",
+    );
   if (!/console\.log/.test(norm))
     return { correct: false, feedback: "Use console.log() to log each step." };
   return { correct: true, feedback: "Correct!" };
@@ -545,13 +583,16 @@ const cf8c: Checker = (answer) => {
   if (!/function\s+cookrice\s*\(/i.test(answer))
     return { correct: false, feedback: "Define a main function called cookRice(amountOfRice)." };
   if ((answer.match(/\bfunction\b/gi) ?? []).length < 2)
-    return hint("Try breaking the recipe into smaller helper functions — the prompt suggests it, and it makes the main function much easier to read.");
+    return hint(
+      "Try breaking the recipe into smaller helper functions — the prompt suggests it, and it makes the main function much easier to read.",
+    );
   if (!/\bfor\b/.test(norm) && !/\bwhile\b/.test(norm))
     return fail("Use a loop to simulate the waiting time while the rice cooks.");
   if (!/\bif\b/.test(norm))
-    return fail("Use an if statement to check if the rice is still hard and cook for 2 more minutes if so.");
-  if (!/console\.log/.test(norm))
-    return fail("Use console.log() to print messages at each step.");
+    return fail(
+      "Use an if statement to check if the rice is still hard and cook for 2 more minutes if so.",
+    );
+  if (!/console\.log/.test(norm)) return fail("Use console.log() to print messages at each step.");
   if (!/cookrice\s*\(\s*[^)\s][^)]*\)/i.test(answer))
     return fail("Call cookRice() with an amount at the end (e.g. cookRice(100)).");
   return pass();
@@ -565,9 +606,13 @@ const cf8c: Checker = (answer) => {
 
 const cf8f: Checker = (answer) => {
   if (!/\b13\b/.test(answer))
-    return hint("The final result isn't 13. Trace each call: myFunction(6) → myFunction(4) → myFunction(2) → myFunction(0) returns 1, then add back up.");
+    return hint(
+      "The final result isn't 13. Trace each call: myFunction(6) → myFunction(4) → myFunction(2) → myFunction(0) returns 1, then add back up.",
+    );
   if (!/myfunction\s*\(\s*[024]\s*\)|myfunc.*[024]/i.test(answer))
-    return hint("Show the full recursive trace — include myFunction(4), myFunction(2), and myFunction(0) in your working.");
+    return hint(
+      "Show the full recursive trace — include myFunction(4), myFunction(2), and myFunction(0) in your working.",
+    );
   if (!/myfunction\s*\(\s*0\s*\)|n\s*<=\s*1|returns?\s*1/i.test(answer))
     return hint("Show the base case: myFunction(0) returns 1 because n <= 1.");
   return pass("Correct! finalResult = 13.");
@@ -579,18 +624,35 @@ const cf8f: Checker = (answer) => {
 const cf8g: Checker = (answer) => {
   const norm = answer.toLowerCase();
   if (!/\bfunction\b/.test(norm))
-    return { correct: false, feedback: "Write a recursive function (e.g. getFamilyNames) to traverse the family tree." };
+    return {
+      correct: false,
+      feedback: "Write a recursive function (e.g. getFamilyNames) to traverse the family tree.",
+    };
   if (!/\.children/.test(answer))
-    return { correct: false, feedback: "Access the .children property to recurse into each family member." };
+    return {
+      correct: false,
+      feedback: "Access the .children property to recurse into each family member.",
+    };
   if (!(/\.foreach\s*\(/i.test(answer) || /\bfor\b/.test(norm)))
-    return { correct: false, feedback: "Use forEach (or a for loop) to iterate over each person's children." };
+    return {
+      correct: false,
+      feedback: "Use forEach (or a for loop) to iterate over each person's children.",
+    };
   if (!/\.concat\s*\(|names\s*=.*names|push\s*\(/i.test(answer))
-    return { correct: false, feedback: "Accumulate all names — use concat() or push() to collect names from each recursive call." };
+    return {
+      correct: false,
+      feedback:
+        "Accumulate all names — use concat() or push() to collect names from each recursive call.",
+    };
   if (!/\.length/.test(answer))
     return { correct: false, feedback: "Log the family size using .length on the names array." };
   if (!/console\.log/.test(norm))
     return { correct: false, feedback: "Use console.log() to print the family size and names." };
-  return { correct: true, feedback: "Correct! The family has 9 members: Mary, John, Amina, Jessica, Luca, Sarah, Mike, Maria, Jim." };
+  return {
+    correct: true,
+    feedback:
+      "Correct! The family has 9 members: Mary, John, Amina, Jessica, Luca, Sarah, Mike, Maria, Jim.",
+  };
 };
 
 // ── cf9-c: Playing with scopes ────────────────────────────────────────────────
@@ -605,20 +667,31 @@ const cf9c: Checker = (answer) => {
 
   // The var half: prints 3 each time.
   const saysThree = /\b3\b/.test(answer);
-  const saysRepeated = /three times|3 times|each time|every time|all three|same value/i.test(answer);
+  const saysRepeated = /three times|3 times|each time|every time|all three|same value/i.test(
+    answer,
+  );
   if (!saysThree || !saysRepeated)
-    return hint("What does the var version print, and how many times? (hint: all three callbacks fire after the loop has ended)");
+    return hint(
+      "What does the var version print, and how many times? (hint: all three callbacks fire after the loop has ended)",
+    );
 
   const explainsVar =
-    /function[ -]scope|not block[ -]scope|shared|same i\b|one i\b|single i\b|already.*(incremented|finished)|after the loop/i.test(norm);
+    /function[ -]scope|not block[ -]scope|shared|same i\b|one i\b|single i\b|already.*(incremented|finished)|after the loop/i.test(
+      norm,
+    );
   if (!explainsVar)
-    return hint("Explain why var gives the same value each time — the callbacks all refer to one shared i, because var isn't block-scoped.");
+    return hint(
+      "Explain why var gives the same value each time — the callbacks all refer to one shared i, because var isn't block-scoped.",
+    );
 
   // The let half: prints 0, 1, 2.
   if (!/0[\s,]+1[\s,]+2|value:\s*0/i.test(answer))
-    return hint("What does the let version print? Walk through what each of the three callbacks logs.");
+    return hint(
+      "What does the let version print? Walk through what each of the three callbacks logs.",
+    );
 
-  const explainsLet = /block[ -]scope|each iteration|per iteration|its own|new i\b|fresh|copy|preserved/i.test(norm);
+  const explainsLet =
+    /block[ -]scope|each iteration|per iteration|its own|new i\b|fresh|copy|preserved/i.test(norm);
   if (!explainsLet)
     return hint("Explain why let behaves differently — what does each iteration of the loop get?");
 
@@ -636,15 +709,16 @@ const cf9c: Checker = (answer) => {
 const cf9d: Checker = (answer) => {
   if (!/let\s+count\b/i.test(answer))
     return fail("Declare count with let inside the function (before the for loop).");
-  if (!/let\s+i\b/i.test(answer))
-    return fail("Declare i with let instead of var.");
+  if (!/let\s+i\b/i.test(answer)) return fail("Declare i with let instead of var.");
   if (!/console\.log\s*\(\s*counter\s*\(\s*\)\s*\)/i.test(answer))
     return fail("Keep console.log(counter()) to verify the function still works.");
 
   // Still worth flagging a leftover `var x =` declaration, but gently — it may
   // just be the "before" half of a before/after answer.
   if (/\bvar\s+[a-z_$][\w$]*\s*=/i.test(answer))
-    return hint("There's still a var declaration in your answer — if that's the original code you're comparing against, ignore this.");
+    return hint(
+      "There's still a var declaration in your answer — if that's the original code you're comparing against, ignore this.",
+    );
 
   return pass();
 };
@@ -669,7 +743,9 @@ const cf9e: Checker = (answer) => {
   if (declIdx === -1) {
     // Fix (b): the inner declaration is gone entirely.
     if (!/num\s*\+=\s*1/i.test(answer))
-      return fail("Keep num += 1 inside inner() — the exercise is about where num is declared, not about removing the increment.");
+      return fail(
+        "Keep num += 1 inside inner() — the exercise is about where num is declared, not about removing the increment.",
+      );
     return pass("Correct! Using the outer num gives: Inner num: 3, Outer num: 3, Global num: 1.");
   }
 
@@ -682,7 +758,9 @@ const cf9e: Checker = (answer) => {
   const lastDecl = lastIndexOf(/let\s+num\s*=\s*3/i);
   const lastInc = lastIndexOf(/num\s*\+=\s*1/i);
   if (lastInc !== -1 && lastInc < lastDecl)
-    return hint("Check the order inside inner() — num += 1 still runs before let num = 3 is declared, which throws. If that's the original code you're comparing against, ignore this.");
+    return hint(
+      "Check the order inside inner() — num += 1 still runs before let num = 3 is declared, which throws. If that's the original code you're comparing against, ignore this.",
+    );
 
   return pass("Correct! Inner num: 4, Outer num: 2, Global num: 1.");
 };
@@ -697,7 +775,9 @@ const cf10c: Checker = (answer) => {
   if (!/document\.title\s*=\s*["'`]/.test(answer))
     return fail("Change the page title by assigning a new string to document.title.");
   if (!/document\.body\.style\.(backgroundcolor|background)\s*=/i.test(norm))
-    return fail('Change the background colour with document.body.style.backgroundColor = "lightblue" (or any colour).');
+    return fail(
+      'Change the background colour with document.body.style.backgroundColor = "lightblue" (or any colour).',
+    );
   if (!/<script[\s>]/i.test(answer) || !/<\/script>/i.test(answer))
     return fail("Wrap your JavaScript inside a <script> tag in the HTML file.");
   return pass();
@@ -709,23 +789,46 @@ const cf10c: Checker = (answer) => {
 const cf11d: Checker = (answer) => {
   const norm = answer.toLowerCase();
   if (!/<p[\s>]/i.test(answer))
-    return { correct: false, feedback: "Add a <p> element to your HTML with the initial text \"Hello\"." };
+    return {
+      correct: false,
+      feedback: 'Add a <p> element to your HTML with the initial text "Hello".',
+    };
   if (!/hello/i.test(answer))
-    return { correct: false, feedback: "Set the initial text of the paragraph to \"Hello\"." };
+    return { correct: false, feedback: 'Set the initial text of the paragraph to "Hello".' };
   if (!/getelementbyid|queryselector/i.test(answer))
-    return { correct: false, feedback: "Select the paragraph using getElementById() or querySelector()." };
+    return {
+      correct: false,
+      feedback: "Select the paragraph using getElementById() or querySelector().",
+    };
   if (!/addeventlistener/i.test(answer))
     return { correct: false, feedback: "Use addEventListener() to attach the mouse events." };
   if (!/mouseenter|mouseover/i.test(answer))
-    return { correct: false, feedback: "Listen for the \"mouseenter\" (or \"mouseover\") event to detect when the mouse hovers." };
+    return {
+      correct: false,
+      feedback:
+        'Listen for the "mouseenter" (or "mouseover") event to detect when the mouse hovers.',
+    };
   if (!/i see you/i.test(answer))
-    return { correct: false, feedback: "Set the paragraph text to \"I see you!\" in the mouseenter handler." };
+    return {
+      correct: false,
+      feedback: 'Set the paragraph text to "I see you!" in the mouseenter handler.',
+    };
   if (!/mouseleave|mouseout/i.test(answer))
-    return { correct: false, feedback: "Listen for the \"mouseleave\" (or \"mouseout\") event to detect when the mouse leaves." };
+    return {
+      correct: false,
+      feedback:
+        'Listen for the "mouseleave" (or "mouseout") event to detect when the mouse leaves.',
+    };
   if (!/where did you go/i.test(answer))
-    return { correct: false, feedback: "Set the paragraph text to \"Where did you go?\" in the mouseleave handler." };
+    return {
+      correct: false,
+      feedback: 'Set the paragraph text to "Where did you go?" in the mouseleave handler.',
+    };
   if (!/textcontent|innertext|innerhtml/i.test(answer))
-    return { correct: false, feedback: "Update the paragraph text using textContent (or innerText)." };
+    return {
+      correct: false,
+      feedback: "Update the paragraph text using textContent (or innerText).",
+    };
   return { correct: true, feedback: "Correct!" };
 };
 
@@ -737,19 +840,47 @@ const cf12c: Checker = (answer) => {
   if (!/\btry\b/.test(norm))
     return { correct: false, feedback: "Wrap the withdrawal logic in a try block." };
   if (!/\bcatch\s*\(\s*\w+\s*\)/.test(answer))
-    return { correct: false, feedback: "Add a catch(error) block to handle the error and log error.message." };
+    return {
+      correct: false,
+      feedback: "Add a catch(error) block to handle the error and log error.message.",
+    };
   if (!/\bfinally\b/.test(norm))
-    return { correct: false, feedback: "Add a finally block — the card must always be ejected, whether the withdrawal succeeds or fails." };
+    return {
+      correct: false,
+      feedback:
+        "Add a finally block — the card must always be ejected, whether the withdrawal succeeds or fails.",
+    };
   if (!/eject/i.test(answer))
-    return { correct: false, feedback: "Log a card ejection message inside the finally block (e.g. \"Card ejected.\")." };
+    return {
+      correct: false,
+      feedback: 'Log a card ejection message inside the finally block (e.g. "Card ejected.").',
+    };
   if (!/throw\s+new\s+Error/i.test(answer))
-    return { correct: false, feedback: "Use throw new Error(...) to throw an error when the amount exceeds the balance." };
+    return {
+      correct: false,
+      feedback: "Use throw new Error(...) to throw an error when the amount exceeds the balance.",
+    };
   if (!/amount\s*>\s*accountbalance|accountbalance\s*<\s*amount/i.test(answer))
-    return { correct: false, feedback: "Check if amount > accountBalance before throwing the error." };
-  if (!/accountbalance\s*-=\s*amount|accountbalance\s*=\s*accountbalance\s*-\s*amount/i.test(answer))
-    return { correct: false, feedback: "Deduct the amount from accountBalance on a successful withdrawal (accountBalance -= amount)." };
-  if (!/withdrawmoney\s*\(\s*50\s*\)/i.test(answer) || !/withdrawmoney\s*\(\s*200\s*\)/i.test(answer))
-    return { correct: false, feedback: "Keep both test cases: withdrawMoney(50) and withdrawMoney(200)." };
+    return {
+      correct: false,
+      feedback: "Check if amount > accountBalance before throwing the error.",
+    };
+  if (
+    !/accountbalance\s*-=\s*amount|accountbalance\s*=\s*accountbalance\s*-\s*amount/i.test(answer)
+  )
+    return {
+      correct: false,
+      feedback:
+        "Deduct the amount from accountBalance on a successful withdrawal (accountBalance -= amount).",
+    };
+  if (
+    !/withdrawmoney\s*\(\s*50\s*\)/i.test(answer) ||
+    !/withdrawmoney\s*\(\s*200\s*\)/i.test(answer)
+  )
+    return {
+      correct: false,
+      feedback: "Keep both test cases: withdrawMoney(50) and withdrawMoney(200).",
+    };
   return { correct: true, feedback: "Correct!" };
 };
 
@@ -774,8 +905,7 @@ const cf13h: Checker = (answer) => {
     return fail("The battery should start at 100% and chargeBattery() should reset it to 100.");
 
   const deducts = /battery\s*-=|battery\s*=\s*.*battery\s*-/i.test(answer);
-  if (!deducts)
-    return fail("Deduct the drain amount from battery in useApp().");
+  if (!deducts) return fail("Deduct the drain amount from battery in useApp().");
 
   // 10% for iPhone, 5% for Samsung — via super(10)/super(5) or written directly
   // into each class, both fine.
@@ -785,7 +915,9 @@ const cf13h: Checker = (answer) => {
     return fail("The Samsung drains 5% of battery per use — that 5 needs to appear somewhere.");
 
   if (!/\bextends\b/.test(norm))
-    return hint("This works. As a refinement: both phones share the same interface, so you could pull the common parts into a base class and use extends — worth trying if you want to practise inheritance.");
+    return hint(
+      "This works. As a refinement: both phones share the same interface, so you could pull the common parts into a base class and use extends — worth trying if you want to practise inheritance.",
+    );
 
   return pass();
 };
@@ -795,10 +927,16 @@ const cf13h: Checker = (answer) => {
 
 const cf14b: Checker = (answer) => {
   if (!/new\s+Set\s*\(\s*colors\s*\)/i.test(answer))
-    return { correct: false, feedback: "Pass the colors array directly into new Set(): new Set(colors)." };
+    return {
+      correct: false,
+      feedback: "Pass the colors array directly into new Set(): new Set(colors).",
+    };
   if (!/console\.log/.test(answer))
     return { correct: false, feedback: "Use console.log() to print the result." };
-  return { correct: true, feedback: "Correct! The unique colours are: blue, orange, yellow, green." };
+  return {
+    correct: true,
+    feedback: "Correct! The unique colours are: blue, orange, yellow, green.",
+  };
 };
 
 // ── cf14-d: Fibonacci with Map cache ─────────────────────────────────────────
@@ -807,19 +945,34 @@ const cf14b: Checker = (answer) => {
 
 const cf14d: Checker = (answer) => {
   const norm = answer.toLowerCase();
-  if (!/new\s+Map\s*\(\s*\)/.test(answer))
-    return fail("Create a cache using new Map().");
+  if (!/new\s+Map\s*\(\s*\)/.test(answer)) return fail("Create a cache using new Map().");
   if (!/cache\.has\s*\(\s*n\s*\)|\.has\s*\(\s*n\s*\)/i.test(answer))
-    return { correct: false, feedback: "Check if the result is already cached using cache.has(n) before computing." };
+    return {
+      correct: false,
+      feedback: "Check if the result is already cached using cache.has(n) before computing.",
+    };
   if (!/cache\.get\s*\(\s*n\s*\)|\.get\s*\(\s*n\s*\)/i.test(answer))
-    return { correct: false, feedback: "Return the cached value using cache.get(n) when it exists." };
+    return {
+      correct: false,
+      feedback: "Return the cached value using cache.get(n) when it exists.",
+    };
   if (!/cache\.set\s*\(\s*n\s*,|\.set\s*\(\s*n\s*,/i.test(answer))
     return { correct: false, feedback: "Store the computed result using cache.set(n, result)." };
   if (!/console\.time/i.test(answer))
-    return { correct: false, feedback: "Keep the console.time() and console.timeEnd() calls to verify the speed improvement." };
+    return {
+      correct: false,
+      feedback:
+        "Keep the console.time() and console.timeEnd() calls to verify the speed improvement.",
+    };
   if (!/calculatefibonacci\s*\(\s*35\s*\)/i.test(answer))
-    return { correct: false, feedback: "Test with calculateFibonacci(35) to verify the performance." };
-  return { correct: true, feedback: "Correct! With caching the result should now compute in under 1ms." };
+    return {
+      correct: false,
+      feedback: "Test with calculateFibonacci(35) to verify the performance.",
+    };
+  return {
+    correct: true,
+    feedback: "Correct! With caching the result should now compute in under 1ms.",
+  };
 };
 
 // ── cf14-f: Old to new (arrow functions) ─────────────────────────────────────
@@ -829,13 +982,27 @@ const cf14f: Checker = (answer) => {
   if (!/=>/.test(answer))
     return { correct: false, feedback: "Use arrow function syntax (=>) for all three functions." };
   if (!/const\s+hello\s*=/i.test(answer))
-    return { correct: false, feedback: "Rewrite hello as a const arrow function: const hello = () => ..." };
+    return {
+      correct: false,
+      feedback: "Rewrite hello as a const arrow function: const hello = () => ...",
+    };
   if (!/const\s+applyDiscount\s*=/i.test(answer))
-    return { correct: false, feedback: "Rewrite applyDiscount as a const arrow function: const applyDiscount = (price, discount) => ..." };
+    return {
+      correct: false,
+      feedback:
+        "Rewrite applyDiscount as a const arrow function: const applyDiscount = (price, discount) => ...",
+    };
   if (!/const\s+checkStock\s*=/i.test(answer))
-    return { correct: false, feedback: "Rewrite checkStock as a const arrow function: const checkStock = (quantity) => ..." };
+    return {
+      correct: false,
+      feedback:
+        "Rewrite checkStock as a const arrow function: const checkStock = (quantity) => ...",
+    };
   // Catches both `function hello()` and `const hello = function ()`.
-  if (/\bfunction\s+(hello|applyDiscount|checkStock)\b/i.test(answer) || /\bfunction\s*\(/.test(answer))
+  if (
+    /\bfunction\s+(hello|applyDiscount|checkStock)\b/i.test(answer) ||
+    /\bfunction\s*\(/.test(answer)
+  )
     return fail("Remove the function keyword — all three should use const name = (...) => syntax.");
   return pass();
 };
@@ -845,18 +1012,49 @@ const cf14f: Checker = (answer) => {
 
 const cf14h: Checker = (answer) => {
   const norm = answer.toLowerCase();
-  if (!/function\s+sendDelivery\s*\([^)]*\.\.\./i.test(answer) && !/sendDelivery\s*=\s*\([^)]*\.\.\./i.test(answer))
-    return { correct: false, feedback: "Define sendDelivery with a rest parameter: function sendDelivery(specialIngredient, ...optionals)." };
-  if (!/function\s+order\s*\([^)]*\.\.\./i.test(answer) && !/order\s*=\s*\([^)]*\.\.\./i.test(answer))
-    return { correct: false, feedback: "Define order with a rest parameter: function order(mainComponent, specialIngredient, ...optionals)." };
+  if (
+    !/function\s+sendDelivery\s*\([^)]*\.\.\./i.test(answer) &&
+    !/sendDelivery\s*=\s*\([^)]*\.\.\./i.test(answer)
+  )
+    return {
+      correct: false,
+      feedback:
+        "Define sendDelivery with a rest parameter: function sendDelivery(specialIngredient, ...optionals).",
+    };
+  if (
+    !/function\s+order\s*\([^)]*\.\.\./i.test(answer) &&
+    !/order\s*=\s*\([^)]*\.\.\./i.test(answer)
+  )
+    return {
+      correct: false,
+      feedback:
+        "Define order with a rest parameter: function order(mainComponent, specialIngredient, ...optionals).",
+    };
   if (!/\[\s*\w+\s*,\s*\.\.\.\w+\s*\]|\[\s*\.\.\.\w+\s*\]/i.test(answer))
-    return { correct: false, feedback: "Use spread syntax to combine ingredients into an array (e.g. [specialIngredient, ...optionals])." };
-  if (!/maincomponents\.includes|specialingredients\.includes|optionalingredients\.includes/i.test(answer))
-    return { correct: false, feedback: "Validate each part of the order using .includes() against the collections." };
+    return {
+      correct: false,
+      feedback:
+        "Use spread syntax to combine ingredients into an array (e.g. [specialIngredient, ...optionals]).",
+    };
+  if (
+    !/maincomponents\.includes|specialingredients\.includes|optionalingredients\.includes/i.test(
+      answer,
+    )
+  )
+    return {
+      correct: false,
+      feedback: "Validate each part of the order using .includes() against the collections.",
+    };
   if (!/order invalid|not available/i.test(answer))
-    return { correct: false, feedback: "Return a user-friendly error message when an item is not available." };
+    return {
+      correct: false,
+      feedback: "Return a user-friendly error message when an item is not available.",
+    };
   if (!/order submitted/i.test(answer))
-    return { correct: false, feedback: "Return a success message (e.g. \"Order submitted\") when the order is valid." };
+    return {
+      correct: false,
+      feedback: 'Return a success message (e.g. "Order submitted") when the order is valid.',
+    };
   if (!/console\.log/.test(norm))
     return { correct: false, feedback: "Use console.log() with the provided test cases." };
   return { correct: true, feedback: "Correct!" };
@@ -877,7 +1075,11 @@ const cf14j: Checker = (answer) => {
   if (!/\bprice\b/.test(norm))
     return { correct: false, feedback: "Extract the price property from product." };
   if (!/specs\s*:\s*\{\s*color\b|\bcolor\b.*=.*specs|const\s*\{\s*color\b/i.test(answer))
-    return { correct: false, feedback: "Extract color using nested destructuring: specs: { color } inside the main destructuring." };
+    return {
+      correct: false,
+      feedback:
+        "Extract color using nested destructuring: specs: { color } inside the main destructuring.",
+    };
   if (!/\breviews\b/.test(norm))
     return { correct: false, feedback: "Extract the reviews array from product." };
   if ((answer.match(/console\.log/g) ?? []).length < 2)
@@ -890,7 +1092,10 @@ const cf14j: Checker = (answer) => {
 
 const cf14l: Checker = (answer) => {
   if (!/`[^`]*\$\{[^`]*`/.test(answer))
-    return { correct: false, feedback: "Use a template literal (backticks) with ${} interpolation to build the string." };
+    return {
+      correct: false,
+      feedback: "Use a template literal (backticks) with ${} interpolation to build the string.",
+    };
   if (!/\$\{\s*firstName\s*\}/i.test(answer))
     return { correct: false, feedback: "Interpolate firstName using ${firstName}." };
   if (!/\$\{\s*role\s*\}/i.test(answer))
@@ -911,17 +1116,44 @@ const cf14l: Checker = (answer) => {
 const cf15b: Checker = (answer) => {
   const norm = answer.toLowerCase();
   if (/while\s*\([^)]*date\.now/i.test(answer))
-    return { correct: false, feedback: "Remove the CPU-blocking while loop — replace it with setTimeout." };
+    return {
+      correct: false,
+      feedback: "Remove the CPU-blocking while loop — replace it with setTimeout.",
+    };
   if (!/settimeout/i.test(answer))
-    return { correct: false, feedback: "Use setTimeout() inside prepareFood to simulate the cooking delay asynchronously." };
-  if (!/function\s+prepareFood\s*\([^)]*callback/i.test(answer) && !/prepareFood\s*=\s*\([^)]*callback/i.test(answer))
-    return { correct: false, feedback: "Add a callback parameter to prepareFood(orderItem, timeMs, callback) and call it after the food is ready." };
-  if (!/if\s*\(\s*callback\s*\)\s*callback\s*\(\)|callback\s*&&\s*callback\s*\(\)|callback\s*\(\)/i.test(answer))
-    return { correct: false, feedback: "Call the callback inside the setTimeout after logging that the food is ready." };
+    return {
+      correct: false,
+      feedback: "Use setTimeout() inside prepareFood to simulate the cooking delay asynchronously.",
+    };
+  if (
+    !/function\s+prepareFood\s*\([^)]*callback/i.test(answer) &&
+    !/prepareFood\s*=\s*\([^)]*callback/i.test(answer)
+  )
+    return {
+      correct: false,
+      feedback:
+        "Add a callback parameter to prepareFood(orderItem, timeMs, callback) and call it after the food is ready.",
+    };
+  if (
+    !/if\s*\(\s*callback\s*\)\s*callback\s*\(\)|callback\s*&&\s*callback\s*\(\)|callback\s*\(\)/i.test(
+      answer,
+    )
+  )
+    return {
+      correct: false,
+      feedback: "Call the callback inside the setTimeout after logging that the food is ready.",
+    };
   if (!/preparefood\s*\("drink"/i.test(answer))
-    return { correct: false, feedback: "Start the chain by calling prepareFood(\"Drink\", ...) with a callback that calls the next course." };
+    return {
+      correct: false,
+      feedback:
+        'Start the chain by calling prepareFood("Drink", ...) with a callback that calls the next course.',
+    };
   if (!/taking order for table a|table a/i.test(answer))
-    return { correct: false, feedback: "Keep the console.log messages to verify the correct async order." };
+    return {
+      correct: false,
+      feedback: "Keep the console.log messages to verify the correct async order.",
+    };
   return { correct: true, feedback: "Correct!" };
 };
 
@@ -931,16 +1163,29 @@ const cf15b: Checker = (answer) => {
 const cf15d: Checker = (answer) => {
   const norm = answer.toLowerCase();
   if (!/new\s+Promise\s*\(\s*\(\s*resolve/i.test(answer))
-    return { correct: false, feedback: "Return a new Promise((resolve) => ...) from prepareFood and call resolve() inside setTimeout when the food is ready." };
+    return {
+      correct: false,
+      feedback:
+        "Return a new Promise((resolve) => ...) from prepareFood and call resolve() inside setTimeout when the food is ready.",
+    };
   // Accept an inline arrow, an inline function, or a function reference.
   if (!/\.then\s*\(\s*[^)]/i.test(answer))
     return fail("Chain the courses using .then(() => prepareFood(...)).");
   if ((answer.match(/\.then\s*\(/g) ?? []).length < 3)
-    return { correct: false, feedback: "Chain all three courses with .then() — Drink, Pizza, and Dessert." };
+    return {
+      correct: false,
+      feedback: "Chain all three courses with .then() — Drink, Pizza, and Dessert.",
+    };
   if (!/all courses served/i.test(answer))
-    return { correct: false, feedback: "Log \"All courses served to Table A!\" in the final .then()." };
+    return {
+      correct: false,
+      feedback: 'Log "All courses served to Table A!" in the final .then().',
+    };
   if (!/taking order for table a|table a/i.test(answer))
-    return { correct: false, feedback: "Keep the console.log messages to verify the correct async order." };
+    return {
+      correct: false,
+      feedback: "Keep the console.log messages to verify the correct async order.",
+    };
   return { correct: true, feedback: "Correct!" };
 };
 
@@ -950,15 +1195,32 @@ const cf15d: Checker = (answer) => {
 const cf15f: Checker = (answer) => {
   const norm = answer.toLowerCase();
   if (!/async\s+function\s+\w+|const\s+\w+\s*=\s*async/i.test(answer))
-    return { correct: false, feedback: "Define an async function (e.g. async function serveTableA()) to contain the await calls." };
+    return {
+      correct: false,
+      feedback:
+        "Define an async function (e.g. async function serveTableA()) to contain the await calls.",
+    };
   if ((answer.match(/\bawait\b/g) ?? []).length < 3)
-    return { correct: false, feedback: "Use await before each prepareFood() call — one for Drink, Pizza, and Dessert." };
+    return {
+      correct: false,
+      feedback: "Use await before each prepareFood() call — one for Drink, Pizza, and Dessert.",
+    };
   if (!/new\s+Promise\s*\(\s*\(\s*resolve/i.test(answer))
-    return { correct: false, feedback: "prepareFood still needs to return a Promise — keep the new Promise((resolve) => ...) wrapping setTimeout." };
+    return {
+      correct: false,
+      feedback:
+        "prepareFood still needs to return a Promise — keep the new Promise((resolve) => ...) wrapping setTimeout.",
+    };
   if (!/all courses served/i.test(answer))
-    return { correct: false, feedback: "Log \"All courses served to Table A!\" after the last await." };
+    return {
+      correct: false,
+      feedback: 'Log "All courses served to Table A!" after the last await.',
+    };
   if (!/taking order for table a|table a/i.test(answer))
-    return { correct: false, feedback: "Keep the console.log messages to verify the correct async order." };
+    return {
+      correct: false,
+      feedback: "Keep the console.log messages to verify the correct async order.",
+    };
   return { correct: true, feedback: "Correct!" };
 };
 
@@ -967,20 +1229,30 @@ const cf15f: Checker = (answer) => {
 
 const cf16c: Checker = (answer) => {
   if ((answer.match(/fetch\s*\(/g) ?? []).length < 2)
-    return fail("You need two fetch() calls — one to get your location, and one to get the weather from open-meteo.");
+    return fail(
+      "You need two fetch() calls — one to get your location, and one to get the weather from open-meteo.",
+    );
   // The prompt names open-meteo directly, but only offers ip-api as an example
   // ("an open online service, like ip-api.com/json"), so any geolocation
   // service is acceptable.
   if (!/open-meteo\.com/i.test(answer))
-    return fail("Use the open-meteo API (api.open-meteo.com/v1/forecast) to get the weather for your coordinates.");
+    return fail(
+      "Use the open-meteo API (api.open-meteo.com/v1/forecast) to get the weather for your coordinates.",
+    );
   if (!/\b(lat|latitude)\b/i.test(answer) || !/\b(lon|longitude)\b/i.test(answer))
     return fail("Get lat and lon from the location response and pass them to the open-meteo URL.");
   if (!/current_weather/i.test(answer))
-    return fail("Add current_weather=true to the open-meteo URL and access data.current_weather in the response.");
+    return fail(
+      "Add current_weather=true to the open-meteo URL and access data.current_weather in the response.",
+    );
   if (!/\baccurate\b/i.test(answer))
-    return fail("Add an accurate field, set to true if the weather data is less than 60 minutes old.");
+    return fail(
+      "Add an accurate field, set to true if the weather data is less than 60 minutes old.",
+    );
   if (!/\b60\b/.test(answer))
-    return hint("Compare the age of the weather record against 60 minutes to work out the accurate flag.");
+    return hint(
+      "Compare the age of the weather record against 60 minutes to work out the accurate flag.",
+    );
   return pass();
 };
 
@@ -990,12 +1262,12 @@ const cf16c: Checker = (answer) => {
 // syntax gate: prose explanations, HTML pages, and prose+code mixtures where
 // students are asked to describe a change rather than only write it.
 const NON_JS_ANSWERS = new Set([
-  "cf1-c",  // reorder the algorithm — prose/numbered list
-  "cf2-c",  // Hello World in the browser — HTML
-  "cf8-f",  // tracking the execution flow — pen-and-paper trace
-  "cf9-c",  // playing with scopes — prose explanation
-  "cf9-d",  // improve the code — prose + code
-  "cf9-e",  // fix the code — prose + code, and the bug is a runtime error anyway
+  "cf1-c", // reorder the algorithm — prose/numbered list
+  "cf2-c", // Hello World in the browser — HTML
+  "cf8-f", // tracking the execution flow — pen-and-paper trace
+  "cf9-c", // playing with scopes — prose explanation
+  "cf9-d", // improve the code — prose + code
+  "cf9-e", // fix the code — prose + code, and the bug is a runtime error anyway
   "cf10-c", // DOM manipulation — HTML
   "cf11-d", // I see you! — HTML
 ]);

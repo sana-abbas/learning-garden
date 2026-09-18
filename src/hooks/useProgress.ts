@@ -145,8 +145,7 @@ export function useProgress(userId: string | null): ProgressState {
           onboardedRef.current = remoteOnboarded;
 
           // Auto-onboard users who already have progress (retroactive)
-          const effectiveOnboarded =
-            remoteOnboarded || Object.keys(remoteChecked).length > 0;
+          const effectiveOnboarded = remoteOnboarded || Object.keys(remoteChecked).length > 0;
           setOnboardedState(effectiveOnboarded);
           if (effectiveOnboarded && !remoteOnboarded) {
             onboardedRef.current = true;
@@ -212,19 +211,37 @@ export function useProgress(userId: string | null): ProgressState {
   useEffect(() => {
     if (!userId || !loaded.current) return;
     localStorage.setItem(lsKey("checked", userId), JSON.stringify(checked));
-    scheduleUpsert(checked, notesRef.current, submissionsRef.current, streakCountRef.current, streakDateRef.current);
+    scheduleUpsert(
+      checked,
+      notesRef.current,
+      submissionsRef.current,
+      streakCountRef.current,
+      streakDateRef.current,
+    );
   }, [checked, userId, scheduleUpsert]);
 
   useEffect(() => {
     if (!userId || !loaded.current) return;
     localStorage.setItem(lsKey("notes", userId), JSON.stringify(notes));
-    scheduleUpsert(checkedRef.current, notes, submissionsRef.current, streakCountRef.current, streakDateRef.current);
+    scheduleUpsert(
+      checkedRef.current,
+      notes,
+      submissionsRef.current,
+      streakCountRef.current,
+      streakDateRef.current,
+    );
   }, [notes, userId, scheduleUpsert]);
 
   useEffect(() => {
     if (!userId || !loaded.current) return;
     localStorage.setItem(lsKey("submissions", userId), JSON.stringify(submissions));
-    scheduleUpsert(checkedRef.current, notesRef.current, submissions, streakCountRef.current, streakDateRef.current);
+    scheduleUpsert(
+      checkedRef.current,
+      notesRef.current,
+      submissions,
+      streakCountRef.current,
+      streakDateRef.current,
+    );
   }, [submissions, userId, scheduleUpsert]);
 
   // ── setSubmission helper ──────────────────────────────────────────────────
@@ -241,10 +258,12 @@ export function useProgress(userId: string | null): ProgressState {
     if (!userId) return;
     localStorage.setItem(lsKey("onboarded", userId), "true");
     try {
-      await supabase.from("user_progress").upsert(
-        { user_id: userId, onboarded: true, updated_at: new Date().toISOString() },
-        { onConflict: "user_id" },
-      );
+      await supabase
+        .from("user_progress")
+        .upsert(
+          { user_id: userId, onboarded: true, updated_at: new Date().toISOString() },
+          { onConflict: "user_id" },
+        );
     } catch {
       // silent fail — the next debounced upsert will carry the flag
     }
@@ -305,11 +324,18 @@ export function useProgress(userId: string | null): ProgressState {
   }, []);
 
   return {
-    checked, setChecked,
-    notes, setNotes,
-    submissions, setSubmission,
-    streak, bumpStreak,
-    syncing, saveNow,
-    onboarded, progressReady, setOnboarded,
+    checked,
+    setChecked,
+    notes,
+    setNotes,
+    submissions,
+    setSubmission,
+    streak,
+    bumpStreak,
+    syncing,
+    saveNow,
+    onboarded,
+    progressReady,
+    setOnboarded,
   };
 }

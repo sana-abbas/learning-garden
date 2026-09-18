@@ -81,7 +81,10 @@ const QUOTES = [
   { text: "The best way to predict the future is to invent it.", author: "Alan Kay" },
   { text: "Code is like humour. When you have to explain it, it's bad.", author: "Cory House" },
   { text: "First, solve the problem. Then, write the code.", author: "John Johnson" },
-  { text: "Any fool can write code a computer understands. Good programmers write code humans understand.", author: "Martin Fowler" },
+  {
+    text: "Any fool can write code a computer understands. Good programmers write code humans understand.",
+    author: "Martin Fowler",
+  },
   { text: "Progress, not perfection.", author: null },
   { text: "Small steps every day add up to big leaps.", author: null },
   { text: "The secret to getting ahead is getting started.", author: "Mark Twain" },
@@ -90,16 +93,28 @@ const QUOTES = [
   { text: "Talk is cheap. Show me the code.", author: "Linus Torvalds" },
   { text: "Simplicity is the soul of efficiency.", author: "Austin Freeman" },
   { text: "The journey of a thousand miles begins with a single step.", author: "Lao Tzu" },
-  { text: "The more I learn, the more I realise how much I don't know.", author: "Albert Einstein" },
-  { text: "One of my most productive days was throwing away 1,000 lines of code.", author: "Ken Thompson" },
+  {
+    text: "The more I learn, the more I realise how much I don't know.",
+    author: "Albert Einstein",
+  },
+  {
+    text: "One of my most productive days was throwing away 1,000 lines of code.",
+    author: "Ken Thompson",
+  },
   { text: "Learning to code is learning to think.", author: "Steve Jobs" },
   { text: "The best investment you can make is in yourself.", author: "Warren Buffett" },
   { text: "Consistency beats intensity every time.", author: null },
   { text: "Future you is going to thank present you.", author: null },
   { text: "You are literally rewiring your brain right now.", author: null },
   { text: "Every checkbox is a seed planted. 🌱", author: null },
-  { text: "Debugging is twice as hard as writing the code in the first place.", author: "Brian Kernighan" },
-  { text: "Good judgment comes from experience, and experience comes from bad judgment.", author: null },
+  {
+    text: "Debugging is twice as hard as writing the code in the first place.",
+    author: "Brian Kernighan",
+  },
+  {
+    text: "Good judgment comes from experience, and experience comes from bad judgment.",
+    author: null,
+  },
   { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
   { text: "Sometimes the best code is no code at all.", author: null },
 ];
@@ -174,7 +189,9 @@ function Index() {
   const [staffHome, setStaffHome] = useState<"/mentor" | "/founder">("/mentor");
   const [authReady, setAuthReady] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [todayUpdate, setTodayUpdate] = useState<{ today: string; tomorrow: string; blockers: string | null } | null | undefined>(undefined);
+  const [todayUpdate, setTodayUpdate] = useState<
+    { today: string; tomorrow: string; blockers: string | null } | null | undefined
+  >(undefined);
   const [openId, setOpenId] = useState<string | null>(null);
   // Submission gate modal (assignment subtasks)
   const [submissionModal, setSubmissionModal] = useState<{
@@ -188,10 +205,19 @@ function Index() {
   const modalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const {
-    checked, setChecked, notes, setNotes,
-    submissions, setSubmission,
-    streak, bumpStreak, syncing, saveNow,
-    onboarded, progressReady, setOnboarded,
+    checked,
+    setChecked,
+    notes,
+    setNotes,
+    submissions,
+    setSubmission,
+    streak,
+    bumpStreak,
+    syncing,
+    saveNow,
+    onboarded,
+    progressReady,
+    setOnboarded,
   } = useProgress(userId);
 
   // Tracks which chapter note just saved (for ✓ button feedback)
@@ -209,13 +235,35 @@ function Index() {
   const [sidebarTab, setSidebarTab] = useState<"curriculum" | "community">("curriculum");
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
   const [todayDateLabel, setTodayDateLabel] = useState<string | null>(null);
-  useEffect(() => { setTodayDateLabel(new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })); }, []);
+  useEffect(() => {
+    setTodayDateLabel(new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }));
+  }, []);
   const [bloomBurst, setBloomBurst] = useState(false);
 
   type FsCommunityMember = { user_id: string; firstName: string };
-  type FsCommunityUpdate = { user_id: string; firstName: string; date: string; today: string; tomorrow: string; blockers: string | null };
-  type FsReaction = { update_user_id: string; update_date: string; reactor_user_id: string; emoji: string };
-  type FsComment = { id: string; update_user_id: string; update_date: string; commenter_user_id: string; commenter_name: string; text: string; created_at: string };
+  type FsCommunityUpdate = {
+    user_id: string;
+    firstName: string;
+    date: string;
+    today: string;
+    tomorrow: string;
+    blockers: string | null;
+  };
+  type FsReaction = {
+    update_user_id: string;
+    update_date: string;
+    reactor_user_id: string;
+    emoji: string;
+  };
+  type FsComment = {
+    id: string;
+    update_user_id: string;
+    update_date: string;
+    commenter_user_id: string;
+    commenter_name: string;
+    text: string;
+    created_at: string;
+  };
   const [fsMembers, setFsMembers] = useState<FsCommunityMember[] | null>(null);
   const [fsUpdates, setFsUpdates] = useState<FsCommunityUpdate[] | null>(null);
   const [fsLoading, setFsLoading] = useState(false);
@@ -251,34 +299,61 @@ function Index() {
         const isStaff = isFounder || isMentor;
         if (isFounder) setStaffHome("/founder");
         else if (isMentor) setStaffHome("/mentor");
-        if (isFounder && !garden) { navigate({ to: "/founder" }); return; }
-        if (isMentor && !garden) { navigate({ to: "/mentor" }); return; }
+        if (isFounder && !garden) {
+          navigate({ to: "/founder" });
+          return;
+        }
+        if (isMentor && !garden) {
+          navigate({ to: "/mentor" });
+          return;
+        }
         if (!isStaff) {
           // The database owns cohort assignment (ensure_my_cohort), so this is
           // the same answer /cf gets — the two routes can no longer disagree.
           const slug = await resolveMyCohort(session.user.id);
-          if (slug === "coding-fundamentals") { navigate({ to: "/cf" }); return; }
+          if (slug === "coding-fundamentals") {
+            navigate({ to: "/cf" });
+            return;
+          }
         }
         // Full-stack (or cohort unknown) — stay on /
         // Save display_name and email so the mentor dashboard can read them
-        const name = (session.user.user_metadata?.full_name as string | undefined) ?? session.user.email?.split("@")[0] ?? "Gardener";
+        const name =
+          (session.user.user_metadata?.full_name as string | undefined) ??
+          session.user.email?.split("@")[0] ??
+          "Gardener";
         const avatarUrl = (session.user.user_metadata?.avatar_url as string | undefined) ?? null;
-        supabase.from("user_progress").upsert(
-          { user_id: session.user.id, display_name: name, email: session.user.email, avatar_url: avatarUrl, updated_at: new Date().toISOString() },
-          { onConflict: "user_id" },
-        ).then(() => {});
+        supabase
+          .from("user_progress")
+          .upsert(
+            {
+              user_id: session.user.id,
+              display_name: name,
+              email: session.user.email,
+              avatar_url: avatarUrl,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "user_id" },
+          )
+          .then(() => {});
         setUserId(session.user.id);
         setUser(session.user);
         setAuthReady(true);
 
         const dateStr = new Date().toISOString().split("T")[0];
-        supabase.from("daily_updates").select("today, tomorrow, blockers")
-          .eq("user_id", session.user.id).eq("date", dateStr).maybeSingle()
+        supabase
+          .from("daily_updates")
+          .select("today, tomorrow, blockers")
+          .eq("user_id", session.user.id)
+          .eq("date", dateStr)
+          .maybeSingle()
           .then(({ data }) => setTodayUpdate(data ?? null));
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
         navigate({ to: "/login" });
       } else {
@@ -311,7 +386,8 @@ function Index() {
   }, [checked]);
 
   const weeksRemaining = useMemo(
-    () => STEPS.filter((s) => !completion[s.id]).reduce((acc, s) => acc + parseWeeks(s.duration), 0),
+    () =>
+      STEPS.filter((s) => !completion[s.id]).reduce((acc, s) => acc + parseWeeks(s.duration), 0),
     [completion],
   );
 
@@ -347,9 +423,7 @@ function Index() {
       return;
     }
 
-    const justCompleted = STEPS.filter(
-      (s) => completion[s.id] && !prev[s.id],
-    );
+    const justCompleted = STEPS.filter((s) => completion[s.id] && !prev[s.id]);
     if (justCompleted.length > 0) {
       const fact = CHAPTER_FACTS[justCompleted[0].id];
       if (fact) {
@@ -370,7 +444,7 @@ function Index() {
     if (progressReady && userId) {
       bumpStreak();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progressReady, userId]);
 
   const toggleStep = (step: Step) => {
@@ -472,7 +546,10 @@ function Index() {
         body: {
           callName: step.title,
           callVariant: step.callVariant,
-          userName: (user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? "A participant",
+          userName:
+            (user?.user_metadata?.full_name as string | undefined) ??
+            user?.email ??
+            "A participant",
           userEmail: user?.email ?? "",
         },
       });
@@ -487,7 +564,9 @@ function Index() {
     for (const step of STEPS) {
       if (step.id === startingStepId) break;
       if (step.subtasks && step.subtasks.length > 0) {
-        step.subtasks.forEach((sub) => { preChecked[sub.id] = true; });
+        step.subtasks.forEach((sub) => {
+          preChecked[sub.id] = true;
+        });
       } else {
         preChecked[step.id] = true;
       }
@@ -513,16 +592,22 @@ function Index() {
   }
 
   // Progress counts only curriculum steps (modules + paid projects), not founders calls
-const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
+  const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
   const progress = (completedCount / CURRICULUM_STEPS.length) * 100;
   const allDone = completedCount === CURRICULUM_STEPS.length;
 
   // User profile derived values
-  const displayName = (user?.user_metadata?.full_name as string | undefined)
-    ?? user?.email?.split("@")[0]
-    ?? "Gardener";
+  const displayName =
+    (user?.user_metadata?.full_name as string | undefined) ??
+    user?.email?.split("@")[0] ??
+    "Gardener";
   const avatarUrl = user?.user_metadata?.avatar_url as string | undefined;
-  const initials = displayName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
+  const initials = displayName
+    .split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
   const lastActive = user ? todayDateLabel : null;
 
   const rootsActive = completion["ch1"] || completion["ch2"];
@@ -535,22 +620,61 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
   const loadFsCommunity = async () => {
     if (fsMembers !== null || fsLoading) return;
     setFsLoading(true);
-    const { data: cohortRow } = await supabase.from("cohorts").select("id").eq("slug", "full-stack").maybeSingle();
-    if (!cohortRow) { setFsMembers([]); setFsLoading(false); return; }
-    const { data: memberRows } = await supabase.from("cohort_members").select("user_id").eq("cohort_id", (cohortRow as any).id);
+    const { data: cohortRow } = await supabase
+      .from("cohorts")
+      .select("id")
+      .eq("slug", "full-stack")
+      .maybeSingle();
+    if (!cohortRow) {
+      setFsMembers([]);
+      setFsLoading(false);
+      return;
+    }
+    const { data: memberRows } = await supabase
+      .from("cohort_members")
+      .select("user_id")
+      .eq("cohort_id", (cohortRow as any).id);
     const fsUserIds = (memberRows ?? []).map((r: any) => r.user_id as string);
-    if (fsUserIds.length === 0) { setFsMembers([]); setFsLoading(false); return; }
+    if (fsUserIds.length === 0) {
+      setFsMembers([]);
+      setFsLoading(false);
+      return;
+    }
     // Names come from participant_directory, not user_progress — a participant
     // can only read their own user_progress row, which is why every name here
     // used to fall through to "Someone".
     const nameMap = await fetchFirstNames(fsUserIds);
-    const members: FsCommunityMember[] = fsUserIds.map(id => ({ user_id: id, firstName: nameMap[id] || "Someone" }));
-    const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const members: FsCommunityMember[] = fsUserIds.map((id) => ({
+      user_id: id,
+      firstName: nameMap[id] || "Someone",
+    }));
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const cutoff = sevenDaysAgo.toISOString().split("T")[0];
-    const { data: updateRows } = await supabase.from("daily_updates").select("user_id, date, today, tomorrow, blockers, display_name").in("user_id", fsUserIds).gte("date", cutoff).order("date", { ascending: false }).limit(50);
-    const updates: FsCommunityUpdate[] = (updateRows ?? []).map((u: any) => ({ ...u, firstName: u.display_name?.split(" ")[0] || nameMap[u.user_id] || "Someone" }));
-    const { data: reactionRows } = await supabase.from("update_reactions").select("update_user_id, update_date, reactor_user_id, emoji").in("update_user_id", fsUserIds).gte("update_date", cutoff);
-    const { data: commentRows } = await supabase.from("update_comments").select("id, update_user_id, update_date, commenter_user_id, commenter_name, text, created_at").in("update_user_id", fsUserIds).gte("update_date", cutoff).order("created_at", { ascending: true });
+    const { data: updateRows } = await supabase
+      .from("daily_updates")
+      .select("user_id, date, today, tomorrow, blockers, display_name")
+      .in("user_id", fsUserIds)
+      .gte("date", cutoff)
+      .order("date", { ascending: false })
+      .limit(50);
+    const updates: FsCommunityUpdate[] = (updateRows ?? []).map((u: any) => ({
+      ...u,
+      firstName: u.display_name?.split(" ")[0] || nameMap[u.user_id] || "Someone",
+    }));
+    const { data: reactionRows } = await supabase
+      .from("update_reactions")
+      .select("update_user_id, update_date, reactor_user_id, emoji")
+      .in("update_user_id", fsUserIds)
+      .gte("update_date", cutoff);
+    const { data: commentRows } = await supabase
+      .from("update_comments")
+      .select(
+        "id, update_user_id, update_date, commenter_user_id, commenter_name, text, created_at",
+      )
+      .in("update_user_id", fsUserIds)
+      .gte("update_date", cutoff)
+      .order("created_at", { ascending: true });
     setFsMembers(members);
     setFsUpdates(updates);
     setFsReactions((reactionRows ?? []) as FsReaction[]);
@@ -560,13 +684,43 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
 
   const toggleFsReaction = async (updateUserId: string, updateDate: string, emoji: string) => {
     if (!userId) return;
-    const isReacted = fsReactions.some(r => r.update_user_id === updateUserId && r.update_date === updateDate && r.emoji === emoji && r.reactor_user_id === userId);
+    const isReacted = fsReactions.some(
+      (r) =>
+        r.update_user_id === updateUserId &&
+        r.update_date === updateDate &&
+        r.emoji === emoji &&
+        r.reactor_user_id === userId,
+    );
     if (isReacted) {
-      setFsReactions(prev => prev.filter(r => !(r.update_user_id === updateUserId && r.update_date === updateDate && r.emoji === emoji && r.reactor_user_id === userId)));
-      await supabase.from("update_reactions").delete().eq("update_user_id", updateUserId).eq("update_date", updateDate).eq("reactor_user_id", userId).eq("emoji", emoji);
+      setFsReactions((prev) =>
+        prev.filter(
+          (r) =>
+            !(
+              r.update_user_id === updateUserId &&
+              r.update_date === updateDate &&
+              r.emoji === emoji &&
+              r.reactor_user_id === userId
+            ),
+        ),
+      );
+      await supabase
+        .from("update_reactions")
+        .delete()
+        .eq("update_user_id", updateUserId)
+        .eq("update_date", updateDate)
+        .eq("reactor_user_id", userId)
+        .eq("emoji", emoji);
     } else {
-      setFsReactions(prev => [...prev, { update_user_id: updateUserId, update_date: updateDate, reactor_user_id: userId, emoji }]);
-      await supabase.from("update_reactions").insert({ update_user_id: updateUserId, update_date: updateDate, reactor_user_id: userId, emoji });
+      setFsReactions((prev) => [
+        ...prev,
+        { update_user_id: updateUserId, update_date: updateDate, reactor_user_id: userId, emoji },
+      ]);
+      await supabase.from("update_reactions").insert({
+        update_user_id: updateUserId,
+        update_date: updateDate,
+        reactor_user_id: userId,
+        emoji,
+      });
     }
   };
 
@@ -576,17 +730,26 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
     if (!text || !userId) return;
     setFsSubmittingComment(key);
     const firstName = displayName.split(" ")[0] || "Gardener";
-    const { data, error } = await supabase.from("update_comments").insert({ update_user_id: updateUserId, update_date: updateDate, commenter_user_id: userId, commenter_name: firstName, text }).select().single();
+    const { data, error } = await supabase
+      .from("update_comments")
+      .insert({
+        update_user_id: updateUserId,
+        update_date: updateDate,
+        commenter_user_id: userId,
+        commenter_name: firstName,
+        text,
+      })
+      .select()
+      .single();
     if (!error && data) {
-      setFsComments(prev => [...prev, data as FsComment]);
-      setFsCommentDrafts(prev => ({ ...prev, [key]: "" }));
+      setFsComments((prev) => [...prev, data as FsComment]);
+      setFsCommentDrafts((prev) => ({ ...prev, [key]: "" }));
     }
     setFsSubmittingComment(null);
   };
 
   return (
     <div className="h-screen overflow-hidden bg-[color:var(--background)] flex flex-col lg:flex-row">
-
       {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
@@ -596,13 +759,15 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
       )}
 
       {/* Sidebar — fixed drawer on mobile, static on desktop */}
-      <aside className={`
+      <aside
+        className={`
         fixed inset-y-0 left-0 z-40 w-[85vw] max-w-[400px] flex flex-col
         bg-[color:var(--sidebar)] border-r border-[color:var(--sidebar-border)]
         transition-transform duration-300 ease-in-out
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
         ${sidebarTab === "community" ? "lg:hidden" : "lg:static lg:w-[420px] lg:translate-x-0 lg:shrink-0"}
-      `}>
+      `}
+      >
         <div className="p-6 border-b border-[color:var(--sidebar-border)] shrink-0 bg-[color:var(--sidebar)] z-10">
           <div className="flex items-center gap-3">
             <div
@@ -679,16 +844,15 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
             const isLocked = isCall && !!lockedCalls[step.id];
             const hasSubs = !!(step.subtasks && step.subtasks.length);
             const isOpen = openId === step.id;
-            const subDone = hasSubs
-              ? step.subtasks!.filter((s) => checked[s.id]).length
-              : 0;
+            const subDone = hasSubs ? step.subtasks!.filter((s) => checked[s.id]).length : 0;
             // Human-readable hint for locked calls
-            const lockHint = isLocked && step.prerequisites
-              ? `Complete ${step.prerequisites
-                  .filter((p) => !completion[p])
-                  .map((p) => STEPS.find((s) => s.id === p)?.title ?? p)
-                  .join(", ")} to unlock`
-              : null;
+            const lockHint =
+              isLocked && step.prerequisites
+                ? `Complete ${step.prerequisites
+                    .filter((p) => !completion[p])
+                    .map((p) => STEPS.find((s) => s.id === p)?.title ?? p)
+                    .join(", ")} to unlock`
+                : null;
 
             const titleContent = (
               <>
@@ -749,12 +913,12 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
                       <Lock className="w-3.5 h-3.5 text-[color:var(--muted-foreground)]" />
                     </div>
                   ) : (
-                  <Checkbox
-                    checked={isChecked}
-                    onCheckedChange={() => toggleStep(step)}
-                    disabled={isCall && isChecked}
-                    className="w-5 h-5 rounded-md border-[color:var(--primary)]/40 data-[state=checked]:bg-[color:var(--primary)] data-[state=checked]:border-[color:var(--primary)] disabled:opacity-100 disabled:cursor-default"
-                  />
+                    <Checkbox
+                      checked={isChecked}
+                      onCheckedChange={() => toggleStep(step)}
+                      disabled={isCall && isChecked}
+                      className="w-5 h-5 rounded-md border-[color:var(--primary)]/40 data-[state=checked]:bg-[color:var(--primary)] data-[state=checked]:border-[color:var(--primary)] disabled:opacity-100 disabled:cursor-default"
+                    />
                   )}
                   <div
                     className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all duration-500 ${
@@ -768,8 +932,12 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
                             ? "linear-gradient(135deg, var(--bloom-pink), var(--primary))"
                             : "linear-gradient(135deg, var(--primary), var(--leaf-light))"
                         : isCall
-                          ? theme === "dark" ? "oklch(0.25 0.06 340)" : "oklch(0.94 0.04 340)"
-                          : theme === "dark" ? "oklch(0.24 0.03 65)" : "oklch(0.9 0.03 85)",
+                          ? theme === "dark"
+                            ? "oklch(0.25 0.06 340)"
+                            : "oklch(0.94 0.04 340)"
+                          : theme === "dark"
+                            ? "oklch(0.24 0.03 65)"
+                            : "oklch(0.9 0.03 85)",
                       color: isChecked
                         ? "white"
                         : isCall
@@ -825,7 +993,7 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
                                 onCheckedChange={() => toggleSubtask(step, sub)}
                                 className="w-4 h-4 mt-0.5 rounded border-[color:var(--primary)]/40 data-[state=checked]:bg-[color:var(--primary)] data-[state=checked]:border-[color:var(--primary)]"
                               />
-                                  <span className="flex-1">
+                              <span className="flex-1">
                                 {sub.url && !subChecked ? (
                                   <a
                                     href={sub.url}
@@ -887,9 +1055,13 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
                           }`}
                         >
                           {savedNoteId === step.id ? (
-                            <><Check className="w-3 h-3" /> Saved</>
+                            <>
+                              <Check className="w-3 h-3" /> Saved
+                            </>
                           ) : (
-                            <><Send className="w-3 h-3" /> Save note</>
+                            <>
+                              <Send className="w-3 h-3" /> Save note
+                            </>
                           )}
                         </button>
                       </div>
@@ -900,15 +1072,12 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
             );
           })}
         </div>
-
       </aside>
 
       {/* Main */}
       <main className="flex-1 overflow-hidden flex flex-col p-4 lg:p-6">
-
         {/* ── Top bar ─────────────────────────────────────────────── */}
         <div className="shrink-0 flex items-center gap-2 mb-3">
-
           {/* Hamburger — mobile only */}
           <button
             type="button"
@@ -935,17 +1104,29 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
           </div>
 
           {/* Tab toggle — desktop only */}
-          <div className="hidden lg:flex shrink-0 rounded-xl overflow-hidden border border-[color:var(--border)]" style={{ background: "var(--sidebar)" }}>
+          <div
+            className="hidden lg:flex shrink-0 rounded-xl overflow-hidden border border-[color:var(--border)]"
+            style={{ background: "var(--sidebar)" }}
+          >
             {(["curriculum", "community"] as const).map((tab) => (
-              <button key={tab} type="button"
-                onClick={() => { setSidebarTab(tab); if (tab === "community") loadFsCommunity(); }}
+              <button
+                key={tab}
+                type="button"
+                onClick={() => {
+                  setSidebarTab(tab);
+                  if (tab === "community") loadFsCommunity();
+                }}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-all"
                 style={{
                   background: sidebarTab === tab ? "var(--primary)" : "transparent",
                   color: sidebarTab === tab ? "white" : "var(--muted-foreground)",
                 }}
               >
-                {tab === "curriculum" ? <Leaf className="w-3 h-3" /> : <Users className="w-3 h-3" />}
+                {tab === "curriculum" ? (
+                  <Leaf className="w-3 h-3" />
+                ) : (
+                  <Users className="w-3 h-3" />
+                )}
                 {tab}
               </button>
             ))}
@@ -965,7 +1146,8 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
                 className="flex items-center gap-1 rounded-full font-semibold px-2.5 py-1.5 text-[12px]"
                 title={`${streak}-day streak! Keep it up 🔥`}
                 style={{
-                  background: theme === "dark" ? "oklch(0.35 0.08 55 / 0.5)" : "oklch(0.95 0.08 60 / 0.3)",
+                  background:
+                    theme === "dark" ? "oklch(0.35 0.08 55 / 0.5)" : "oklch(0.95 0.08 60 / 0.3)",
                   color: theme === "dark" ? "oklch(0.88 0.14 70)" : "oklch(0.55 0.15 50)",
                 }}
               >
@@ -980,12 +1162,19 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
               onClick={() => setShowUpdateModal(true)}
               title={todayUpdate ? "Edit today's update" : "Post daily update"}
               className="p-2 rounded-xl transition-colors"
-              style={todayUpdate ? {
-                color: "var(--primary)",
-                background: theme === "dark" ? "oklch(0.32 0.08 145 / 0.5)" : "oklch(0.93 0.07 145 / 0.35)",
-              } : {
-                color: "var(--muted-foreground)",
-              }}
+              style={
+                todayUpdate
+                  ? {
+                      color: "var(--primary)",
+                      background:
+                        theme === "dark"
+                          ? "oklch(0.32 0.08 145 / 0.5)"
+                          : "oklch(0.93 0.07 145 / 0.35)",
+                    }
+                  : {
+                      color: "var(--muted-foreground)",
+                    }
+              }
             >
               <ClipboardList className="w-4 h-4" />
             </button>
@@ -997,38 +1186,73 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
             <div className="hidden lg:block relative">
               <button
                 type="button"
-                onClick={() => setAvatarMenuOpen(prev => !prev)}
+                onClick={() => setAvatarMenuOpen((prev) => !prev)}
                 className="flex items-center gap-2 rounded-xl px-2 py-1 hover:bg-[oklch(0.92_0.025_85)] dark:hover:bg-[oklch(0.27_0.03_65)] transition-colors"
               >
                 {avatarUrl ? (
-                  <img src={avatarUrl} alt={displayName} className="w-8 h-8 rounded-full object-cover ring-2 ring-[color:var(--primary)]/30 shrink-0"
-                    onError={(e) => { e.currentTarget.style.display = "none"; (e.currentTarget.nextElementSibling as HTMLElement)?.style.removeProperty("display"); }} />
+                  <img
+                    src={avatarUrl}
+                    alt={displayName}
+                    className="w-8 h-8 rounded-full object-cover ring-2 ring-[color:var(--primary)]/30 shrink-0"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                      (e.currentTarget.nextElementSibling as HTMLElement)?.style.removeProperty(
+                        "display",
+                      );
+                    }}
+                  />
                 ) : null}
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold text-white shrink-0"
-                  style={{ background: "linear-gradient(135deg, var(--primary), var(--bloom-pink))", display: avatarUrl ? "none" : undefined }}>
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold text-white shrink-0"
+                  style={{
+                    background: "linear-gradient(135deg, var(--primary), var(--bloom-pink))",
+                    display: avatarUrl ? "none" : undefined,
+                  }}
+                >
                   {initials}
                 </div>
                 <div className="text-left">
-                  <p className="text-sm font-semibold text-[color:var(--foreground)] leading-tight">{displayName}</p>
-                  {lastActive && <p className="text-[11px] text-[color:var(--muted-foreground)] leading-tight mt-0.5">Last active {lastActive}</p>}
+                  <p className="text-sm font-semibold text-[color:var(--foreground)] leading-tight">
+                    {displayName}
+                  </p>
+                  {lastActive && (
+                    <p className="text-[11px] text-[color:var(--muted-foreground)] leading-tight mt-0.5">
+                      Last active {lastActive}
+                    </p>
+                  )}
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 text-[color:var(--muted-foreground)] ml-0.5" />
               </button>
               {avatarMenuOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setAvatarMenuOpen(false)} />
-                  <div className="absolute right-0 top-full mt-2 z-20 rounded-xl shadow-lg overflow-hidden min-w-[160px]"
-                    style={{ background: "var(--sidebar)", border: "1px solid var(--border)" }}>
-                    <button type="button" onClick={() => { toggleTheme(); setAvatarMenuOpen(false); }}
+                  <div
+                    className="absolute right-0 top-full mt-2 z-20 rounded-xl shadow-lg overflow-hidden min-w-[160px]"
+                    style={{ background: "var(--sidebar)", border: "1px solid var(--border)" }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        toggleTheme();
+                        setAvatarMenuOpen(false);
+                      }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-[oklch(0.92_0.025_85)] dark:hover:bg-[oklch(0.27_0.03_65)] transition-colors text-left"
-                      style={{ color: "var(--foreground)" }}>
-                      {theme === "dark" ? <Sun className="w-4 h-4 shrink-0" /> : <Moon className="w-4 h-4 shrink-0" />}
+                      style={{ color: "var(--foreground)" }}
+                    >
+                      {theme === "dark" ? (
+                        <Sun className="w-4 h-4 shrink-0" />
+                      ) : (
+                        <Moon className="w-4 h-4 shrink-0" />
+                      )}
                       {theme === "dark" ? "Light mode" : "Dark mode"}
                     </button>
                     <div className="h-px mx-3" style={{ background: "var(--border)" }} />
-                    <button type="button" onClick={handleSignOut}
+                    <button
+                      type="button"
+                      onClick={handleSignOut}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-[oklch(0.92_0.025_85)] dark:hover:bg-[oklch(0.27_0.03_65)] transition-colors text-left"
-                      style={{ color: "var(--muted-foreground)" }}>
+                      style={{ color: "var(--muted-foreground)" }}
+                    >
                       <LogOut className="w-4 h-4 shrink-0" />
                       Sign out
                     </button>
@@ -1036,7 +1260,6 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
                 </>
               )}
             </div>
-
           </div>
         </div>
 
@@ -1045,119 +1268,286 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
           {sidebarTab === "community" ? (
             <div className="h-full overflow-y-auto p-6">
               {fsLoading ? (
-                <div className="flex items-center justify-center h-40 text-sm" style={{ color: "var(--muted-foreground)" }}>Loading community…</div>
+                <div
+                  className="flex items-center justify-center h-40 text-sm"
+                  style={{ color: "var(--muted-foreground)" }}
+                >
+                  Loading community…
+                </div>
               ) : (
                 <div className="max-w-2xl mx-auto space-y-4">
                   {/* Filter toolbar */}
                   <div className="flex items-center gap-3 flex-wrap">
-                    <div className="flex items-center gap-2 rounded-xl px-3 py-1.5" style={{ background: "var(--sidebar)", border: "1px solid var(--border)" }}>
-                      <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Date</span>
+                    <div
+                      className="flex items-center gap-2 rounded-xl px-3 py-1.5"
+                      style={{ background: "var(--sidebar)", border: "1px solid var(--border)" }}
+                    >
+                      <span
+                        className="text-[11px] font-semibold uppercase tracking-wider"
+                        style={{ color: "var(--muted-foreground)" }}
+                      >
+                        Date
+                      </span>
                       <input
                         type="date"
                         value={fsFilterDate}
-                        onChange={e => { setFsFilterDate(e.target.value); setFsPage(0); }}
+                        onChange={(e) => {
+                          setFsFilterDate(e.target.value);
+                          setFsPage(0);
+                        }}
                         className="text-xs bg-transparent focus:outline-none"
-                        style={{ color: fsFilterDate ? "var(--foreground)" : "var(--muted-foreground)" }}
+                        style={{
+                          color: fsFilterDate ? "var(--foreground)" : "var(--muted-foreground)",
+                        }}
                       />
                     </div>
                     {fsFilterDate && (
-                      <button type="button" onClick={() => { setFsFilterDate(""); setFsPage(0); }}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFsFilterDate("");
+                          setFsPage(0);
+                        }}
                         className="text-[11px] font-medium px-3 py-1.5 rounded-xl"
-                        style={{ background: "var(--sidebar)", border: "1px solid var(--border)", color: "var(--muted-foreground)" }}>
+                        style={{
+                          background: "var(--sidebar)",
+                          border: "1px solid var(--border)",
+                          color: "var(--muted-foreground)",
+                        }}
+                      >
                         Clear filter
                       </button>
                     )}
-                    <span className="ml-auto text-[11px]" style={{ color: "var(--muted-foreground)" }}>
-                      {(() => { const n = (fsUpdates ?? []).filter(u => !fsFilterDate || u.date === fsFilterDate).length; return `${n} update${n !== 1 ? "s" : ""}`; })()}
+                    <span
+                      className="ml-auto text-[11px]"
+                      style={{ color: "var(--muted-foreground)" }}
+                    >
+                      {(() => {
+                        const n = (fsUpdates ?? []).filter(
+                          (u) => !fsFilterDate || u.date === fsFilterDate,
+                        ).length;
+                        return `${n} update${n !== 1 ? "s" : ""}`;
+                      })()}
                     </span>
                   </div>
 
                   {(() => {
-                    const filtered = (fsUpdates ?? []).filter(u => !fsFilterDate || u.date === fsFilterDate);
+                    const filtered = (fsUpdates ?? []).filter(
+                      (u) => !fsFilterDate || u.date === fsFilterDate,
+                    );
                     const totalPages = Math.ceil(filtered.length / FS_PAGE_SIZE);
-                    const paged = filtered.slice(fsPage * FS_PAGE_SIZE, (fsPage + 1) * FS_PAGE_SIZE);
+                    const paged = filtered.slice(
+                      fsPage * FS_PAGE_SIZE,
+                      (fsPage + 1) * FS_PAGE_SIZE,
+                    );
                     const EMOJIS = ["❤️", "🔥", "💪", "🙌"];
                     return (
                       <>
                         {filtered.length === 0 && (
-                          <p className="text-sm text-center py-12" style={{ color: "var(--muted-foreground)" }}>
-                            {fsFilterDate ? "No updates for this date." : "No updates in the last 7 days."}
+                          <p
+                            className="text-sm text-center py-12"
+                            style={{ color: "var(--muted-foreground)" }}
+                          >
+                            {fsFilterDate
+                              ? "No updates for this date."
+                              : "No updates in the last 7 days."}
                           </p>
                         )}
                         {paged.map((u, i) => {
                           const [y, mo, d] = u.date.split("-").map(Number);
-                          const dateLabel = new Date(y, mo - 1, d).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+                          const dateLabel = new Date(y, mo - 1, d).toLocaleDateString("en-US", {
+                            weekday: "short",
+                            month: "short",
+                            day: "numeric",
+                          });
                           const key = `${u.user_id}_${u.date}`;
-                          const cardReactions = fsReactions.filter(r => r.update_user_id === u.user_id && r.update_date === u.date);
-                          const cardComments = fsComments.filter(c => c.update_user_id === u.user_id && c.update_date === u.date);
+                          const cardReactions = fsReactions.filter(
+                            (r) => r.update_user_id === u.user_id && r.update_date === u.date,
+                          );
+                          const cardComments = fsComments.filter(
+                            (c) => c.update_user_id === u.user_id && c.update_date === u.date,
+                          );
                           const isExpanded = fsExpandedComments.has(key);
                           return (
-                            <div key={i} className="rounded-2xl overflow-hidden" style={{ background: "var(--sidebar)", border: "1px solid var(--border)" }}>
+                            <div
+                              key={i}
+                              className="rounded-2xl overflow-hidden"
+                              style={{
+                                background: "var(--sidebar)",
+                                border: "1px solid var(--border)",
+                              }}
+                            >
                               <div className="px-4 pt-4 pb-3 space-y-2">
                                 <div className="flex items-center justify-between">
-                                  <span className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>{u.firstName}</span>
-                                  <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>{dateLabel}</span>
+                                  <span
+                                    className="text-sm font-semibold"
+                                    style={{ color: "var(--foreground)" }}
+                                  >
+                                    {u.firstName}
+                                  </span>
+                                  <span
+                                    className="text-xs"
+                                    style={{ color: "var(--muted-foreground)" }}
+                                  >
+                                    {dateLabel}
+                                  </span>
                                 </div>
-                                <p className="text-sm leading-relaxed" style={{ color: "var(--foreground)" }}>
-                                  <span className="text-[10px] uppercase tracking-wide font-semibold mr-1.5" style={{ color: "var(--muted-foreground)" }}>Today</span>{u.today}
+                                <p
+                                  className="text-sm leading-relaxed"
+                                  style={{ color: "var(--foreground)" }}
+                                >
+                                  <span
+                                    className="text-[10px] uppercase tracking-wide font-semibold mr-1.5"
+                                    style={{ color: "var(--muted-foreground)" }}
+                                  >
+                                    Today
+                                  </span>
+                                  {u.today}
                                 </p>
-                                <p className="text-sm leading-relaxed" style={{ color: "var(--foreground)" }}>
-                                  <span className="text-[10px] uppercase tracking-wide font-semibold mr-1.5" style={{ color: "var(--muted-foreground)" }}>Tomorrow</span>{u.tomorrow}
+                                <p
+                                  className="text-sm leading-relaxed"
+                                  style={{ color: "var(--foreground)" }}
+                                >
+                                  <span
+                                    className="text-[10px] uppercase tracking-wide font-semibold mr-1.5"
+                                    style={{ color: "var(--muted-foreground)" }}
+                                  >
+                                    Tomorrow
+                                  </span>
+                                  {u.tomorrow}
                                 </p>
                                 {u.blockers && (
-                                  <p className="text-sm leading-relaxed" style={{ color: "oklch(0.55 0.15 50)" }}>
-                                    <span className="text-[10px] uppercase tracking-wide font-semibold mr-1.5">Blocker</span>{u.blockers}
+                                  <p
+                                    className="text-sm leading-relaxed"
+                                    style={{ color: "oklch(0.55 0.15 50)" }}
+                                  >
+                                    <span className="text-[10px] uppercase tracking-wide font-semibold mr-1.5">
+                                      Blocker
+                                    </span>
+                                    {u.blockers}
                                   </p>
                                 )}
                               </div>
-                              <div className="flex items-center gap-1 px-3 py-2 border-t" style={{ borderColor: "var(--border)" }}>
-                                {EMOJIS.map(emoji => {
-                                  const count = cardReactions.filter(r => r.emoji === emoji).length;
-                                  const iMine = cardReactions.some(r => r.emoji === emoji && r.reactor_user_id === userId);
+                              <div
+                                className="flex items-center gap-1 px-3 py-2 border-t"
+                                style={{ borderColor: "var(--border)" }}
+                              >
+                                {EMOJIS.map((emoji) => {
+                                  const count = cardReactions.filter(
+                                    (r) => r.emoji === emoji,
+                                  ).length;
+                                  const iMine = cardReactions.some(
+                                    (r) => r.emoji === emoji && r.reactor_user_id === userId,
+                                  );
                                   return (
-                                    <button key={emoji} type="button"
+                                    <button
+                                      key={emoji}
+                                      type="button"
                                       onClick={() => toggleFsReaction(u.user_id, u.date, emoji)}
                                       className="flex items-center gap-1 rounded-full px-2 py-1 text-[12px] transition-all"
                                       style={{
-                                        background: iMine ? "oklch(0.91 0.07 145 / 0.25)" : "transparent",
-                                        border: iMine ? "1px solid oklch(0.55 0.13 145 / 0.3)" : "1px solid transparent",
+                                        background: iMine
+                                          ? "oklch(0.91 0.07 145 / 0.25)"
+                                          : "transparent",
+                                        border: iMine
+                                          ? "1px solid oklch(0.55 0.13 145 / 0.3)"
+                                          : "1px solid transparent",
                                         color: "var(--foreground)",
                                       }}
                                     >
-                                      {emoji}{count > 0 && <span className="text-[11px] font-medium" style={{ color: "var(--muted-foreground)" }}>{count}</span>}
+                                      {emoji}
+                                      {count > 0 && (
+                                        <span
+                                          className="text-[11px] font-medium"
+                                          style={{ color: "var(--muted-foreground)" }}
+                                        >
+                                          {count}
+                                        </span>
+                                      )}
                                     </button>
                                   );
                                 })}
-                                <button type="button"
-                                  onClick={() => setFsExpandedComments(prev => { const next = new Set(prev); next.has(key) ? next.delete(key) : next.add(key); return next; })}
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setFsExpandedComments((prev) => {
+                                      const next = new Set(prev);
+                                      next.has(key) ? next.delete(key) : next.add(key);
+                                      return next;
+                                    })
+                                  }
                                   className="ml-auto text-[11px] font-medium px-2 py-1 rounded-full transition-colors"
-                                  style={{ color: isExpanded ? "var(--primary)" : "var(--muted-foreground)" }}
+                                  style={{
+                                    color: isExpanded
+                                      ? "var(--primary)"
+                                      : "var(--muted-foreground)",
+                                  }}
                                 >
-                                  {isExpanded ? "Hide" : `Reply${cardComments.length > 0 ? ` (${cardComments.length})` : ""}`}
+                                  {isExpanded
+                                    ? "Hide"
+                                    : `Reply${cardComments.length > 0 ? ` (${cardComments.length})` : ""}`}
                                 </button>
                               </div>
                               {isExpanded && (
-                                <div className="px-4 pb-3 pt-2 border-t space-y-3" style={{ borderColor: "var(--border)", background: theme === "dark" ? "oklch(0.18 0.02 65 / 0.5)" : "oklch(0.97 0.01 85)" }}>
+                                <div
+                                  className="px-4 pb-3 pt-2 border-t space-y-3"
+                                  style={{
+                                    borderColor: "var(--border)",
+                                    background:
+                                      theme === "dark"
+                                        ? "oklch(0.18 0.02 65 / 0.5)"
+                                        : "oklch(0.97 0.01 85)",
+                                  }}
+                                >
                                   {cardComments.length > 0 && (
                                     <div className="space-y-2">
-                                      {cardComments.map(c => (
+                                      {cardComments.map((c) => (
                                         <div key={c.id} className="flex gap-2">
-                                          <span className="text-xs font-semibold shrink-0 mt-0.5" style={{ color: "var(--primary)" }}>{c.commenter_name}</span>
-                                          <span className="text-xs leading-relaxed" style={{ color: "var(--foreground)" }}>{c.text}</span>
+                                          <span
+                                            className="text-xs font-semibold shrink-0 mt-0.5"
+                                            style={{ color: "var(--primary)" }}
+                                          >
+                                            {c.commenter_name}
+                                          </span>
+                                          <span
+                                            className="text-xs leading-relaxed"
+                                            style={{ color: "var(--foreground)" }}
+                                          >
+                                            {c.text}
+                                          </span>
                                         </div>
                                       ))}
                                     </div>
                                   )}
                                   <div className="flex gap-2">
-                                    <input type="text" placeholder="Write a reply…"
+                                    <input
+                                      type="text"
+                                      placeholder="Write a reply…"
                                       value={fsCommentDrafts[key] ?? ""}
-                                      onChange={e => setFsCommentDrafts(prev => ({ ...prev, [key]: e.target.value }))}
-                                      onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitFsComment(u.user_id, u.date); } }}
+                                      onChange={(e) =>
+                                        setFsCommentDrafts((prev) => ({
+                                          ...prev,
+                                          [key]: e.target.value,
+                                        }))
+                                      }
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter" && !e.shiftKey) {
+                                          e.preventDefault();
+                                          submitFsComment(u.user_id, u.date);
+                                        }
+                                      }}
                                       className="flex-1 text-xs px-3 py-1.5 rounded-xl border focus:outline-none focus:ring-2"
-                                      style={{ background: "var(--background)", borderColor: "var(--border)", color: "var(--foreground)" }}
+                                      style={{
+                                        background: "var(--background)",
+                                        borderColor: "var(--border)",
+                                        color: "var(--foreground)",
+                                      }}
                                     />
-                                    <button type="button"
-                                      disabled={!fsCommentDrafts[key]?.trim() || fsSubmittingComment === key}
+                                    <button
+                                      type="button"
+                                      disabled={
+                                        !fsCommentDrafts[key]?.trim() || fsSubmittingComment === key
+                                      }
                                       onClick={() => submitFsComment(u.user_id, u.date)}
                                       className="px-3 py-1.5 rounded-xl text-xs font-medium text-white transition-opacity disabled:opacity-40"
                                       style={{ background: "var(--primary)" }}
@@ -1172,15 +1562,33 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
                         })}
                         {totalPages > 1 && (
                           <div className="flex items-center justify-center gap-3 pt-2 pb-4">
-                            <button type="button" disabled={fsPage === 0} onClick={() => setFsPage(p => p - 1)}
+                            <button
+                              type="button"
+                              disabled={fsPage === 0}
+                              onClick={() => setFsPage((p) => p - 1)}
                               className="px-4 py-1.5 rounded-xl text-xs font-medium transition-opacity disabled:opacity-30"
-                              style={{ background: "var(--sidebar)", border: "1px solid var(--border)", color: "var(--foreground)" }}>
+                              style={{
+                                background: "var(--sidebar)",
+                                border: "1px solid var(--border)",
+                                color: "var(--foreground)",
+                              }}
+                            >
                               ← Prev
                             </button>
-                            <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>Page {fsPage + 1} of {totalPages}</span>
-                            <button type="button" disabled={fsPage >= totalPages - 1} onClick={() => setFsPage(p => p + 1)}
+                            <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+                              Page {fsPage + 1} of {totalPages}
+                            </span>
+                            <button
+                              type="button"
+                              disabled={fsPage >= totalPages - 1}
+                              onClick={() => setFsPage((p) => p + 1)}
                               className="px-4 py-1.5 rounded-xl text-xs font-medium transition-opacity disabled:opacity-30"
-                              style={{ background: "var(--sidebar)", border: "1px solid var(--border)", color: "var(--foreground)" }}>
+                              style={{
+                                background: "var(--sidebar)",
+                                border: "1px solid var(--border)",
+                                color: "var(--foreground)",
+                              }}
+                            >
                               Next →
                             </button>
                           </div>
@@ -1207,10 +1615,7 @@ const completedCount = CURRICULUM_STEPS.filter((s) => completion[s.id]).length;
 
       {/* First-login onboarding overlay */}
       {!onboarded && progressReady && (
-        <OnboardingScreen
-          userName={displayName}
-          onConfirm={handleOnboardingConfirm}
-        />
+        <OnboardingScreen userName={displayName} onConfirm={handleOnboardingConfirm} />
       )}
 
       {/* Submission gate modal */}

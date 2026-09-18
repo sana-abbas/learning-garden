@@ -21,11 +21,16 @@ serve(async (req: Request) => {
     const { callName, callVariant, userName, userEmail } = await req.json();
 
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    const adminEmails = (Deno.env.get("ADMIN_EMAILS") ?? "").split(",").map((e: string) => e.trim()).filter(Boolean);
+    const adminEmails = (Deno.env.get("ADMIN_EMAILS") ?? "")
+      .split(",")
+      .map((e: string) => e.trim())
+      .filter(Boolean);
     const fromEmail = Deno.env.get("FROM_EMAIL") ?? "noreply@example.com";
 
     if (!RESEND_API_KEY || adminEmails.length === 0) {
-      console.log(`[notify-call-claim] Email not configured. Claim received from ${userName} <${userEmail}> for ${callName}`);
+      console.log(
+        `[notify-call-claim] Email not configured. Claim received from ${userName} <${userEmail}> for ${callName}`,
+      );
       return new Response(JSON.stringify({ ok: true, skipped: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

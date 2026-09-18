@@ -1,5 +1,18 @@
 import { useState } from "react";
-import { Leaf, Sprout, Globe, Code2, Layers, GitBranch, LayoutTemplate, FileType2, Database, Atom, Server, Briefcase } from "lucide-react";
+import {
+  Leaf,
+  Sprout,
+  Globe,
+  Code2,
+  Layers,
+  GitBranch,
+  LayoutTemplate,
+  FileType2,
+  Database,
+  Atom,
+  Server,
+  Briefcase,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export interface OnboardingOption {
@@ -11,17 +24,32 @@ export interface OnboardingOption {
 
 // All starting-point options (modules + paid projects, no calls)
 export const ONBOARDING_OPTIONS: OnboardingOption[] = [
-  { id: "ch1",   title: "How the Internet Works",     subtitle: "HTTP, browsers, the web",        icon: Globe         },
-  { id: "ch2",   title: "Interactivity & UX",         subtitle: "JavaScript fundamentals",         icon: Code2         },
-  { id: "ch3",   title: "HTML & CSS",                 subtitle: "Structure & styling",             icon: Layers        },
-  { id: "ch4",   title: "Version Control & Hosting",  subtitle: "Git, GitHub, deploys",            icon: GitBranch     },
-  { id: "paid1", title: "Paid Project: Portfolio",    subtitle: "Interactive portfolio build",     icon: Briefcase     },
-  { id: "ch5",   title: "Dynamic Websites",           subtitle: "Responsive & frameworks",         icon: LayoutTemplate},
-  { id: "ch6",   title: "TypeScript",                 subtitle: "Typed JavaScript",                icon: FileType2     },
-  { id: "ch7",   title: "Databases",                  subtitle: "Design, query, manage",           icon: Database      },
-  { id: "ch8",   title: "React",                      subtitle: "Components & state",              icon: Atom          },
-  { id: "ch9",   title: "Node.js",                    subtitle: "Server-side JavaScript",          icon: Server        },
-  { id: "paid2", title: "Paid Project: Full-Stack",   subtitle: "Capstone build",                  icon: Briefcase     },
+  { id: "ch1", title: "How the Internet Works", subtitle: "HTTP, browsers, the web", icon: Globe },
+  { id: "ch2", title: "Interactivity & UX", subtitle: "JavaScript fundamentals", icon: Code2 },
+  { id: "ch3", title: "HTML & CSS", subtitle: "Structure & styling", icon: Layers },
+  {
+    id: "ch4",
+    title: "Version Control & Hosting",
+    subtitle: "Git, GitHub, deploys",
+    icon: GitBranch,
+  },
+  {
+    id: "paid1",
+    title: "Paid Project: Portfolio",
+    subtitle: "Interactive portfolio build",
+    icon: Briefcase,
+  },
+  {
+    id: "ch5",
+    title: "Dynamic Websites",
+    subtitle: "Responsive & frameworks",
+    icon: LayoutTemplate,
+  },
+  { id: "ch6", title: "TypeScript", subtitle: "Typed JavaScript", icon: FileType2 },
+  { id: "ch7", title: "Databases", subtitle: "Design, query, manage", icon: Database },
+  { id: "ch8", title: "React", subtitle: "Components & state", icon: Atom },
+  { id: "ch9", title: "Node.js", subtitle: "Server-side JavaScript", icon: Server },
+  { id: "paid2", title: "Paid Project: Full-Stack", subtitle: "Capstone build", icon: Briefcase },
 ];
 
 interface Props {
@@ -61,7 +89,8 @@ export function OnboardingScreen({ userName, onConfirm }: Props) {
             Welcome, {firstName}! 🌱
           </h1>
           <p className="text-sm text-[color:var(--muted-foreground)] leading-relaxed">
-            You're joining an existing cohort. Tell us which chapter you're currently on and we'll pick up right there — everything before it will be marked complete.
+            You're joining an existing cohort. Tell us which chapter you're currently on and we'll
+            pick up right there — everything before it will be marked complete.
           </p>
         </div>
 
@@ -117,7 +146,9 @@ export function OnboardingScreen({ userName, onConfirm }: Props) {
                 {/* Text */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className={`text-sm font-medium ${isSelected ? "text-[color:var(--foreground)]" : "text-[color:var(--sidebar-foreground)]"}`}>
+                    <span
+                      className={`text-sm font-medium ${isSelected ? "text-[color:var(--foreground)]" : "text-[color:var(--sidebar-foreground)]"}`}
+                    >
                       {opt.title}
                     </span>
                     {isFirst && (
@@ -132,9 +163,7 @@ export function OnboardingScreen({ userName, onConfirm }: Props) {
                 </div>
 
                 {/* Sprout icon for selected */}
-                {isSelected && (
-                  <Sprout className="w-4 h-4 text-[color:var(--primary)] shrink-0" />
-                )}
+                {isSelected && <Sprout className="w-4 h-4 text-[color:var(--primary)] shrink-0" />}
               </label>
             );
           })}
@@ -145,7 +174,7 @@ export function OnboardingScreen({ userName, onConfirm }: Props) {
           <p className="text-[11px] text-[color:var(--muted-foreground)] text-center mb-4">
             {selected === "ch1"
               ? "You'll start fresh from the very beginning. 🌱"
-              : `Everything before ${ONBOARDING_OPTIONS.find(o => o.id === selected)?.title} will be marked complete.`}
+              : `Everything before ${ONBOARDING_OPTIONS.find((o) => o.id === selected)?.title} will be marked complete.`}
           </p>
           <Button
             onClick={() => onConfirm(selected)}

@@ -44,7 +44,10 @@ describe("syntax gate", () => {
   });
 
   it("tolerates pasted markdown code fences", () => {
-    expectPass("cf6-f", "```jsx\nlet sum = 0;\nfor (let i = 1; i <= 10; i++) { sum += i; }\nconsole.log(sum);\n```");
+    expectPass(
+      "cf6-f",
+      "```jsx\nlet sum = 0;\nfor (let i = 1; i <= 10; i++) { sum += i; }\nconsole.log(sum);\n```",
+    );
   });
 
   it("does not gate prose exercises", () => {
@@ -64,15 +67,24 @@ describe("cf6-f — sum up the numbers", () => {
   });
 
   it("accepts any accumulator name", () => {
-    expectPass("cf6-f", `let result = 0;\nfor (let z = 1; z <= 10; z++) { result = result + z; }\nconsole.log(result);`);
+    expectPass(
+      "cf6-f",
+      `let result = 0;\nfor (let z = 1; z <= 10; z++) { result = result + z; }\nconsole.log(result);`,
+    );
   });
 
   it("accepts += and a descending loop", () => {
-    expectPass("cf6-f", `let total = 0;\nfor (let k = 10; k >= 1; k--) { total += k; }\nconsole.log(total);`);
+    expectPass(
+      "cf6-f",
+      `let total = 0;\nfor (let k = 10; k >= 1; k--) { total += k; }\nconsole.log(total);`,
+    );
   });
 
   it("still catches a loop that stops short of 10", () => {
-    expectBlocked("cf6-f", `let sum = 0;\nfor (let i = 1; i < 10; i++) { sum += i; }\nconsole.log(sum);`);
+    expectBlocked(
+      "cf6-f",
+      `let sum = 0;\nfor (let i = 1; i < 10; i++) { sum += i; }\nconsole.log(sum);`,
+    );
   });
 
   it("still requires a loop", () => {
@@ -146,11 +158,19 @@ month = "month is not valid"
   });
 
   it("blocks a default branch that assigns instead of logging", () => {
-    expectBlocked("cf5-e", correct.replace(`console.log("month is not valid")`, `month = "month is not valid"`));
+    expectBlocked(
+      "cf5-e",
+      correct.replace(`console.log("month is not valid")`, `month = "month is not valid"`),
+    );
   });
 
   it("requires a break per season", () => {
-    expectBlocked("cf5-e", correct.replace(/break;/g, "").replace("console.log(\"winter\")", "console.log(\"winter\"); break"));
+    expectBlocked(
+      "cf5-e",
+      correct
+        .replace(/break;/g, "")
+        .replace('console.log("winter")', 'console.log("winter"); break'),
+    );
   });
 });
 
@@ -206,7 +226,10 @@ describe("cf9-e — fix the code", () => {
   console.log("Global num:", num);`;
 
   it("accepts moving the declaration above the increment", () => {
-    expectPass("cf9-e", `function inner() {\n  let num = 3;\n  // declare first, then increment\n  num += 1;\n  ${threeLogs}\n}`);
+    expectPass(
+      "cf9-e",
+      `function inner() {\n  let num = 3;\n  // declare first, then increment\n  num += 1;\n  ${threeLogs}\n}`,
+    );
   });
 
   it("accepts removing the inner declaration entirely", () => {
@@ -214,7 +237,10 @@ describe("cf9-e — fix the code", () => {
   });
 
   it("does not block when the original code is quoted above the fix", () => {
-    expectNotBlocked("cf9-e", `Before:\nnum += 1;\nlet num = 3;\n\nAfter:\nfunction inner() {\n  let num = 3;\n  num += 1;\n  ${threeLogs}\n}`);
+    expectNotBlocked(
+      "cf9-e",
+      `Before:\nnum += 1;\nlet num = 3;\n\nAfter:\nfunction inner() {\n  let num = 3;\n  num += 1;\n  ${threeLogs}\n}`,
+    );
   });
 });
 
@@ -267,7 +293,10 @@ console.log(adults);`,
 
 describe("cf7-c — filter the numbers", () => {
   it("blocks a filter that keeps the odd numbers", () => {
-    expectBlocked("cf7-c", `const nums = [1,2,3,4];\nconsole.log(nums.filter((n) => n % 2 === 1));`);
+    expectBlocked(
+      "cf7-c",
+      `const nums = [1,2,3,4];\nconsole.log(nums.filter((n) => n % 2 === 1));`,
+    );
   });
 
   it("accepts the even filter", () => {
@@ -295,7 +324,10 @@ console.log(!false === true);`;
   });
 
   it("requires true for the || line now that the prompt brackets it", () => {
-    expectBlocked("cf4-c", allLines.replace("(true || false) === true", "(true || false) === false"));
+    expectBlocked(
+      "cf4-c",
+      allLines.replace("(true || false) === true", "(true || false) === false"),
+    );
   });
 });
 
@@ -357,7 +389,10 @@ const checkStock = (quantity) => (quantity > 0 ? "In Stock" : "Out of Stock");`,
   });
 
   it("cf3-d requires typeof on more than one variable", () => {
-    expectBlocked("cf3-d", `console.log(typeof x); // types: true, null, undefined, 1, "text", {a:1}`);
+    expectBlocked(
+      "cf3-d",
+      `console.log(typeof x); // types: true, null, undefined, 1, "text", {a:1}`,
+    );
   });
 
   it("cf14-l accepts the sentence the prompt actually asks for", () => {

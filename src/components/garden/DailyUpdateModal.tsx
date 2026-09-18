@@ -20,18 +20,24 @@ const todayStr = () => new Date().toISOString().split("T")[0];
 
 function formatDateLabel(dateStr: string) {
   const [y, m, d] = dateStr.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+  return new Date(y, m - 1, d).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 function getWeekRange() {
   const now = new Date();
   const day = now.getDay(); // 0 Sun … 6 Sat
-  const diffToMon = (day === 0 ? -6 : 1 - day);
-  const mon = new Date(now); mon.setDate(now.getDate() + diffToMon);
-  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+  const diffToMon = day === 0 ? -6 : 1 - day;
+  const mon = new Date(now);
+  mon.setDate(now.getDate() + diffToMon);
+  const sun = new Date(mon);
+  sun.setDate(mon.getDate() + 6);
   return {
     start: mon.toISOString().split("T")[0],
-    end:   sun.toISOString().split("T")[0],
+    end: sun.toISOString().split("T")[0],
   };
 }
 
@@ -39,10 +45,22 @@ function weeklyMessage(posted: number, isNewSubmission: boolean) {
   const target = 5;
   const count = isNewSubmission ? Math.min(posted + 1, target) : posted;
   const remaining = target - count;
-  if (count === 0) return { text: "No updates posted yet this week, let's get started! 💪", color: "var(--muted-foreground)" };
-  if (remaining <= 0) return { text: "All 5 updates posted this week, amazing work! 🌟", color: "var(--primary)" };
-  if (remaining === 1) return { text: `${count}/5 updates this week — just 1 more to go! 🔥`, color: "var(--primary)" };
-  return { text: `${count}/5 updates posted this week — keep it up!`, color: "var(--muted-foreground)" };
+  if (count === 0)
+    return {
+      text: "No updates posted yet this week, let's get started! 💪",
+      color: "var(--muted-foreground)",
+    };
+  if (remaining <= 0)
+    return { text: "All 5 updates posted this week, amazing work! 🌟", color: "var(--primary)" };
+  if (remaining === 1)
+    return {
+      text: `${count}/5 updates this week — just 1 more to go! 🔥`,
+      color: "var(--primary)",
+    };
+  return {
+    text: `${count}/5 updates posted this week — keep it up!`,
+    color: "var(--muted-foreground)",
+  };
 }
 
 export function DailyUpdateModal({ userId, displayName, existing, onClose, onSubmitted }: Props) {
@@ -92,12 +110,17 @@ export function DailyUpdateModal({ userId, displayName, existing, onClose, onSub
     setSubmitting(true);
     setError(null);
 
-    const { error: err } = await supabase
-      .from("daily_updates")
-      .upsert(
-        { user_id: userId, date: selectedDate, today: today.trim(), tomorrow: tomorrow.trim(), blockers: blockers.trim() || null, display_name: displayName ?? null },
-        { onConflict: "user_id,date" },
-      );
+    const { error: err } = await supabase.from("daily_updates").upsert(
+      {
+        user_id: userId,
+        date: selectedDate,
+        today: today.trim(),
+        tomorrow: tomorrow.trim(),
+        blockers: blockers.trim() || null,
+        display_name: displayName ?? null,
+      },
+      { onConflict: "user_id,date" },
+    );
 
     setSubmitting(false);
     if (err) {
@@ -106,7 +129,11 @@ export function DailyUpdateModal({ userId, displayName, existing, onClose, onSub
       // If this was a new post (not an edit), bump the weekly count
       const wasNew = !existing && weeklyPosted !== null;
       if (wasNew) setWeeklyPosted((n) => Math.min((n ?? 0) + 1, 5));
-      onSubmitted({ today: today.trim(), tomorrow: tomorrow.trim(), blockers: blockers.trim() || null });
+      onSubmitted({
+        today: today.trim(),
+        tomorrow: tomorrow.trim(),
+        blockers: blockers.trim() || null,
+      });
       onClose();
     }
   };
@@ -125,7 +152,10 @@ export function DailyUpdateModal({ userId, displayName, existing, onClose, onSub
           style={{ borderColor: "var(--sidebar-border)" }}
         >
           <div className="flex-1 min-w-0">
-            <h2 className="font-serif text-base font-semibold" style={{ color: "var(--foreground)" }}>
+            <h2
+              className="font-serif text-base font-semibold"
+              style={{ color: "var(--foreground)" }}
+            >
               Daily Update
             </h2>
             <button
@@ -134,7 +164,10 @@ export function DailyUpdateModal({ userId, displayName, existing, onClose, onSub
               className="flex items-center gap-1 mt-0.5 group"
             >
               <Calendar className="w-3 h-3" style={{ color: "var(--muted-foreground)" }} />
-              <span className="text-[11px] group-hover:underline" style={{ color: isToday ? "var(--muted-foreground)" : "var(--primary)" }}>
+              <span
+                className="text-[11px] group-hover:underline"
+                style={{ color: isToday ? "var(--muted-foreground)" : "var(--primary)" }}
+              >
                 {isToday ? dateLabel : `${dateLabel} (past)`}
               </span>
             </button>
@@ -146,16 +179,22 @@ export function DailyUpdateModal({ userId, displayName, existing, onClose, onSub
               onChange={(e) => e.target.value && handleDateChange(e.target.value)}
               className="sr-only"
             />
-            {weeklyPosted !== null && (() => {
-              const msg = weeklyMessage(weeklyPosted, false);
-              return (
-                <p className="text-[11px] mt-1 font-medium" style={{ color: msg.color }}>
-                  {msg.text}
-                </p>
-              );
-            })()}
+            {weeklyPosted !== null &&
+              (() => {
+                const msg = weeklyMessage(weeklyPosted, false);
+                return (
+                  <p className="text-[11px] mt-1 font-medium" style={{ color: msg.color }}>
+                    {msg.text}
+                  </p>
+                );
+              })()}
           </div>
-          <button type="button" onClick={onClose} className="p-1.5 rounded-lg" style={{ color: "var(--muted-foreground)" }}>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-lg"
+            style={{ color: "var(--muted-foreground)" }}
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -172,7 +211,11 @@ export function DailyUpdateModal({ userId, displayName, existing, onClose, onSub
               value={today}
               onChange={(e) => setToday(e.target.value)}
               className="w-full text-sm px-3 py-2 rounded-lg border resize-none focus:outline-none focus:ring-2"
-              style={{ background: "var(--background)", borderColor: "var(--sidebar-border)", color: "var(--foreground)" }}
+              style={{
+                background: "var(--background)",
+                borderColor: "var(--sidebar-border)",
+                color: "var(--foreground)",
+              }}
             />
           </div>
 
@@ -186,14 +229,20 @@ export function DailyUpdateModal({ userId, displayName, existing, onClose, onSub
               value={tomorrow}
               onChange={(e) => setTomorrow(e.target.value)}
               className="w-full text-sm px-3 py-2 rounded-lg border resize-none focus:outline-none focus:ring-2"
-              style={{ background: "var(--background)", borderColor: "var(--sidebar-border)", color: "var(--foreground)" }}
+              style={{
+                background: "var(--background)",
+                borderColor: "var(--sidebar-border)",
+                color: "var(--foreground)",
+              }}
             />
           </div>
 
           <div className="space-y-1.5">
             <label className="text-xs font-medium" style={{ color: "var(--foreground)" }}>
               Anything blocking me?{" "}
-              <span className="font-normal" style={{ color: "var(--muted-foreground)" }}>(optional)</span>
+              <span className="font-normal" style={{ color: "var(--muted-foreground)" }}>
+                (optional)
+              </span>
             </label>
             <textarea
               rows={2}
@@ -201,15 +250,23 @@ export function DailyUpdateModal({ userId, displayName, existing, onClose, onSub
               value={blockers}
               onChange={(e) => setBlockers(e.target.value)}
               className="w-full text-sm px-3 py-2 rounded-lg border resize-none focus:outline-none focus:ring-2"
-              style={{ background: "var(--background)", borderColor: "var(--sidebar-border)", color: "var(--foreground)" }}
+              style={{
+                background: "var(--background)",
+                borderColor: "var(--sidebar-border)",
+                color: "var(--foreground)",
+              }}
             />
           </div>
 
           {loadingDate && (
-            <p className="text-[12px]" style={{ color: "var(--muted-foreground)" }}>Loading update for selected date…</p>
+            <p className="text-[12px]" style={{ color: "var(--muted-foreground)" }}>
+              Loading update for selected date…
+            </p>
           )}
           {error && (
-            <p className="text-[12px]" style={{ color: "var(--destructive)" }}>{error}</p>
+            <p className="text-[12px]" style={{ color: "var(--destructive)" }}>
+              {error}
+            </p>
           )}
 
           <button

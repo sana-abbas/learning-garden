@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import confetti from "canvas-confetti";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { PhoneCall, Sparkles, Users, Award, CheckCircle2 } from "lucide-react";
 import type { MilestoneVariant } from "@/components/garden/MilestoneModal";
@@ -12,22 +19,26 @@ interface Props {
   onClose: () => void;
 }
 
-const COPY: Record<MilestoneVariant, {
-  badge: string;
-  title: string;
-  body: string;
-  cta: string;
-  successTitle: string;
-  successBody: string;
-  isHarvest?: boolean;
-}> = {
+const COPY: Record<
+  MilestoneVariant,
+  {
+    badge: string;
+    title: string;
+    body: string;
+    cta: string;
+    successTitle: string;
+    successBody: string;
+    isHarvest?: boolean;
+  }
+> = {
   fc1: {
     badge: "Founders' Call · Month 3",
     title: "Foundations Roundtable 🌱",
     body: "You've planted deep roots through Internet, JavaScript, and HTML & CSS. Claim your spot on the Foundations Roundtable — your mentor and the founders will reach out with all the details.",
     cta: "Claim my Foundations Call",
     successTitle: "You're on the list! 🌿",
-    successBody: "Your claim has been received. Your mentor will be in touch soon with the call details.",
+    successBody:
+      "Your claim has been received. Your mentor will be in touch soon with the call details.",
   },
   fc2: {
     badge: "Founders' Call · Month 6",
@@ -76,12 +87,22 @@ export function CallClaimModal({ open, variant, onClaim, onClose }: Props) {
       fired.current = true;
       if (isHarvest) {
         const fire = (ratio: number, opts: confetti.Options) =>
-          confetti({ origin: { y: 0.6 }, particleCount: Math.floor(200 * ratio), colors: ["#f4a8c8", "#c084fc", "#fde68a", "#86efac", "#fb923c"], ...opts });
+          confetti({
+            origin: { y: 0.6 },
+            particleCount: Math.floor(200 * ratio),
+            colors: ["#f4a8c8", "#c084fc", "#fde68a", "#86efac", "#fb923c"],
+            ...opts,
+          });
         fire(0.25, { spread: 26, startVelocity: 55 });
         fire(0.2, { spread: 60 });
         fire(0.35, { spread: 100, decay: 0.91, scalar: 0.9 });
       } else {
-        confetti({ particleCount: 70, spread: 55, origin: { y: 0.5 }, colors: ["#4ade80", "#86efac", "#f472b6", "#a78bfa"] });
+        confetti({
+          particleCount: 70,
+          spread: 55,
+          origin: { y: 0.5 },
+          colors: ["#4ade80", "#86efac", "#f472b6", "#a78bfa"],
+        });
       }
     }
   }, [claimed, isHarvest]);
@@ -96,7 +117,13 @@ export function CallClaimModal({ open, variant, onClaim, onClose }: Props) {
     onClose();
   };
 
-  const Icon = isHarvest ? Award : variant === "fc3" ? Sparkles : variant === "fc2" ? Users : PhoneCall;
+  const Icon = isHarvest
+    ? Award
+    : variant === "fc3"
+      ? Sparkles
+      : variant === "fc2"
+        ? Users
+        : PhoneCall;
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
@@ -104,7 +131,8 @@ export function CallClaimModal({ open, variant, onClaim, onClose }: Props) {
         <div
           className="relative rounded-3xl p-8 text-center"
           style={{
-            background: "linear-gradient(160deg, oklch(0.97 0.04 90) 0%, oklch(0.93 0.06 130) 100%)",
+            background:
+              "linear-gradient(160deg, oklch(0.97 0.04 90) 0%, oklch(0.93 0.06 130) 100%)",
             boxShadow: "var(--shadow-bloom)",
             border: "1px solid var(--border)",
           }}
@@ -121,10 +149,11 @@ export function CallClaimModal({ open, variant, onClaim, onClose }: Props) {
                 : "0 0 50px oklch(0.6 0.16 145 / 0.5)",
             }}
           >
-            {claimed
-              ? <CheckCircle2 className="w-9 h-9 text-white drop-shadow" strokeWidth={1.8} />
-              : <Icon className="w-9 h-9 text-white drop-shadow" strokeWidth={1.8} />
-            }
+            {claimed ? (
+              <CheckCircle2 className="w-9 h-9 text-white drop-shadow" strokeWidth={1.8} />
+            ) : (
+              <Icon className="w-9 h-9 text-white drop-shadow" strokeWidth={1.8} />
+            )}
           </div>
 
           <p className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted-foreground)] mb-2">

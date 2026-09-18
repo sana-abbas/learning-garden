@@ -1,6 +1,13 @@
 import { useEffect, useRef } from "react";
 import confetti from "canvas-confetti";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Award, PhoneCall, Users } from "lucide-react";
 
@@ -12,13 +19,16 @@ interface Props {
   variant: MilestoneVariant;
 }
 
-const COPY: Record<MilestoneVariant, {
-  title: string;
-  body: string;
-  cta: string;
-  badge: string;
-  isHarvest?: boolean;
-}> = {
+const COPY: Record<
+  MilestoneVariant,
+  {
+    title: string;
+    body: string;
+    cta: string;
+    badge: string;
+    isHarvest?: boolean;
+  }
+> = {
   fc1: {
     badge: "Founders' Call · Month 3",
     title: "Foundations Roundtable unlocked! 🌱",
@@ -71,7 +81,13 @@ export function MilestoneModal({ open, onOpenChange, variant }: Props) {
     if (!open) fired.current = false;
   }, [open, isHarvest]);
 
-  const Icon = isHarvest ? Award : variant === "fc3" ? Sparkles : variant === "fc2" ? Users : PhoneCall;
+  const Icon = isHarvest
+    ? Award
+    : variant === "fc3"
+      ? Sparkles
+      : variant === "fc2"
+        ? Users
+        : PhoneCall;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

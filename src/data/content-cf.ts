@@ -1,7 +1,6 @@
 // Learning material content for Coding Fundamentals subtasks.
 // Keyed by subtask ID. Subtasks without an entry show no content modal.
 export const CF_CONTENT: Record<string, string> = {
-
   "cf0-a": `Before you start coding, let's set up your computer. Don't worry if you have never done this before, we will go step by step, and you only need to do this once. This chapter has no exercises, just a simple checklist.
 
 > 👉 What you need to install:
@@ -251,7 +250,6 @@ Note: Table content paraphrased from Sebesta, R. W. (2021). Concepts of Programm
 You may have noticed that some programming languages are listed multiple times - these languages are multi-paradigm: Meaning they provide different tools or features to solve a problem. It's up to the programmer to choose the style that fits their case/task. For example, you might use"procedural code" for simple tasks or "objects" to model real-world entities.
 For now, we're only focusing on the paradigms for JavaScript.
 `,
-
 
   "cf5-intro": `In the following pseudocode we see that an instruction or a block of instructions might be executed according to states, it means decisions in the code can be made based on conditions, which could even be a chain of conditions.
 
@@ -2183,5 +2181,4 @@ Print the text "Hello World!" in the browser's console.
   "cf2-c": `📝Exercise: Hello, World! in the web browser.
 Adapt the HTML code above so that it also prints the text "Hello World!" in the console and save it in a file with the name helloworld.html. When you open the file using a browser, it should print the text in the console. Pay attention that in this case you are not pasting the JavaScript code directly in the console.
 `,
-
 };

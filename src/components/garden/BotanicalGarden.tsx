@@ -5,13 +5,14 @@ import { Sparkles } from "lucide-react";
 const PETALS = Array.from({ length: 14 }, (_, i) => ({
   left: `${(i * 13 + 4) % 88}%`,
   delay: `${((i * 0.22) % 1.8).toFixed(2)}s`,
-  duration: `${(1.9 + (i * 0.19) % 1.3).toFixed(2)}s`,
-  size: 10 + (i * 6) % 14,
-  color: i % 3 === 0
-    ? "oklch(0.72 0.21 350)"   // pink
-    : i % 3 === 1
-      ? "oklch(0.62 0.18 140)" // green
-      : "oklch(0.78 0.22 60)", // gold
+  duration: `${(1.9 + ((i * 0.19) % 1.3)).toFixed(2)}s`,
+  size: 10 + ((i * 6) % 14),
+  color:
+    i % 3 === 0
+      ? "oklch(0.72 0.21 350)" // pink
+      : i % 3 === 1
+        ? "oklch(0.62 0.18 140)" // green
+        : "oklch(0.78 0.22 60)", // gold
 }));
 
 interface Props {
@@ -33,21 +34,27 @@ export function BotanicalGarden({
   isDark = false,
   bloomBurst = false,
 }: Props) {
-  const soilSpecks = useMemo(() =>
-    Array.from({ length: 60 }, (_, i) => ({
-      cx: `${(i * 37) % 100}%`,
-      cy: `${(i * 53) % 100}%`,
-      r: ((i * 31) % 15) / 10 + 0.5,
-    })), []);
+  const soilSpecks = useMemo(
+    () =>
+      Array.from({ length: 60 }, (_, i) => ({
+        cx: `${(i * 37) % 100}%`,
+        cy: `${(i * 53) % 100}%`,
+        r: ((i * 31) % 15) / 10 + 0.5,
+      })),
+    [],
+  );
 
-  const sparkleData = useMemo(() =>
-    Array.from({ length: 24 }, () => ({
-      top: Math.random() * 80 + 5,
-      left: Math.random() * 90 + 5,
-      size: Math.random() * 14 + 10,
-      duration: 2 + Math.random() * 2,
-      delay: Math.random() * 2,
-    })), []);
+  const sparkleData = useMemo(
+    () =>
+      Array.from({ length: 24 }, () => ({
+        top: Math.random() * 80 + 5,
+        left: Math.random() * 90 + 5,
+        size: Math.random() * 14 + 10,
+        duration: 2 + Math.random() * 2,
+        delay: Math.random() * 2,
+      })),
+    [],
+  );
 
   return (
     <div className="relative w-full h-full rounded-[2rem] overflow-hidden shadow-[0_30px_80px_-30px_oklch(0.4_0.05_60/0.4)] border border-[color:var(--border)]">
@@ -55,8 +62,7 @@ export function BotanicalGarden({
       <div
         className="absolute inset-x-0 top-0 h-1/2"
         style={{
-          background:
-            "linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 100%)",
+          background: "linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 100%)",
         }}
       >
         {/* Sun / Moon */}
@@ -74,7 +80,9 @@ export function BotanicalGarden({
                 </mask>
               </defs>
               <circle
-                cx="50" cy="50" r="42"
+                cx="50"
+                cy="50"
+                r="42"
                 fill="oklch(0.91 0.04 85)"
                 mask="url(#moonMask)"
                 style={{ filter: "drop-shadow(0 0 18px oklch(0.85 0.05 90 / 0.8))" }}
@@ -112,20 +120,13 @@ export function BotanicalGarden({
       <div
         className="absolute inset-x-0 bottom-0 h-1/2"
         style={{
-          background:
-            "linear-gradient(180deg, var(--soil-top) 0%, var(--soil-bottom) 100%)",
+          background: "linear-gradient(180deg, var(--soil-top) 0%, var(--soil-bottom) 100%)",
         }}
       >
         {/* Soil texture specks */}
         <svg className="absolute inset-0 w-full h-full opacity-40" preserveAspectRatio="none">
           {soilSpecks.map((speck, i) => (
-            <circle
-              key={i}
-              cx={speck.cx}
-              cy={speck.cy}
-              r={speck.r}
-              fill="oklch(0.5 0.06 55)"
-            />
+            <circle key={i} cx={speck.cx} cy={speck.cy} r={speck.r} fill="oklch(0.5 0.06 55)" />
           ))}
         </svg>
       </div>
@@ -247,8 +248,22 @@ export function BotanicalGarden({
               fill="none"
               strokeLinecap="round"
             />
-            <ellipse cx="388" cy="365" rx="14" ry="8" fill="var(--leaf-light)" transform="rotate(-30 388 365)" />
-            <ellipse cx="412" cy="365" rx="14" ry="8" fill="var(--leaf-light)" transform="rotate(30 412 365)" />
+            <ellipse
+              cx="388"
+              cy="365"
+              rx="14"
+              ry="8"
+              fill="var(--leaf-light)"
+              transform="rotate(-30 388 365)"
+            />
+            <ellipse
+              cx="412"
+              cy="365"
+              rx="14"
+              ry="8"
+              fill="var(--leaf-light)"
+              transform="rotate(30 412 365)"
+            />
           </g>
         )}
 
@@ -301,10 +316,7 @@ export function BotanicalGarden({
 
         {/* === MAIN FLOWER === */}
         {flowerActive && (
-          <g
-            className="animate-bloom"
-            style={{ transformOrigin: "400px 80px" }}
-          >
+          <g className="animate-bloom" style={{ transformOrigin: "400px 80px" }}>
             {/* Petals — 8 petals around center */}
             {Array.from({ length: 8 }).map((_, i) => {
               const angle = (i * 360) / 8;
@@ -416,7 +428,8 @@ export function BotanicalGarden({
           <div
             className="absolute inset-0 rounded-[2rem] pointer-events-none"
             style={{
-              background: "radial-gradient(ellipse at 50% 40%, oklch(0.88 0.22 75 / 0.55) 0%, oklch(0.75 0.18 130 / 0.2) 55%, transparent 80%)",
+              background:
+                "radial-gradient(ellipse at 50% 40%, oklch(0.88 0.22 75 / 0.55) 0%, oklch(0.75 0.18 130 / 0.2) 55%, transparent 80%)",
               animation: "bloom-glow-burst 2.8s ease-out forwards",
             }}
           />
@@ -435,7 +448,14 @@ export function BotanicalGarden({
                 filter: `drop-shadow(0 2px 4px ${p.color}80)`,
               }}
             >
-              <ellipse cx="12" cy="12" rx="6" ry="11" fill={p.color} transform="rotate(-20 12 12)" />
+              <ellipse
+                cx="12"
+                cy="12"
+                rx="6"
+                ry="11"
+                fill={p.color}
+                transform="rotate(-20 12 12)"
+              />
             </svg>
           ))}
         </>

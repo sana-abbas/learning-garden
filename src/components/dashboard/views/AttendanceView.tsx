@@ -662,7 +662,11 @@ function RecentSessions({
   records: AttendanceRecord[];
   onOpen: (s: AttendanceSession) => void;
 }) {
-  if (sessions.length === 0) return null;
+  // `records` covers only the people on screen, so this drops sessions other
+  // mentors recorded for their own participants, which would read "0/0".
+  const withMarks = new Set(records.map((r) => r.session_id));
+  const shown = sessions.filter((s) => withMarks.has(s.id));
+  if (shown.length === 0) return null;
   return (
     <section>
       <SectionTitle>Recorded sessions</SectionTitle>
@@ -670,7 +674,7 @@ function RecentSessions({
         className="rounded-2xl divide-y"
         style={{ background: "var(--sidebar)", border: "1px solid var(--sidebar-border)" }}
       >
-        {sessions.slice(0, 30).map((s) => {
+        {shown.slice(0, 30).map((s) => {
           const mine = records.filter((r) => r.session_id === s.id);
           const attended = mine.filter((r) => r.status === "attended").length;
           return (

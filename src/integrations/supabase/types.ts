@@ -139,6 +139,71 @@ export type Database = {
         }
         Relationships: []
       }
+      attendance_sessions: {
+        Row: {
+          cohort_slug: string | null
+          created_at: string
+          created_by: string | null
+          held_on: string
+          id: string
+          kind: string
+          title: string | null
+        }
+        Insert: {
+          cohort_slug?: string | null
+          created_at?: string
+          created_by?: string | null
+          held_on: string
+          id?: string
+          kind: string
+          title?: string | null
+        }
+        Update: {
+          cohort_slug?: string | null
+          created_at?: string
+          created_by?: string | null
+          held_on?: string
+          id?: string
+          kind?: string
+          title?: string | null
+        }
+        Relationships: []
+      }
+      attendance_records: {
+        Row: {
+          note: string | null
+          recorded_by: string | null
+          session_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          note?: string | null
+          recorded_by?: string | null
+          session_id: string
+          status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          note?: string | null
+          recorded_by?: string | null
+          session_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       founders: {
         Row: {
           created_at: string
@@ -413,6 +478,28 @@ export type Database = {
       ensure_my_cohort: { Args: never; Returns: string }
       is_founder: { Args: never; Returns: boolean }
       claim_my_role: { Args: never; Returns: string }
+      mentor_add_participant: {
+        Args: { p_email: string; p_cohort_slug: string }
+        Returns: string
+      }
+      mentor_remove_participant: { Args: { p_email: string }; Returns: boolean }
+      is_mentor: { Args: never; Returns: boolean }
+      participant_statuses: {
+        Args: never
+        Returns: { user_id: string; status: string | null }[]
+      }
+      participant_mentors: {
+        Args: never
+        Returns: {
+          user_id: string
+          notion_mentor: string | null
+          mentor_user_id: string | null
+        }[]
+      }
+      open_attendance_session: {
+        Args: { p_kind: string; p_held_on: string; p_title?: string; p_cohort_slug?: string }
+        Returns: string
+      }
       founder_roster: {
         Args: never
         Returns: {

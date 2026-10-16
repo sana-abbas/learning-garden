@@ -19,10 +19,13 @@ export function DetailPanel({
   participant,
   cohortSlug,
   onClose,
+  actions,
 }: {
   participant: ParticipantRow;
   cohortSlug: string;
   onClose: () => void;
+  /** Shown under the progress bar, e.g. the mentor's remove control. */
+  actions?: React.ReactNode;
 }) {
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
 
@@ -99,6 +102,8 @@ export function DetailPanel({
               />
             </div>
           </div>
+
+          {actions && <div className="mt-4">{actions}</div>}
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-5">

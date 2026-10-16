@@ -1,21 +1,23 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { CheckCircle2, ClipboardList, MessageCircle, Users } from "lucide-react";
+import { CalendarCheck, CheckCircle2, ClipboardList, MessageCircle, Users } from "lucide-react";
 import { DashboardShell, DashboardSpinner, TabBar } from "@/components/dashboard/DashboardShell";
 import { useStaffDashboard } from "@/components/dashboard/useStaffDashboard";
 import { ParticipantsView } from "@/components/dashboard/views/ParticipantsView";
 import { DailyUpdatesView } from "@/components/dashboard/views/DailyUpdatesView";
 import { AssignmentsView } from "@/components/dashboard/views/AssignmentsView";
 import { ReflectionsView } from "@/components/dashboard/views/ReflectionsView";
+import { AttendanceView } from "@/components/dashboard/views/AttendanceView";
 
 export const Route = createFileRoute("/mentor")({
   component: MentorDashboard,
 });
 
-type View = "participants" | "daily-updates" | "assignments" | "reflections";
+type View = "participants" | "attendance" | "daily-updates" | "assignments" | "reflections";
 
 const TABS = [
   { value: "participants" as const, label: "Participants", icon: Users },
+  { value: "attendance" as const, label: "Attendance", icon: CalendarCheck },
   { value: "daily-updates" as const, label: "Daily Updates", icon: ClipboardList },
   { value: "assignments" as const, label: "Assignments", icon: CheckCircle2 },
   { value: "reflections" as const, label: "Reflections", icon: MessageCircle },
@@ -31,6 +33,11 @@ function MentorDashboard() {
   const staff = useStaffDashboard("mentor");
 
   if (staff.loading) return <DashboardSpinner />;
+
+  // Graduates (per Notion) drop out of the people a mentor works with day to
+  // day, but stay in the history tabs, where their past work still belongs.
+  const inProgress = staff.participants.filter((p) => !staff.graduatedIds.has(p.user_id));
+  const graduated = staff.participants.filter((p) => staff.graduatedIds.has(p.user_id));
 
   return (
     <DashboardShell
@@ -61,9 +68,21 @@ function MentorDashboard() {
 
         {view === "participants" && (
           <ParticipantsView
-            participants={staff.participants}
+            participants={inProgress}
+            graduatedParticipants={graduated}
             cohortMemberMap={staff.cohortMemberMap}
             todayUpdateUserIds={staff.todayUpdateUserIds}
+            invites={staff.invites}
+            removedParticipants={staff.removedParticipants}
+            onAccessChanged={staff.refreshAccess}
+          />
+        )}
+
+        {view === "attendance" && (
+          <AttendanceView
+            participants={inProgress}
+            cohortMemberMap={staff.cohortMemberMap}
+            currentUserId={staff.user?.id}
           />
         )}
 

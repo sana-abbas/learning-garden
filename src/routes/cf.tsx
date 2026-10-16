@@ -31,6 +31,7 @@ import { BotanicalGarden } from "@/components/garden/BotanicalGarden";
 import { SubmissionModal } from "@/components/garden/SubmissionModal";
 import { ContentModal } from "@/components/garden/ContentModal";
 import { DailyUpdateModal } from "@/components/garden/DailyUpdateModal";
+import { NoAccessScreen } from "@/components/garden/NoAccessScreen";
 import { CF_STEPS, CF_CURRICULUM_STEPS } from "@/data/curriculum-cf";
 import { CF_CONTENT } from "@/data/content-cf";
 import { EXERCISE_CHECKERS } from "@/data/exercise-checkers";
@@ -99,6 +100,10 @@ function CodingFundamentals() {
   const [userId, setUserId] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  // Same as on "/": signed in but not on the access list, and the listener
+  // must not mark the garden ready before the guard has let them in.
+  const [noAccess, setNoAccess] = useState(false);
+  const accessGranted = useRef(false);
   // Which staff dashboard to offer a way back to, or null for a participant.
   const [staffHome, setStaffHome] = useState<"/mentor" | "/founder" | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -227,15 +232,21 @@ function CodingFundamentals() {
       if (isFounder) setStaffHome("/founder");
       else if (isMentor) setStaffHome("/mentor");
       if (!isFounder && !isMentor) {
-        // Only CF participants belong here. ensure_my_cohort() enrols anyone
-        // who has no membership row yet, so an unknown cohort now means "not
-        // CF" rather than "database gap" — safe to turn away.
+        // Only CF participants belong here. No cohort means not invited or
+        // removed — the garden is invite-only, so show that rather than
+        // bouncing them to "/", which would only turn them away again.
         const slug = await resolveMyCohort(session.user.id);
+        if (slug === null) {
+          setUser(session.user);
+          setNoAccess(true);
+          return;
+        }
         if (slug !== "coding-fundamentals") {
           navigate({ to: "/" });
           return;
         }
       }
+      accessGranted.current = true;
       // Save profile on login
       const name =
         (session.user.user_metadata?.full_name as string | undefined) ??
@@ -275,7 +286,7 @@ function CodingFundamentals() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
         navigate({ to: "/login" });
-      } else {
+      } else if (accessGranted.current) {
         setUserId(session.user.id);
         setUser(session.user);
         setAuthReady(true);
@@ -611,6 +622,10 @@ function CodingFundamentals() {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
   };
+
+  if (noAccess) {
+    return <NoAccessScreen email={user?.email} onSignOut={handleSignOut} />;
+  }
 
   if (!authReady || !progressReady) {
     return (

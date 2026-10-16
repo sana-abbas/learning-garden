@@ -22,6 +22,13 @@ export interface ParticipantRow {
   updated_at: string;
 }
 
+/** One email on the garden's access list (cohort_invites). */
+export interface InviteRow {
+  email: string;
+  cohort: string;
+  created_at: string | null;
+}
+
 export interface DailyUpdateRow {
   id: string;
   user_id: string;

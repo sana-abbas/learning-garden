@@ -1,11 +1,20 @@
 import { useState } from "react";
-import { Clock, Flame, Users, ClipboardList } from "lucide-react";
-import type { ParticipantRow } from "../types";
+import {
+  ChevronDown,
+  Clock,
+  ClipboardList,
+  Flame,
+  GraduationCap,
+  UserPlus,
+  Users,
+} from "lucide-react";
+import type { InviteRow, ParticipantRow } from "../types";
 import { DAY_MS, displayName, timeAgo } from "../format";
 import { completedCountFor, currentChapterFor, curriculumFor } from "../progress";
 import { Avatar } from "../Avatar";
 import { DetailPanel } from "../DetailPanel";
 import { StatCard } from "../ui";
+import { AccessLists, AddParticipantModal, RemoveParticipantButton } from "../ParticipantAccess";
 
 type Sort = "progress" | "active" | "streak";
 
@@ -15,23 +24,48 @@ type Sort = "progress" | "active" | "streak";
  * Card-shaped because a mentor works one participant at a time — they open a
  * card, read the reflections, and follow up. Founders get the same people as
  * a flat table instead (see RosterView), since they read across everyone.
+ *
+ * Passing `onAccessChanged` turns on the access controls: adding participants,
+ * removing them, and the invited/removed lists. Only /mentor does.
  */
 export function ParticipantsView({
   participants,
   cohortMemberMap,
   todayUpdateUserIds,
+  invites = [],
+  removedParticipants = [],
+  graduatedParticipants = [],
+  onAccessChanged,
 }: {
   participants: ParticipantRow[];
   cohortMemberMap: Record<string, string>;
   todayUpdateUserIds: Set<string>;
+  invites?: InviteRow[];
+  removedParticipants?: ParticipantRow[];
+  /** Graduated per Notion: listed apart, not among the cards or counts. */
+  graduatedParticipants?: ParticipantRow[];
+  onAccessChanged?: () => Promise<void>;
 }) {
   const [cohortTab, setCohortTab] = useState<"full-stack" | "coding-fundamentals">("full-stack");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<Sort>("progress");
   const [selected, setSelected] = useState<ParticipantRow | null>(null);
+  // null when closed; otherwise the emails to prefill (empty for a fresh add).
+  const [adding, setAdding] = useState<string | null>(null);
 
-  const slugOf = (p: ParticipantRow) => cohortMemberMap[p.user_id] ?? "full-stack";
+  // Everyone in `participants` has a cohort: removed participants arrive
+  // separately, in removedParticipants.
+  const slugOf = (p: ParticipantRow) => cohortMemberMap[p.user_id];
   const cohortParticipants = participants.filter((p) => slugOf(p) === cohortTab);
+
+  // Invited to this cohort but not signed in yet. Anyone who has signed in has
+  // a user_progress row, so an invite with no matching email is still pending.
+  const knownEmails = new Set(
+    [...participants, ...removedParticipants, ...graduatedParticipants].map((p) =>
+      (p.email ?? "").toLowerCase(),
+    ),
+  );
+  const pendingInvites = invites.filter((i) => i.cohort === cohortTab && !knownEmails.has(i.email));
 
   const filtered = cohortParticipants
     .filter((p) => {
@@ -52,14 +86,9 @@ export function ParticipantsView({
   ).length;
   const onStreak = cohortParticipants.filter((p) => (p.streak_count || 0) > 0).length;
 
-  // Participants with no cohort_members row show up in the Full Stack tab by
-  // default, which is exactly how the CF-routing bug stayed invisible — so
-  // surface them rather than letting the default hide them.
-  const unassigned = participants.filter((p) => !cohortMemberMap[p.user_id]);
-
   return (
     <>
-      <div className="flex gap-2 mb-6">
+      <div className="flex flex-wrap items-center gap-2 mb-6">
         {(
           [
             { slug: "full-stack", label: "Full Stack" },
@@ -80,6 +109,16 @@ export function ParticipantsView({
             {label}
           </button>
         ))}
+        {onAccessChanged && (
+          <button
+            type="button"
+            onClick={() => setAdding("")}
+            className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium text-white"
+            style={{ background: "var(--primary)" }}
+          >
+            <UserPlus className="w-4 h-4" /> Add participants
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -146,21 +185,20 @@ export function ParticipantsView({
         </div>
       </div>
 
-      {unassigned.length > 0 && (
-        <div
-          className="mb-4 rounded-xl px-4 py-3 text-sm"
-          style={{
-            background: "var(--sidebar)",
-            border: "1px solid var(--destructive)",
-            color: "var(--foreground)",
-          }}
-        >
-          <strong>
-            {unassigned.length} participant{unassigned.length === 1 ? "" : "s"} have no cohort
-          </strong>{" "}
-          — shown here by default, and may see the wrong curriculum:{" "}
-          {unassigned.map((p) => p.email || displayName(p)).join(", ")}
-        </div>
+      <GraduatedList
+        people={graduatedParticipants.filter((p) => cohortMemberMap[p.user_id] === cohortTab)}
+        cohortSlug={cohortTab}
+        onOpen={setSelected}
+      />
+
+      {onAccessChanged && (
+        <AccessLists
+          cohort={cohortTab}
+          pendingInvites={pendingInvites}
+          removed={removedParticipants}
+          onAddBack={(email) => setAdding(email)}
+          onChanged={onAccessChanged}
+        />
       )}
 
       {filtered.length === 0 ? (
@@ -183,8 +221,28 @@ export function ParticipantsView({
       {selected && (
         <DetailPanel
           participant={selected}
-          cohortSlug={cohortMemberMap[selected.user_id] ?? "full-stack"}
+          cohortSlug={cohortMemberMap[selected.user_id] ?? cohortTab}
           onClose={() => setSelected(null)}
+          actions={
+            onAccessChanged && (
+              <RemoveParticipantButton
+                participant={selected}
+                onRemoved={async () => {
+                  setSelected(null);
+                  await onAccessChanged();
+                }}
+              />
+            )
+          }
+        />
+      )}
+
+      {adding !== null && onAccessChanged && (
+        <AddParticipantModal
+          defaultCohort={cohortTab}
+          defaultEmails={adding}
+          onClose={() => setAdding(null)}
+          onAdded={onAccessChanged}
         />
       )}
     </>
@@ -311,5 +369,69 @@ function ParticipantCard({
         </div>
       </div>
     </button>
+  );
+}
+
+/** Graduated per Notion's Status. Collapsed by default; each opens the detail panel. */
+function GraduatedList({
+  people,
+  cohortSlug,
+  onOpen,
+}: {
+  people: ParticipantRow[];
+  cohortSlug: string;
+  onOpen: (p: ParticipantRow) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  if (people.length === 0) return null;
+  return (
+    <div
+      className="rounded-xl overflow-hidden mb-3"
+      style={{ background: "var(--sidebar)", border: "1px solid var(--sidebar-border)" }}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-2 px-4 py-3 text-sm text-left"
+        style={{ color: "var(--foreground)" }}
+      >
+        <GraduationCap className="w-4 h-4" style={{ color: "var(--primary)" }} />
+        <span className="font-medium flex-1">Graduated</span>
+        <span className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+          from Notion
+        </span>
+        <span className="text-xs font-mono ml-2" style={{ color: "var(--muted-foreground)" }}>
+          {people.length}
+        </span>
+        <ChevronDown
+          className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`}
+          style={{ color: "var(--muted-foreground)" }}
+        />
+      </button>
+      {open && (
+        <div className="border-t divide-y" style={{ borderColor: "var(--sidebar-border)" }}>
+          {people.map((p) => (
+            <button
+              key={p.user_id}
+              type="button"
+              onClick={() => onOpen(p)}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-left"
+              style={{ borderColor: "var(--sidebar-border)" }}
+            >
+              <Avatar row={p} size="sm" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm truncate" style={{ color: "var(--foreground)" }}>
+                  {displayName(p)}
+                </p>
+                <p className="text-[11px] truncate" style={{ color: "var(--muted-foreground)" }}>
+                  {completedCountFor(cohortSlug, p.checked)}/{curriculumFor(cohortSlug).length}{" "}
+                  chapters in the garden
+                </p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

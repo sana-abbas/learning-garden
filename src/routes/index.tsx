@@ -34,6 +34,7 @@ import { SubmissionModal } from "@/components/garden/SubmissionModal";
 import { CallClaimModal } from "@/components/garden/CallClaimModal";
 import { DailyUpdateModal } from "@/components/garden/DailyUpdateModal";
 import { OnboardingScreen, ONBOARDING_OPTIONS } from "@/components/garden/OnboardingScreen";
+import { NoAccessScreen } from "@/components/garden/NoAccessScreen";
 import { STEPS, CURRICULUM_STEPS } from "@/data/curriculum";
 import type { Step, SubTask } from "@/data/curriculum";
 
@@ -188,6 +189,12 @@ function Index() {
   // Which staff dashboard the garden-preview link goes back to, if any.
   const [staffHome, setStaffHome] = useState<"/mentor" | "/founder">("/mentor");
   const [authReady, setAuthReady] = useState(false);
+  // Signed in, but not on the garden's access list (never invited, or removed).
+  const [noAccess, setNoAccess] = useState(false);
+  // Set once the guard below has let this user in. Until then the auth
+  // listener must not mark the garden ready, or a user with no access would
+  // see it (and write progress) before the guard turns them away.
+  const accessGranted = useRef(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [todayUpdate, setTodayUpdate] = useState<
     { today: string; tomorrow: string; blockers: string | null } | null | undefined
@@ -315,8 +322,15 @@ function Index() {
             navigate({ to: "/cf" });
             return;
           }
+          // The garden is invite-only: no cohort means not invited, or removed.
+          if (slug === null) {
+            setUser(session.user);
+            setNoAccess(true);
+            return;
+          }
         }
-        // Full-stack (or cohort unknown) — stay on /
+        // Full-stack — stay on /
+        accessGranted.current = true;
         // Save display_name and email so the mentor dashboard can read them
         const name =
           (session.user.user_metadata?.full_name as string | undefined) ??
@@ -356,7 +370,7 @@ function Index() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
         navigate({ to: "/login" });
-      } else {
+      } else if (accessGranted.current) {
         setUserId(session.user.id);
         setUser(session.user);
         setAuthReady(true);
@@ -581,6 +595,10 @@ function Index() {
     await supabase.auth.signOut();
     // onAuthStateChange listener above will navigate to /login
   };
+
+  if (noAccess) {
+    return <NoAccessScreen email={user?.email} onSignOut={handleSignOut} />;
+  }
 
   // Show spinner while checking auth or loading progress
   if (!authReady || !progressReady) {

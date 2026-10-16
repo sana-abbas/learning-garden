@@ -4,13 +4,13 @@ export type CohortSlug = "full-stack" | "coding-fundamentals";
 
 /**
  * Resolves the signed-in participant's cohort. The database decides — see
- * ensure_my_cohort() in supabase/sql/2026-08-24-cohort-enrollment.sql. It enrols
- * anyone who has no membership row yet (CF if they are on the invite list, Full
- * Stack otherwise), so "no cohort" stops being a state a participant can be left
- * in — which is what let people drift into the wrong garden.
+ * ensure_my_cohort() in supabase/sql/2026-10-15-participant-access.sql. It
+ * enrols anyone on the invite list who has no membership row yet, into the
+ * cohort their invite names.
  *
- * Returns null only when the cohort genuinely cannot be determined. Callers must
- * treat null as "not CF" rather than guessing.
+ * Returns null when they have no cohort: never invited, or removed by a
+ * mentor. The garden is invite-only, so callers must treat null as "no
+ * access" and show NoAccessScreen rather than defaulting to a garden.
  */
 export async function resolveMyCohort(userId: string): Promise<CohortSlug | null> {
   const { data, error } = await supabase.rpc("ensure_my_cohort");

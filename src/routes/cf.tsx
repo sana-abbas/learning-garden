@@ -854,7 +854,10 @@ function CodingFundamentals() {
                                         ? "text-[color:var(--muted-foreground)] line-through decoration-[color:var(--primary)]/50"
                                         : "text-[color:var(--sidebar-foreground)]"
                                     }`;
-                                    if (hasContent && !subChecked) {
+                                    // Stays clickable once ticked so students can look back at
+                                    // their submission — a plain span here would sit inside the
+                                    // label and untick the box instead.
+                                    if (hasContent) {
                                       return (
                                         <button
                                           type="button"
@@ -886,6 +889,21 @@ function CodingFundamentals() {
                                         >
                                           {sub.label}
                                         </a>
+                                      );
+                                    }
+                                    if (sub.gate && subChecked && submissions[sub.id]) {
+                                      return (
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            setSubmissionModal({ step, sub });
+                                          }}
+                                          className={`${labelClass} text-left cursor-pointer`}
+                                        >
+                                          {sub.label}
+                                        </button>
                                       );
                                     }
                                     return <span className={labelClass}>{sub.label}</span>;

@@ -1022,6 +1022,20 @@ function Index() {
                                   >
                                     {sub.label}
                                   </a>
+                                ) : sub.gate && subChecked && submissions[sub.id] ? (
+                                  // Opens the submission to look back at — a plain span here
+                                  // would sit inside the label and untick the box instead.
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      setSubmissionModal({ step, sub });
+                                    }}
+                                    className="text-[12.5px] leading-snug text-left cursor-pointer transition-all text-[color:var(--muted-foreground)] line-through decoration-[color:var(--primary)]/50"
+                                  >
+                                    {sub.label}
+                                  </button>
                                 ) : (
                                   <span
                                     className={`text-[12.5px] leading-snug transition-all ${

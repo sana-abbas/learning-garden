@@ -119,80 +119,212 @@
   --sidebar-primary: oklch(0.55 0.13 145);
   --sidebar-primary-foreground: oklch(0.99 0.01 100);
   --sidebar-ring: oklch(0.55 0.13 145);
+
+  /* Participant-status palette (founder dashboard).
+     Four hues, one per lifecycle status, kept separate from --chart-* because
+     these are fills on a card surface rather than garden decoration. The steps
+     are not free choices: they clear the lightness band, chroma floor, CVD
+     separation and normal-vision floor in BOTH themes — light warns only on
+     contrast-vs-surface, which is why every segment that uses them carries a
+     visible label and a legend. Re-validate before changing any of them. */
+  --status-enrolled: #008300;
+  --status-paused: #eda100;
+  --status-graduated: #e87ba4;
+  --status-offboarded: #2a78d6;
+  /* Applied / Accepted / Declined — nobody is in the programme yet, so they get
+     a neutral rather than competing for a hue (adding a fifth hue broke the
+     dark-mode gate against Enrolled). */
+  --status-other: oklch(0.62 0.02 80);
 }
 
 @keyframes float-soft {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
 }
 @keyframes pulse-glow {
-  0%, 100% { opacity: 0.55; filter: blur(2px); }
-  50% { opacity: 1; filter: blur(4px); }
+  0%,
+  100% {
+    opacity: 0.55;
+    filter: blur(2px);
+  }
+  50% {
+    opacity: 1;
+    filter: blur(4px);
+  }
 }
 @keyframes draw-path {
-  to { stroke-dashoffset: 0; }
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 @keyframes grow-up {
-  from { transform: scaleY(0); opacity: 0; }
-  to { transform: scaleY(1); opacity: 1; }
+  from {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
 }
 @keyframes bloom-in {
-  0% { transform: scale(0) rotate(-90deg); opacity: 0; }
-  60% { transform: scale(1.15) rotate(10deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0); opacity: 1; }
+  0% {
+    transform: scale(0) rotate(-90deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15) rotate(10deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
 }
 @keyframes spin-slow {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 @keyframes sparkle-twinkle {
-  0%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
-  50% { opacity: 1; transform: scale(1) rotate(180deg); }
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.4) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1) rotate(180deg);
+  }
 }
 @keyframes sun-glow {
-  0%, 100% { transform: scale(1); opacity: 0.7; }
-  50% { transform: scale(1.08); opacity: 0.95; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.95;
+  }
 }
 
-.animate-float-soft { animation: float-soft 6s ease-in-out infinite; }
-.animate-pulse-glow { animation: pulse-glow 2.4s ease-in-out infinite; }
-.animate-grow-up { animation: grow-up 1.4s var(--ease-organic) forwards; transform-origin: bottom center; }
-.animate-bloom { animation: bloom-in 1.2s var(--ease-organic) forwards; transform-origin: center; }
-.animate-spin-slow { animation: spin-slow 60s linear infinite; }
-.animate-sun-glow { animation: sun-glow 5s ease-in-out infinite; }
+.animate-float-soft {
+  animation: float-soft 6s ease-in-out infinite;
+}
+.animate-pulse-glow {
+  animation: pulse-glow 2.4s ease-in-out infinite;
+}
+.animate-grow-up {
+  animation: grow-up 1.4s var(--ease-organic) forwards;
+  transform-origin: bottom center;
+}
+.animate-bloom {
+  animation: bloom-in 1.2s var(--ease-organic) forwards;
+  transform-origin: center;
+}
+.animate-spin-slow {
+  animation: spin-slow 60s linear infinite;
+}
+.animate-sun-glow {
+  animation: sun-glow 5s ease-in-out infinite;
+}
+
+@keyframes bloom-glow-burst {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes petal-fall {
+  0% {
+    transform: translateY(-8%) rotate(0deg) scale(1);
+    opacity: 0.9;
+  }
+  85% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(112%) rotate(700deg) scale(0.6);
+    opacity: 0;
+  }
+}
 
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  /* Night garden — warm earthy dark, not cold blue */
+  --background: oklch(0.16 0.025 70);
+  --foreground: oklch(0.92 0.02 80);
+  --card: oklch(0.2 0.025 68);
+  --card-foreground: oklch(0.92 0.02 80);
+  --popover: oklch(0.2 0.025 68);
+  --popover-foreground: oklch(0.92 0.02 80);
+  --primary: oklch(0.62 0.15 145);
+  --primary-foreground: oklch(0.15 0.03 60);
+  --secondary: oklch(0.25 0.04 120);
+  --secondary-foreground: oklch(0.88 0.04 130);
+  --muted: oklch(0.24 0.02 70);
+  --muted-foreground: oklch(0.58 0.04 75);
+  --accent: oklch(0.7 0.2 350);
+  --accent-foreground: oklch(0.99 0.01 350);
+  --destructive: oklch(0.65 0.2 25);
+  --destructive-foreground: oklch(0.99 0.01 25);
+  --border: oklch(0.28 0.03 65 / 80%);
+  --input: oklch(0.28 0.03 65);
+  --ring: oklch(0.62 0.15 145);
+  --chart-1: oklch(0.62 0.15 145);
+  --chart-2: oklch(0.72 0.2 350);
+  --chart-3: oklch(0.78 0.18 180);
+  --chart-4: oklch(0.8 0.22 60);
+  --chart-5: oklch(0.62 0.22 305);
+
+  /* Participant-status palette — dark mode's own steps, not a flip of light's.
+     The dark lightness band (0.48–0.67) is narrower, so each hue is re-stepped
+     and re-validated against the dark card surface. Enrolled/Paused sit in the
+     6–8 CVD floor band here, which is why the stacked bar keeps 2px gaps and
+     direct labels. */
+  --status-enrolled: #008300;
+  --status-paused: #c98500;
+  --status-graduated: #d55181;
+  --status-offboarded: #3987e5;
+  --status-other: oklch(0.55 0.02 80);
+
+  /* Garden scene tokens */
+  --sky-top: oklch(0.22 0.05 240);
+  --sky-bottom: oklch(0.18 0.06 230);
+  --sun: oklch(0.85 0.15 75);
+  --sun-glow: oklch(0.78 0.18 70);
+  --soil-top: oklch(0.28 0.05 50);
+  --soil-bottom: oklch(0.16 0.04 45);
+  --root-glow: oklch(0.72 0.18 180);
+  --stem: oklch(0.62 0.18 145);
+  --leaf: oklch(0.68 0.2 140);
+  --leaf-light: oklch(0.78 0.17 135);
+  --bloom-pink: oklch(0.75 0.21 350);
+  --bloom-magenta: oklch(0.65 0.24 340);
+  --bloom-purple: oklch(0.6 0.22 305);
+  --bloom-exotic: oklch(0.8 0.22 60);
+  --bloom-exotic-2: oklch(0.72 0.25 30);
+  --sparkle: oklch(0.95 0.18 95);
+  --shadow-leaf: 0 10px 40px -10px oklch(0.62 0.15 145 / 0.35);
+  --shadow-bloom: 0 20px 60px -15px oklch(0.75 0.21 350 / 0.45);
+  --sidebar: oklch(0.19 0.028 68);
+  --sidebar-foreground: oklch(0.9 0.02 80);
+  --sidebar-primary: oklch(0.62 0.15 145);
+  --sidebar-primary-foreground: oklch(0.99 0.01 100);
+  --sidebar-accent: oklch(0.25 0.05 130);
+  --sidebar-accent-foreground: oklch(0.82 0.08 140);
+  --sidebar-border: oklch(0.26 0.03 65);
+  --sidebar-ring: oklch(0.62 0.15 145);
 }
 
 @layer base {
@@ -207,8 +339,161 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  .font-serif, h1, h2 {
+  .font-serif,
+  h1,
+  h2 {
     font-family: "Fraunces", ui-serif, Georgia, serif;
     font-optical-sizing: auto;
   }
+}
+
+/* ── Content modal prose styles ───────────────────────────────────────────── */
+.prose-cf {
+  color: var(--foreground);
+  font-size: 13.5px;
+  line-height: 1.75;
+}
+.prose-cf h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 1.4rem 0 0.5rem;
+  color: var(--foreground);
+}
+.prose-cf h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 1.2rem 0 0.4rem;
+  color: var(--foreground);
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+.prose-cf p {
+  margin: 0.6rem 0;
+}
+.prose-cf ul,
+.prose-cf ol {
+  padding-left: 1.4rem;
+  margin: 0.5rem 0;
+}
+.prose-cf li {
+  margin: 0.2rem 0;
+}
+.prose-cf hr {
+  border: none;
+  border-top: 1px solid var(--sidebar-border);
+  margin: 1.2rem 0;
+}
+.prose-cf blockquote {
+  border-left: 3px solid oklch(0.55 0.13 145);
+  margin: 0.65rem 0;
+  padding: 0.5rem 0.75rem 0.5rem 1rem;
+  background: oklch(0.91 0.07 145 / 0.22);
+  border-radius: 0 0.5rem 0.5rem 0;
+  color: var(--sidebar-foreground);
+}
+.dark .prose-cf blockquote {
+  background: oklch(0.25 0.06 145 / 0.25);
+  border-left-color: oklch(0.62 0.15 145);
+}
+.prose-cf blockquote p {
+  margin: 0.2rem 0;
+}
+.prose-cf code {
+  font-family: ui-monospace, "Cascadia Code", monospace;
+  font-size: 0.82em;
+  background: oklch(0.91 0.03 130 / 0.5);
+  padding: 0.1em 0.35em;
+  border-radius: 0.3rem;
+  color: var(--primary);
+}
+.dark .prose-cf code {
+  background: oklch(0.25 0.04 130 / 0.5);
+}
+.prose-cf pre {
+  background: oklch(0.14 0.02 260);
+  color: oklch(0.92 0.03 145);
+  padding: 1rem 1.2rem;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.8rem;
+  line-height: 1.65;
+}
+.prose-cf pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+}
+.prose-cf table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.8rem 0;
+  font-size: 0.82rem;
+}
+.prose-cf th {
+  background: oklch(0.92 0.04 130 / 0.5);
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border: 1px solid var(--sidebar-border);
+  color: var(--foreground);
+}
+.dark .prose-cf th {
+  background: oklch(0.25 0.04 130 / 0.4);
+}
+.prose-cf td {
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--sidebar-border);
+  vertical-align: top;
+}
+.prose-cf tr:nth-child(even) td {
+  background: oklch(0.96 0.01 85 / 0.4);
+}
+.dark .prose-cf tr:nth-child(even) td {
+  background: oklch(0.22 0.02 65 / 0.3);
+}
+.prose-cf strong {
+  font-weight: 600;
+  color: var(--foreground);
+}
+.prose-cf a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 500;
+}
+.prose-cf a:hover {
+  opacity: 0.75;
+}
+.prose-cf img {
+  width: 100%;
+  border-radius: 0.75rem;
+  margin: 0.75rem 0;
+  border: 1px solid var(--sidebar-border);
+}
+
+/* 💡 Deep dive callouts — blue */
+.prose-cf .cf-deepdive {
+  background: oklch(0.92 0.06 225 / 0.22);
+  border-left: 3px solid oklch(0.52 0.15 225);
+  padding: 0.5rem 0.75rem 0.5rem 1rem;
+  border-radius: 0 0.5rem 0.5rem 0;
+  margin: 0.65rem 0;
+}
+.dark .prose-cf .cf-deepdive {
+  background: oklch(0.22 0.06 225 / 0.28);
+  border-left-color: oklch(0.6 0.16 225);
+}
+
+/* 📝 Exercise callouts — amber */
+.prose-cf .cf-exercise {
+  background: oklch(0.93 0.07 80 / 0.22);
+  border-left: 3px solid oklch(0.68 0.16 75);
+  padding: 0.5rem 0.75rem 0.5rem 1rem;
+  border-radius: 0 0.5rem 0.5rem 0;
+  margin: 0.65rem 0;
+}
+.dark .prose-cf .cf-exercise {
+  background: oklch(0.24 0.06 80 / 0.28);
+  border-left-color: oklch(0.72 0.16 75);
 }

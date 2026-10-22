@@ -1,5 +1,6 @@
 import * as React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/sonner";
 import {
   Outlet,
   Link,
@@ -73,8 +74,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Code Blossom — Watch your learning bloom" },
-      { name: "description", content: "An interactive learning dashboard for the Code Blossom coding bootcamp. Tend your curriculum and watch your garden grow." },
+      { title: "Code Blossom Garden" },
+      {
+        name: "description",
+        content:
+          "An interactive learning dashboard for the Code Blossom coding bootcamp. Tend your curriculum and watch your garden grow.",
+      },
       { property: "og:title", content: "Code Blossom" },
       { property: "og:description", content: "Tend your learning. Watch it bloom." },
       { property: "og:type", content: "website" },
@@ -82,10 +87,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌸</text></svg>" },
+      {
+        rel: "icon",
+        href: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌸</text></svg>",
+      },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap",
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -114,8 +125,10 @@ function RootComponent() {
 
   React.useEffect(() => {
     let unsubscribe: (() => void) | undefined;
-    import("@/integrations/supabase/client").then(({ supabase }) => {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+    void import("@/integrations/supabase/client").then(({ supabase }) => {
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange(() => {
         router.invalidate();
         queryClient.invalidateQueries();
       });
@@ -127,6 +140,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
+      <Toaster position="bottom-right" richColors />
     </QueryClientProvider>
   );
 }

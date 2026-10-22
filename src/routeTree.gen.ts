@@ -9,12 +9,30 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MentorRouteImport } from './routes/mentor'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as FounderRouteImport } from './routes/founder'
+import { Route as CfRouteImport } from './routes/cf'
 import { Route as IndexRouteImport } from './routes/index'
 
+const MentorRoute = MentorRouteImport.update({
+  id: '/mentor',
+  path: '/mentor',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FounderRoute = FounderRouteImport.update({
+  id: '/founder',
+  path: '/founder',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CfRoute = CfRouteImport.update({
+  id: '/cf',
+  path: '/cf',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -25,37 +43,70 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cf': typeof CfRoute
+  '/founder': typeof FounderRoute
   '/login': typeof LoginRoute
+  '/mentor': typeof MentorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cf': typeof CfRoute
+  '/founder': typeof FounderRoute
   '/login': typeof LoginRoute
+  '/mentor': typeof MentorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/cf': typeof CfRoute
+  '/founder': typeof FounderRoute
   '/login': typeof LoginRoute
+  '/mentor': typeof MentorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login'
+  fullPaths: '/' | '/cf' | '/founder' | '/login' | '/mentor'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login'
-  id: '__root__' | '/' | '/login'
+  to: '/' | '/cf' | '/founder' | '/login' | '/mentor'
+  id: '__root__' | '/' | '/cf' | '/founder' | '/login' | '/mentor'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CfRoute: typeof CfRoute
+  FounderRoute: typeof FounderRoute
   LoginRoute: typeof LoginRoute
+  MentorRoute: typeof MentorRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/mentor': {
+      id: '/mentor'
+      path: '/mentor'
+      fullPath: '/mentor'
+      preLoaderRoute: typeof MentorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/founder': {
+      id: '/founder'
+      path: '/founder'
+      fullPath: '/founder'
+      preLoaderRoute: typeof FounderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cf': {
+      id: '/cf'
+      path: '/cf'
+      fullPath: '/cf'
+      preLoaderRoute: typeof CfRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -70,7 +121,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CfRoute: CfRoute,
+  FounderRoute: FounderRoute,
   LoginRoute: LoginRoute,
+  MentorRoute: MentorRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

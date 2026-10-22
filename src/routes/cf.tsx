@@ -662,8 +662,11 @@ function CodingFundamentals() {
     <div className="h-screen overflow-hidden bg-[color:var(--background)] flex flex-col lg:flex-row">
       {/* Mobile backdrop */}
       {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm lg:hidden"
+        <button
+          type="button"
+          aria-label="Close"
+          tabIndex={-1}
+          className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm lg:hidden cursor-default"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -1156,7 +1159,13 @@ function CodingFundamentals() {
               </button>
               {avatarMenuOpen && (
                 <>
-                  <div className="fixed inset-0 z-10" onClick={() => setAvatarMenuOpen(false)} />
+                  <button
+                    type="button"
+                    aria-label="Close"
+                    tabIndex={-1}
+                    className="fixed inset-0 z-10 cursor-default"
+                    onClick={() => setAvatarMenuOpen(false)}
+                  />
                   <div
                     className="absolute right-0 top-full mt-2 z-20 rounded-xl shadow-lg overflow-hidden min-w-[160px]"
                     style={{ background: "var(--sidebar)", border: "1px solid var(--border)" }}
@@ -1681,8 +1690,11 @@ function CodingFundamentals() {
       {/* Curriculum completion modal */}
       {showCompleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          <button
+            type="button"
+            aria-label="Close"
+            tabIndex={-1}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-default"
             onClick={() => setShowCompleteModal(false)}
           />
           <div

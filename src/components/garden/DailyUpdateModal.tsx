@@ -140,7 +140,13 @@ export function DailyUpdateModal({ userId, displayName, existing, onClose, onSub
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <button
+        type="button"
+        aria-label="Close"
+        tabIndex={-1}
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm cursor-default"
+        onClick={onClose}
+      />
 
       <div
         className="relative z-10 w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl"
@@ -202,10 +208,15 @@ export function DailyUpdateModal({ userId, displayName, existing, onClose, onSub
         {/* Fields */}
         <div className="px-6 py-5 space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium" style={{ color: "var(--foreground)" }}>
+            <label
+              htmlFor="daily-update-today"
+              className="text-xs font-medium"
+              style={{ color: "var(--foreground)" }}
+            >
               What did I do today? <span style={{ color: "var(--destructive)" }}>*</span>
             </label>
             <textarea
+              id="daily-update-today"
               rows={3}
               placeholder="Share what you worked on today…"
               value={today}
@@ -220,10 +231,15 @@ export function DailyUpdateModal({ userId, displayName, existing, onClose, onSub
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium" style={{ color: "var(--foreground)" }}>
+            <label
+              htmlFor="daily-update-tomorrow"
+              className="text-xs font-medium"
+              style={{ color: "var(--foreground)" }}
+            >
               What will I do tomorrow? <span style={{ color: "var(--destructive)" }}>*</span>
             </label>
             <textarea
+              id="daily-update-tomorrow"
               rows={3}
               placeholder="What are you planning for tomorrow…"
               value={tomorrow}
@@ -238,13 +254,18 @@ export function DailyUpdateModal({ userId, displayName, existing, onClose, onSub
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium" style={{ color: "var(--foreground)" }}>
+            <label
+              htmlFor="daily-update-blockers"
+              className="text-xs font-medium"
+              style={{ color: "var(--foreground)" }}
+            >
               Anything blocking me?{" "}
               <span className="font-normal" style={{ color: "var(--muted-foreground)" }}>
                 (optional)
               </span>
             </label>
             <textarea
+              id="daily-update-blockers"
               rows={2}
               placeholder="Any blockers or challenges…"
               value={blockers}

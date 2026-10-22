@@ -349,7 +349,6 @@ export function AttendanceView({
                     {(otherTitle || (title && !titleIsListed)) && (
                       <input
                         type="text"
-                        autoFocus
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder="Name of the session"

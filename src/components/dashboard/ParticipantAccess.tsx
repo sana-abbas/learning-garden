@@ -92,7 +92,13 @@ export function AddParticipantModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <button
+        type="button"
+        aria-label="Close"
+        tabIndex={-1}
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm cursor-default"
+        onClick={onClose}
+      />
       <form
         onSubmit={submit}
         className="relative z-10 w-full max-w-md rounded-2xl p-6"
@@ -117,13 +123,14 @@ export function AddParticipantModal({
         </p>
 
         <label
+          htmlFor="invite-emails"
           className="block text-[11px] uppercase tracking-[0.14em] font-semibold mb-1.5"
           style={{ color: "var(--muted-foreground)" }}
         >
           Emails
         </label>
         <textarea
-          autoFocus
+          id="invite-emails"
           value={emailsText}
           onChange={(e) => setEmailsText(e.target.value)}
           rows={4}
@@ -139,18 +146,20 @@ export function AddParticipantModal({
           One per line, or separated by commas.
         </p>
 
-        <label
+        <p
+          id="invite-cohort-label"
           className="block text-[11px] uppercase tracking-[0.14em] font-semibold mb-1.5"
           style={{ color: "var(--muted-foreground)" }}
         >
           Cohort
-        </label>
-        <div className="flex gap-2 mb-5">
+        </p>
+        <div role="group" aria-labelledby="invite-cohort-label" className="flex gap-2 mb-5">
           {COHORTS.map(({ slug, label }) => (
             <button
               key={slug}
               type="button"
               onClick={() => setCohort(slug)}
+              aria-pressed={cohort === slug}
               className="flex-1 px-3 py-2 rounded-xl text-sm font-medium transition-all"
               style={{
                 background: cohort === slug ? "var(--primary)" : "var(--background)",

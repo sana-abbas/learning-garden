@@ -53,7 +53,13 @@ export function DetailPanel({
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <button
+        type="button"
+        aria-label="Close"
+        tabIndex={-1}
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm cursor-default"
+        onClick={onClose}
+      />
 
       <div
         className="relative z-10 w-full max-w-xl h-full flex flex-col overflow-hidden"

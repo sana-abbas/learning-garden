@@ -378,7 +378,8 @@ export function ColumnChart({
             </span>
           ) : (
             <span style={{ color: "var(--muted-foreground)" }}>
-              Peak {max} in {monthLabel(data.reduce((a, b) => (b.count > a.count ? b : a)).month)}
+              Peak {max} in{" "}
+              {monthLabel(data.reduce((a, b) => (b.count > a.count ? b : a), data[0]).month)}
             </span>
           )}
         </div>

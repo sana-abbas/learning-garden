@@ -124,7 +124,7 @@ export function AttendanceView({
         .filter((a) => a.mentorUserId === null && a.notionMentor)
         .map((a) => a.notionMentor!),
     ),
-  ].sort();
+  ].sort((a, b) => a.localeCompare(b));
 
   const inCohort = participants
     .filter((p) => cohort === "all" || cohortMemberMap[p.user_id] === cohort)
@@ -164,7 +164,7 @@ export function AttendanceView({
     const extra = [
       ...new Set(sessions.filter((s) => s.kind === "beyond_coding").map((s) => s.title ?? "")),
     ].filter((t) => t && !known.has(t.toLowerCase()));
-    return [...BEYOND_CODING_SESSIONS, ...extra.sort()];
+    return [...BEYOND_CODING_SESSIONS, ...extra.sort((a, b) => a.localeCompare(b))];
   }, [sessions]);
   const [otherTitle, setOtherTitle] = useState(false);
   const titleIsListed = bcTitles.some((t) => t.toLowerCase() === title.trim().toLowerCase());

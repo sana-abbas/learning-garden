@@ -32,7 +32,9 @@ export function RosterView({ rows }: { rows: RosterRow[] }) {
 
   const options = useMemo(() => {
     const uniq = (values: (string | null)[]) =>
-      [...new Set(values.map((v) => v?.trim()).filter((v): v is string => !!v))].sort();
+      [...new Set(values.map((v) => v?.trim()).filter((v): v is string => !!v))].sort((a, b) =>
+        a.localeCompare(b),
+      );
     return {
       statuses: uniq(rows.map((r) => r.status)),
       tracks: uniq(rows.map((r) => r.track)),

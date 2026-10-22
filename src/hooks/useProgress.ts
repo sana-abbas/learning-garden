@@ -185,7 +185,9 @@ export function useProgress(userId: string | null): ProgressState {
           if (savedNotes) setNotes(JSON.parse(savedNotes));
           const savedSubs = localStorage.getItem(lsKey("submissions", userId!));
           if (savedSubs) setSubmissions(JSON.parse(savedSubs));
-          const savedStreak = parseInt(localStorage.getItem(lsKey("streak_count", userId!)) ?? "0");
+          const savedStreak = Number.parseInt(
+            localStorage.getItem(lsKey("streak_count", userId!)) ?? "0",
+          );
           const savedDate = localStorage.getItem(lsKey("streak_date", userId!)) ?? null;
           const savedOnboarded = localStorage.getItem(lsKey("onboarded", userId!)) === "true";
           setStreak(savedStreak);
@@ -203,7 +205,7 @@ export function useProgress(userId: string | null): ProgressState {
       }
     }
 
-    loadProgress();
+    void loadProgress();
   }, [userId]);
 
   // ── Persist state changes ─────────────────────────────────────────────────

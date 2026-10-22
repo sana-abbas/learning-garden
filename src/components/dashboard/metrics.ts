@@ -328,7 +328,7 @@ export function startsByMonth(rows: RosterRow[]): { month: string; count: number
     .map((r) => r.start_date)
     .filter((d): d is string => !!d)
     .map((d) => d.slice(0, 7))
-    .sort();
+    .sort((a, b) => a.localeCompare(b));
   if (dates.length === 0) return [];
 
   const counts = new Map<string, number>();

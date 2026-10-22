@@ -53,13 +53,13 @@ export const Route = createFileRoute("/")({
 function parseWeeks(duration: string): number {
   if (/week/i.test(duration)) {
     const m = duration.match(/(\d+)/);
-    return m ? parseInt(m[1]) : 0;
+    return m ? Number.parseInt(m[1]) : 0;
   }
   if (/month/i.test(duration)) {
     const m = duration.match(/(\d+)[–-]?(\d+)?/);
     if (m) {
-      const lo = parseInt(m[1]);
-      const hi = m[2] ? parseInt(m[2]) : lo;
+      const lo = Number.parseInt(m[1]);
+      const hi = m[2] ? Number.parseInt(m[2]) : lo;
       return Math.round(((lo + hi) / 2) * 4);
     }
   }
@@ -1146,7 +1146,7 @@ function Index() {
                 type="button"
                 onClick={() => {
                   setSidebarTab(tab);
-                  if (tab === "community") loadFsCommunity();
+                  if (tab === "community") void loadFsCommunity();
                 }}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-all"
                 style={{
@@ -1565,7 +1565,7 @@ function Index() {
                                       onKeyDown={(e) => {
                                         if (e.key === "Enter" && !e.shiftKey) {
                                           e.preventDefault();
-                                          submitFsComment(u.user_id, u.date);
+                                          void submitFsComment(u.user_id, u.date);
                                         }
                                       }}
                                       className="flex-1 text-xs px-3 py-1.5 rounded-xl border focus:outline-none focus:ring-2"

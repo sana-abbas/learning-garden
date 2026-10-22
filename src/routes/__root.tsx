@@ -125,7 +125,7 @@ function RootComponent() {
 
   React.useEffect(() => {
     let unsubscribe: (() => void) | undefined;
-    import("@/integrations/supabase/client").then(({ supabase }) => {
+    void import("@/integrations/supabase/client").then(({ supabase }) => {
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange(() => {

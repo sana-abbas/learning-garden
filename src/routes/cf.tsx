@@ -1047,7 +1047,7 @@ function CodingFundamentals() {
                   type="button"
                   onClick={() => {
                     setSidebarTab(tab);
-                    if (tab === "community") loadCommunity();
+                    if (tab === "community") void loadCommunity();
                   }}
                   className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-all"
                   style={{
@@ -1472,7 +1472,7 @@ function CodingFundamentals() {
                                       onKeyDown={(e) => {
                                         if (e.key === "Enter" && !e.shiftKey) {
                                           e.preventDefault();
-                                          submitComment(u.user_id, u.date);
+                                          void submitComment(u.user_id, u.date);
                                         }
                                       }}
                                       className="flex-1 text-xs px-3 py-1.5 rounded-xl border focus:outline-none focus:ring-2"
@@ -1666,7 +1666,7 @@ function CodingFundamentals() {
                 type="button"
                 onClick={() => {
                   setShowWelcomeModal(false);
-                  setOnboarded();
+                  void setOnboarded();
                 }}
                 className="w-full py-2.5 rounded-xl text-sm font-medium text-white transition-opacity"
                 style={{ background: "linear-gradient(135deg, var(--primary), var(--leaf))" }}

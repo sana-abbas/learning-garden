@@ -421,6 +421,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           email: string | null
+          hints: Json
           id: string
           notes: Json
           onboarded: boolean | null
@@ -436,6 +437,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           email?: string | null
+          hints?: Json
           id?: string
           notes?: Json
           onboarded?: boolean | null
@@ -451,6 +453,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           email?: string | null
+          hints?: Json
           id?: string
           notes?: Json
           onboarded?: boolean | null

@@ -16,6 +16,7 @@ import {
   Server,
   Globe,
   Layers,
+  Landmark,
 } from "lucide-react";
 import type { Step } from "@/data/curriculum";
 
@@ -441,6 +442,78 @@ export const CF_STEPS: Step[] = [
         label: "Watch (optional): Get JSON with the JavaScript fetch Method (YouTube)",
         url: "https://youtu.be/37vxWr0WgQk",
       },
+    ],
+  },
+  {
+    id: "cf17",
+    title: "Final Project: TermBank",
+    subtitle: "A bank teller's terminal in vanilla JavaScript",
+    duration: "Self-paced",
+    icon: Landmark,
+    kind: "module",
+    subtasks: [
+      { id: "cf17-intro", label: "Welcome & starter kit" },
+      {
+        id: "cf17-m1",
+        label: "Milestone 1: Wake Up the Terminal",
+        gate: { pasteLabel: "Your whole script.js" },
+      },
+      {
+        id: "cf17-m2",
+        label: "Milestone 2: The Command Parser",
+        gate: { pasteLabel: "Your whole script.js" },
+      },
+      {
+        id: "cf17-m3",
+        label: "Milestone 3: Opening, Searching, Listing Accounts & Serving Customers",
+        gate: { pasteLabel: "Your whole script.js" },
+      },
+      {
+        id: "cf17-m4",
+        label: "Milestone 4: Locking Down the Balance",
+        gate: { pasteLabel: "Your whole script.js" },
+      },
+      {
+        id: "cf17-m5",
+        label: "Milestone 5: Special Account Types",
+        gate: { pasteLabel: "Your whole script.js" },
+      },
+      {
+        id: "cf17-m6",
+        label: "Milestone 6: Clocking In: Teller Sessions & Fast Lookups",
+        gate: { pasteLabel: "Your whole script.js" },
+      },
+      {
+        id: "cf17-m7",
+        label: "Milestone 7: Transaction History & Corrections",
+        gate: { pasteLabel: "Your whole script.js" },
+      },
+      {
+        id: "cf17-m8",
+        label: "Milestone 8: Handling Real Mistakes",
+        gate: { pasteLabel: "Your whole script.js" },
+      },
+      {
+        id: "cf17-m9",
+        label: "Milestone 9: Manager Approval for Large Transfers",
+        gate: { pasteLabel: "Your whole script.js" },
+      },
+      {
+        id: "cf17-m10",
+        label: "Milestone 10: The Forex Desk: Real Exchange Rates",
+        gate: { pasteLabel: "Your whole script.js" },
+      },
+      {
+        id: "cf17-m11",
+        label: "Milestone 11: Clean Code Refactor: Going Modular",
+        gate: { filesLabel: "Your files" },
+      },
+      {
+        id: "cf17-m12",
+        label: "Milestone 12: Make It Yours",
+        gate: { filesLabel: "Your files", videoLabel: "Demo video URL (Loom / YouTube)" },
+      },
+      { id: "cf17-showcase", label: "Get ready for the community showcase" },
     ],
   },
 ];

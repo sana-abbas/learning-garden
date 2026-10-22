@@ -24,6 +24,7 @@ export type Submission = {
   link2?: string;
   video?: string;
   paste?: string;
+  files?: { name: string; code: string }[];
   claimedAt?: string;
   submittedAt?: string;
 };
@@ -43,6 +44,9 @@ export interface ProgressState {
   onboarded: boolean;
   progressReady: boolean;
   setOnboarded: () => Promise<void>;
+  /** Hints opened so far, keyed by subtask id. */
+  hints: Record<string, number>;
+  revealHint: (subId: string) => void;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -55,6 +59,8 @@ export function useProgress(userId: string | null): ProgressState {
   const [syncing, setSyncing] = useState(false);
   const [onboarded, setOnboardedState] = useState(false);
   const [progressReady, setProgressReady] = useState(false);
+  const [hints, setHints] = useState<Record<string, number>>({});
+  const hintsRef = useRef(hints);
 
   // Refs that hold current state values for the debounced upsert
   const loaded = useRef(false);
@@ -252,6 +258,41 @@ export function useProgress(userId: string | null): ProgressState {
     setSubmissions((prev) => ({ ...prev, [id]: data }));
   }, []);
 
+  // ── Hints ─────────────────────────────────────────────────────────────────
+  // Read and written apart from the rest of progress, so that until
+  // 2026-10-22-hints.sql adds the column only these calls fail.
+
+  useEffect(() => {
+    hintsRef.current = {};
+    setHints({});
+    if (!userId) return;
+    void supabase
+      .from("user_progress")
+      .select("hints")
+      .eq("user_id", userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!data?.hints) return;
+        hintsRef.current = data.hints as Record<string, number>;
+        setHints(hintsRef.current);
+      });
+  }, [userId]);
+
+  const revealHint = useCallback(
+    (subId: string) => {
+      const next = { ...hintsRef.current, [subId]: (hintsRef.current[subId] ?? 0) + 1 };
+      hintsRef.current = next;
+      setHints(next);
+      if (!userId) return;
+      void supabase
+        .from("user_progress")
+        .update({ hints: next })
+        .eq("user_id", userId)
+        .then(() => {});
+    },
+    [userId],
+  );
+
   // ── setOnboarded ──────────────────────────────────────────────────────────
 
   const setOnboarded = useCallback(async () => {
@@ -339,5 +380,7 @@ export function useProgress(userId: string | null): ProgressState {
     onboarded,
     progressReady,
     setOnboarded,
+    hints,
+    revealHint,
   };
 }

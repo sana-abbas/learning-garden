@@ -16,6 +16,8 @@ export interface ParticipantRow {
   checked: Record<string, boolean>;
   notes: Record<string, string>;
   submissions: Record<string, Submission>;
+  /** Hints opened per subtask id; empty until 2026-10-22-hints.sql runs. */
+  hints?: Record<string, number>;
   streak_count: number;
   streak_date: string | null;
   created_at: string;

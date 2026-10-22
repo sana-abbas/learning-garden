@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Filter, Link as LinkIcon } from "lucide-react";
 import type { ParticipantRow, CohortFilter } from "../types";
-import { cohortLabel } from "../format";
+import { cohortLabel, hintsUsedLabel } from "../format";
 import { SUBTASK_INDEX } from "../progress";
 import { TableShell } from "../ui";
 import { Pager } from "./DailyUpdatesView";
@@ -18,6 +18,9 @@ interface SubmissionRow {
   paste: string;
   link: string;
   link2: string;
+  video: string;
+  files: { name: string; code: string }[];
+  hintsUsed: string | null;
 }
 
 /** Every assignment submission across both cohorts, newest first. */
@@ -45,6 +48,9 @@ export function AssignmentsView({
         paste: sub.paste ?? "",
         link: sub.link ?? "",
         link2: sub.link2 ?? "",
+        video: sub.video ?? "",
+        files: sub.files ?? [],
+        hintsUsed: hintsUsedLabel(p.hints, subId),
       })),
     )
     .sort((a, b) => (b.submittedAt ?? "").localeCompare(a.submittedAt ?? ""));
@@ -136,7 +142,8 @@ export function AssignmentsView({
           {filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map((r, i) => {
             const expanded = expandedKey === r.rowKey;
             const dateStr = r.submittedAt ? new Date(r.submittedAt).toLocaleDateString() : "—";
-            const hasMore = !!(r.paste || r.link || r.link2);
+            const links = [r.link, r.link2, r.video].filter(Boolean);
+            const hasMore = !!(r.paste || links.length || r.files.length);
             const rowBg = i % 2 === 0 ? "transparent" : "var(--sidebar)";
             return (
               <React.Fragment key={r.rowKey}>
@@ -175,6 +182,14 @@ export function AssignmentsView({
                     style={{ color: "var(--foreground)" }}
                   >
                     {r.exercise}
+                    {r.hintsUsed && (
+                      <span
+                        className="block text-[11px] mt-0.5"
+                        style={{ color: "var(--muted-foreground)" }}
+                      >
+                        💡 {r.hintsUsed}
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3 max-w-xs">
                     {r.paste ? (
@@ -184,9 +199,16 @@ export function AssignmentsView({
                       >
                         {r.paste}
                       </p>
-                    ) : r.link || r.link2 ? (
+                    ) : r.files.length ? (
+                      <p
+                        className="text-[12px] leading-relaxed line-clamp-2 font-mono"
+                        style={{ color: "var(--foreground)" }}
+                      >
+                        {r.files.map((f) => f.name).join(", ")}
+                      </p>
+                    ) : links.length ? (
                       <div className="flex flex-col gap-1">
-                        {[r.link, r.link2].filter(Boolean).map((href) => (
+                        {links.map((href) => (
                           <a
                             key={href}
                             href={href}
@@ -249,9 +271,29 @@ export function AssignmentsView({
                             {r.paste}
                           </p>
                         )}
-                        {(r.link || r.link2) && (
+                        {r.files.map((f) => (
+                          <div key={f.name} className="space-y-1">
+                            <p
+                              className="text-[12px] font-mono font-semibold"
+                              style={{ color: "var(--foreground)" }}
+                            >
+                              {f.name}
+                            </p>
+                            <pre
+                              className="text-[12px] leading-relaxed whitespace-pre-wrap rounded-lg p-3 overflow-x-auto"
+                              style={{
+                                background: "var(--sidebar)",
+                                border: "1px solid var(--sidebar-border)",
+                                color: "var(--foreground)",
+                              }}
+                            >
+                              {f.code}
+                            </pre>
+                          </div>
+                        ))}
+                        {links.length > 0 && (
                           <div className="flex flex-col gap-1.5">
-                            {[r.link, r.link2].filter(Boolean).map((href) => (
+                            {links.map((href) => (
                               <a
                                 key={href}
                                 href={href}

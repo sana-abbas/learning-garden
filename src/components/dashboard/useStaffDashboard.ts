@@ -107,6 +107,7 @@ export function useStaffDashboard(require: StaffRole): StaffDashboard {
         { data: allMentors },
         { data: allFounders },
         { data: statuses },
+        { data: hintRows },
       ] = await Promise.all([
         supabase
           .from("user_progress")
@@ -120,6 +121,8 @@ export function useStaffDashboard(require: StaffRole): StaffDashboard {
         supabase.from("founders").select("user_id"),
         // Fails harmlessly (no graduates hidden) until 2026-10-15-graduates.sql runs.
         supabase.rpc("participant_statuses"),
+        // Its own query so it fails harmlessly until 2026-10-22-hints.sql runs.
+        supabase.from("user_progress").select("user_id, hints"),
       ]);
       if (cancelled) return;
 
@@ -133,7 +136,13 @@ export function useStaffDashboard(require: StaffRole): StaffDashboard {
       // Emails we can tie to staff: their own preview rows, plus whoever is
       // signed in. Old invites for staff predate the access rules and would
       // otherwise show up as participants who have not signed in yet.
-      const progressRows = (progress as ParticipantRow[] | null) ?? [];
+      const hintsByUser = new Map(
+        (hintRows ?? []).map((h) => [h.user_id, h.hints as Record<string, number>]),
+      );
+      const progressRows = ((progress as ParticipantRow[] | null) ?? []).map((p) => ({
+        ...p,
+        hints: hintsByUser.get(p.user_id) ?? {},
+      }));
       setStaffEmails(
         new Set(
           [

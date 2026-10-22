@@ -1,3 +1,4 @@
+import { TERMBANK_HINTS } from "@/data/content-termbank";
 import type { ParticipantRow } from "./types";
 
 export const DAY_MS = 86400000;
@@ -67,4 +68,15 @@ export function median(values: number[]): number {
   const sorted = [...values].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
   return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+}
+
+/** "2 of 4 hints" when someone opened hints on this exercise, else null. */
+export function hintsUsedLabel(
+  hints: Record<string, number> | undefined,
+  subId: string,
+): string | null {
+  const total = TERMBANK_HINTS[subId]?.length;
+  const used = hints?.[subId] ?? 0;
+  if (!total || !used) return null;
+  return `${Math.min(used, total)} of ${total} hints`;
 }

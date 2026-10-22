@@ -34,7 +34,7 @@ import { DailyUpdateModal } from "@/components/garden/DailyUpdateModal";
 import { NoAccessScreen } from "@/components/garden/NoAccessScreen";
 import { CF_STEPS, CF_CURRICULUM_STEPS } from "@/data/curriculum-cf";
 import { CF_CONTENT } from "@/data/content-cf";
-import { EXERCISE_CHECKERS } from "@/data/exercise-checkers";
+import { TERMBANK_HINTS } from "@/data/content-termbank";
 import type { Step, SubTask } from "@/data/curriculum";
 
 export const Route = createFileRoute("/cf")({
@@ -134,6 +134,8 @@ function CodingFundamentals() {
     onboarded,
     progressReady,
     setOnboarded,
+    hints,
+    revealHint,
   } = useProgress(userId);
 
   const [showUpdateModal, setShowUpdateModal] = useState(false);
@@ -536,6 +538,19 @@ function CodingFundamentals() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progressReady, userId]);
 
+  // Exercises with written content go through ContentModal: it runs any
+  // auto-checker, shows hints, and has the multi-file and video fields.
+  // SubmissionModal only checks the box isn't empty, so routing there would
+  // let a student skip validation just by ticking the checkbox.
+  const openGate = (step: Step, sub: SubTask) => {
+    const content = CF_CONTENT[sub.id];
+    if (content) {
+      setContentModal({ title: sub.label, content, gate: sub.gate, step, sub, subId: sub.id });
+      return;
+    }
+    setSubmissionModal({ step, sub });
+  };
+
   const toggleSubtask = (step: Step, sub: SubTask) => {
     const subId = sub.id;
     if (checked[subId]) {
@@ -543,15 +558,7 @@ function CodingFundamentals() {
       return;
     }
     if (sub.gate) {
-      // Exercises with an auto-checker must go through ContentModal, which runs
-      // it. SubmissionModal only checks the box isn't empty, so routing here
-      // would let a student skip validation just by ticking the checkbox.
-      const content = CF_CONTENT[subId];
-      if (content && EXERCISE_CHECKERS[subId]) {
-        setContentModal({ title: sub.label, content, gate: sub.gate, step, sub, subId });
-        return;
-      }
-      setSubmissionModal({ step, sub });
+      openGate(step, sub);
       return;
     }
     setChecked((prev) => {
@@ -574,7 +581,7 @@ function CodingFundamentals() {
           (s) => s.gate && !checked[s.id] && !submissions[s.id],
         );
         if (firstPendingGate) {
-          setSubmissionModal({ step, sub: firstPendingGate });
+          openGate(step, firstPendingGate);
           return;
         }
       }
@@ -1582,6 +1589,9 @@ function CodingFundamentals() {
           gate={contentModal.gate}
           subId={contentModal.subId}
           existing={contentModal.sub ? submissions[contentModal.sub.id] : undefined}
+          hints={contentModal.subId ? TERMBANK_HINTS[contentModal.subId] : undefined}
+          hintsRevealed={contentModal.subId ? hints[contentModal.subId] : 0}
+          onRevealHint={() => contentModal.subId && revealHint(contentModal.subId)}
           onSubmit={
             contentModal.gate && contentModal.step && contentModal.sub
               ? (data) => confirmSubmission(contentModal.step!, contentModal.sub!, data)

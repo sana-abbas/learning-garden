@@ -1,3 +1,5 @@
+import { TERMBANK_CONTENT } from "./content-termbank";
+
 // Learning material content for Coding Fundamentals subtasks.
 // Keyed by subtask ID. Subtasks without an entry show no content modal.
 export const CF_CONTENT: Record<string, string> = {
@@ -2181,4 +2183,6 @@ Print the text "Hello World!" in the browser's console.
   "cf2-c": `📝Exercise: Hello, World! in the web browser.
 Adapt the HTML code above so that it also prints the text "Hello World!" in the console and save it in a file with the name helloworld.html. When you open the file using a browser, it should print the text in the console. Pay attention that in this case you are not pasting the JavaScript code directly in the console.
 `,
+
+  ...TERMBANK_CONTENT,
 };

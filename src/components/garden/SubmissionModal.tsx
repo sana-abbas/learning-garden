@@ -18,6 +18,7 @@ export interface SubmissionGate {
   linkLabel?: string; // first link field label
   link2Label?: string; // second link field label (e.g. "Live demo URL")
   videoLabel?: string; // video field label
+  filesLabel?: string; // one name + code box per file, for multi-file projects
   linkDomains?: string[]; // allowed domains for first link
   link2Domains?: string[]; // allowed domains for second link
 }

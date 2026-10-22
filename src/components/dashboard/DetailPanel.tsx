@@ -10,7 +10,7 @@ import {
   X,
 } from "lucide-react";
 import type { ParticipantRow } from "./types";
-import { displayName, timeAgo } from "./format";
+import { displayName, hintsUsedLabel, timeAgo } from "./format";
 import { completionFor, curriculumFor, stepsFor } from "./progress";
 import { Avatar } from "./Avatar";
 
@@ -313,6 +313,14 @@ export function DetailPanel({
                                   >
                                     {sub.label}
                                   </span>
+                                  {hintsUsedLabel(participant.hints, sub.id) && (
+                                    <span
+                                      className="block text-[11px] mt-0.5"
+                                      style={{ color: "var(--muted-foreground)" }}
+                                    >
+                                      💡 {hintsUsedLabel(participant.hints, sub.id)} opened
+                                    </span>
+                                  )}
                                   {subSubmission && (
                                     <div className="mt-1 space-y-0.5">
                                       {[subSubmission.link, subSubmission.link2]

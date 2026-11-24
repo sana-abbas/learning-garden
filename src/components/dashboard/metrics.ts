@@ -157,18 +157,14 @@ export interface HeadlineKpis {
   /** Distinct people who have graduated at least one track. */
   graduatedPeople: number;
   /**
-   * Of the people who reached a first paid project, how many also graduated.
+   * Of the people who reached a first paid project, the % who also graduated.
    *
    * The denominator is `reachedPaidWork`, so numerator and denominator describe
-   * the same population — the previous all-time rate divided graduates by the
-   * entire roster, which included applicants and declined candidates who were
-   * never enrolled at all, and sank every time a new application was added.
-   *
-   * Both halves are measured on the same enrolment: "graduated" and "paid" have
-   * to be true of one row, not of two different tracks the person took.
+   * the same population — an all-roster rate would include applicants and
+   * declined candidates and sink with every new application. Both halves are
+   * measured on the same enrolment: "graduated" and "paid" have to be true of
+   * one row, not of two different tracks the person took.
    */
-  graduatedOfPaid: number;
-  /** graduatedOfPaid ÷ reachedPaidWork. Meaningless where nothing is recorded. */
   graduationRateOfPaid: number;
   /**
    * True when this scope records paid projects at all.
@@ -222,7 +218,6 @@ export function headlineKpis(rows: RosterRow[]): HeadlineKpis {
     pipeline: by("Applied") + by("Accepted; not yet enrolled"),
     declined: by("Declined"),
     graduatedPeople,
-    graduatedOfPaid,
     graduationRateOfPaid: pct(graduatedOfPaid, reachedPaidWork),
     tracksPaidWork: reachedPaidWork > 0,
     // Per person: someone paid on two tracks has still reached paid work once.

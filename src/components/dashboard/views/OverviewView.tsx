@@ -142,7 +142,8 @@ export function OverviewView({ rows }: { rows: RosterRow[] }) {
                 different things — all people ever on the roster, and only the
                 enrolments that had ended — and read as a contradiction. Its
                 sub-line breaks the headline down by track; the graduation rate
-                lives on the paid-work card, beside the 45 it is a share of. */}
+                lives on the paid-work card as a % only, since its count (22)
+                repeated the second-project figure beside it. */}
             <StatCard
               icon={GraduationCap}
               label="Graduates"
@@ -165,7 +166,7 @@ export function OverviewView({ rows }: { rows: RosterRow[] }) {
               value={kpis.tracksPaidWork ? kpis.reachedPaidWork : DASH}
               sub={
                 kpis.tracksPaidWork
-                  ? `${kpis.graduatedOfPaid} went on to graduate (${kpis.graduationRateOfPaid}%) · ${kpis.reachedSecondPaidWork} reached a second project`
+                  ? `${kpis.graduationRateOfPaid}% graduated · ${kpis.reachedSecondPaidWork} reached a second project`
                   : "no paid projects recorded on this track"
               }
               formula={FORMULAS.paidWork}

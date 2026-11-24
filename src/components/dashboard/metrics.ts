@@ -321,6 +321,22 @@ export function trackScores(rows: RosterRow[]): TrackScore[] {
     });
 }
 
+/**
+ * Graduates per Notion track, largest first — the sub-line under the Graduates
+ * card, so the headline visibly adds up and the Full Stack figure on the jobs
+ * card can be traced back to it.
+ *
+ * Counts people within each track. Someone who graduated two tracks would
+ * appear under both, making the parts sum to more than the headline; nobody
+ * has yet, and that would be the true picture if they did.
+ */
+export function graduatesByTrack(rows: RosterRow[]): { track: string; count: number }[] {
+  const grads = rows.filter((r) => isOnRoster(r) && r.status === "Graduated");
+  return [...groupBy(grads, (r) => r.track ?? "No track").entries()]
+    .map(([track, members]) => ({ track, count: countPeople(members) }))
+    .sort((a, b) => b.count - a.count);
+}
+
 /** Enrolments per calendar month, oldest first, with empty months filled in. */
 export function startsByMonth(rows: RosterRow[]): { month: string; count: number }[] {
   const dates = rows

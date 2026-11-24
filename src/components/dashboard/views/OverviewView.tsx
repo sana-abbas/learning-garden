@@ -17,7 +17,9 @@ import {
   cohortEngagement,
   dataQualityIssues,
   fullStackGraduateJobs,
+  graduatesByTrack,
   headlineKpis,
+  isFullStackTrack,
   scopeRows,
   startsByMonth,
   rosterName,
@@ -75,11 +77,11 @@ function scopeLabel(scope: TrackScope): string {
 const FORMULAS = {
   activeNow:
     "Notion status = Enrolled. “Active in the garden” means they also opened it in the last 14 days.",
-  graduates:
-    "People marked Graduated, counted once each. Rate = graduates ÷ people whose 1st Paid Project is “Paid”. Only Full Stack records paid projects.",
+  graduates: "People marked Graduated in Notion, counted once each.",
   offboarded:
     "Enrolments marked Offboarded. Counts enrolments, so leaving two tracks counts twice.",
-  paidWork: "People whose 1st Paid Project is Paid, once each.",
+  paidWork:
+    "People whose 1st Paid Project is Paid, once each. The % is how many of them graduated. Only Full Stack records paid projects.",
   jobs: "Graduates with Job Status Working for Full Stack",
 } as const;
 
@@ -138,12 +140,14 @@ export function OverviewView({ rows }: { rows: RosterRow[] }) {
             />
             {/* One graduation card, not two. The pair that stood here divided by
                 different things — all people ever on the roster, and only the
-                enrolments that had ended — and read as a contradiction. */}
+                enrolments that had ended — and read as a contradiction. Its
+                sub-line breaks the headline down by track; the graduation rate
+                lives on the paid-work card, beside the 45 it is a share of. */}
             <StatCard
               icon={GraduationCap}
               label="Graduates"
               value={kpis.graduatedPeople || DASH}
-              sub={graduationSub(kpis)}
+              sub={graduatesSub(graduatesByTrack(scoped))}
               formula={FORMULAS.graduates}
               accent="var(--status-graduated)"
             />
@@ -157,11 +161,11 @@ export function OverviewView({ rows }: { rows: RosterRow[] }) {
             />
             <StatCard
               icon={Briefcase}
-              label="Reached paid work"
+              label="Reached first paid work"
               value={kpis.tracksPaidWork ? kpis.reachedPaidWork : DASH}
               sub={
                 kpis.tracksPaidWork
-                  ? `${kpis.reachedSecondPaidWork} reached a second project`
+                  ? `${kpis.graduatedOfPaid} went on to graduate (${kpis.graduationRateOfPaid}%) · ${kpis.reachedSecondPaidWork} reached a second project`
                   : "no paid projects recorded on this track"
               }
               formula={FORMULAS.paidWork}
@@ -174,7 +178,7 @@ export function OverviewView({ rows }: { rows: RosterRow[] }) {
                 dashes out, like the other cards with nothing to report. */}
             <StatCard
               icon={Building2}
-              label="Grads in work"
+              label="Full Stack grads in work"
               value={!jobsApply || jobs.total === 0 ? DASH : `${jobs.working} of ${jobs.total}`}
               sub={
                 !jobsApply
@@ -541,21 +545,21 @@ export function OverviewView({ rows }: { rows: RosterRow[] }) {
 }
 
 /**
- * The sub-line under the Graduates headline.
+ * The sub-line under the Graduates headline: the same count, split by track.
  *
- * The headline is a plain count, which needs no denominator; the rate has to
- * name the group it was measured over, or 28 graduates beside a 38% rate reads
- * as an error. Where a track records no paid projects the rate is withheld
- * rather than shown as 0% — nobody reaching a milestone that is not recorded is
- * not the same claim as nobody reaching it.
+ * It used to carry the graduation rate ("45 reached a paid project · 21 of them
+ * graduated"), which put a second, smaller graduate figure under the headline
+ * and read as a contradiction of it. The rate now sits on the paid-work card.
  */
-function graduationSub(kpis: ReturnType<typeof headlineKpis>): string {
-  if (kpis.tracksPaidWork) {
-    return `${kpis.reachedPaidWork} reached a paid project · ${kpis.graduatedOfPaid} of them graduated (${kpis.graduationRateOfPaid}%)`;
-  }
-  return kpis.graduatedPeople === 0
-    ? "no graduates yet on this track"
-    : "no paid projects recorded on this track, so no rate is shown";
+function graduatesSub(byTrack: { track: string; count: number }[]): string {
+  if (byTrack.length === 0) return "no graduates yet on this track";
+  return byTrack.map(({ track, count }) => `${count} ${trackDisplayName(track)}`).join(" · ");
+}
+
+/** Notion's track names, made readable for a sub-line ("full-stack 1.0" → "Full Stack 1.0"). */
+function trackDisplayName(track: string): string {
+  if (isFullStackTrack(track)) return track.replace(/^full[- ]stack/i, "Full Stack");
+  return track.replace(/-/g, " ");
 }
 
 /** All tracks / Full Stack / Coding Fundamentals, scoping the whole Overview. */
